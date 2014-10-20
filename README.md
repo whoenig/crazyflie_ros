@@ -29,7 +29,8 @@ Please note that there are (optional) arguments to change the device uri and pat
 
 ### Subscribers
 
-The crazyflie subscribes to the `cmd_vel` topic.
+#### cmd_vel
+
 Similar to the hector_quadrotor, package the fields are used as following:
 * linear.y: roll [e.g. -30 to 30]
 * linear.x: pitch [e.g. -30 to 30]
@@ -38,7 +39,11 @@ Similar to the hector_quadrotor, package the fields are used as following:
 
 ### Publishers
 
-At this point, nothing is published.
+#### imu
+This node contains the sensor readings of gyroscope and accelerometer.
+The covariance matrices are set to unknown and the orientation is not set. (This could be done by the magnetometer readings in the future.)
+The data is updated every 10ms, however the different time sources (ROS vs. crazyflie) are not synchronized, hence the time_stamp is the time when the packet was received.
+The IMU data can be viewed in rviz.
 
 ## Similar Projects
 
