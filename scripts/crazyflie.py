@@ -2,7 +2,7 @@
 
 import rospy
 from geometry_msgs.msg import Twist
-from sensor_msgs.msg import Imu
+from sensor_msgs.msg import Imu, Temperature
 
 import time, sys
 from threading import Thread
@@ -30,10 +30,14 @@ class CrazyflieROS:
         self._lg_imu.add_variable("gyro.y", "float")
         self._lg_imu.add_variable("gyro.z", "float")
 
+        self._lg_log2 = LogConfig(name="LOG2", period_in_ms=100)
+        self._lg_log2.add_variable("baro.temp", "float")
+
         self._cmdVel = Twist()
         rospy.Subscriber("cmd_vel", Twist, self._cmdVelChanged)
 
         self._pubImu = rospy.Publisher('crazyflie/imu', Imu, queue_size=10)
+        self._pubTemp = rospy.Publisher('crazyflie/temperature', Temperature, queue_size=10)
 
         self._state = CrazyflieROS.Disconnected
         Thread(target=self._update).start()
@@ -55,11 +59,23 @@ class CrazyflieROS:
             # This callback will receive the data
             self._lg_imu.data_received_cb.add_callback(self._log_data_imu)
             # This callback will be called on errors
-            self._lg_imu.error_cb.add_callback(self._log_error_imu)
+            self._lg_imu.error_cb.add_callback(self._log_error)
             # Start the logging
             self._lg_imu.start()
         else:
             rospy.logfatal("Could not add logconfig since some variables are not in TOC")
+
+        self._cf.log.add_config(self._lg_log2)
+        if self._lg_log2.valid:
+            # This callback will receive the data
+            self._lg_log2.data_received_cb.add_callback(self._log_data_log2)
+            # This callback will be called on errors
+            self._lg_log2.error_cb.add_callback(self._log_error)
+            # Start the logging
+            self._lg_log2.start()
+        else:
+            rospy.logfatal("Could not add logconfig since some variables are not in TOC")
+
 
     def _connection_failed(self, link_uri, msg):
         """Callback when connection initial connection fails (i.e no Crazyflie
@@ -78,7 +94,7 @@ class CrazyflieROS:
         rospy.logfatal("Disconnected from %s" % link_uri)
         self._state = CrazyflieROS.Disconnected
 
-    def _log_error_imu(self, logconf, msg):
+    def _log_error(self, logconf, msg):
         """Callback from the log API when an error occurs"""
         rospy.logfatal("Error when logging %s: %s" % (logconf.name, msg))
 
@@ -103,6 +119,18 @@ class CrazyflieROS:
         self._pubImu.publish(msg)
 
         #print "[%d][%s]: %s" % (timestamp, logconf.name, data)
+
+    def _log_data_log2(self, timestamp, data, logconf):
+        """Callback froma the log API when data arrives"""
+        msg = Temperature()
+        # ToDo: it would be better to convert from timestamp to rospy time
+        msg.header.stamp = rospy.Time.now()
+        msg.header.frame_id = "map"
+        msg.temperature = data["baro.temp"]
+        self._pubTemp.publish(msg)
+
+        #print "[%d][%s]: %s" % (timestamp, logconf.name, data)
+
 
     def _send_setpoint(self):
         roll = self._cmdVel.linear.y

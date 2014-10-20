@@ -29,4 +29,6 @@
 
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find crazyflie_ros)/launch/crazyflie.rviz" />
 
+    <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot" args="/crazyflie/temperature/temperature"/>
+
 </launch>
