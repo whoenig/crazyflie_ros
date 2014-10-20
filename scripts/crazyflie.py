@@ -13,8 +13,9 @@ class CrazyflieROS:
     Connected = 2
 
     """Wrapper between ROS and Crazyflie SDK"""
-    def __init__(self, link_uri):
+    def __init__(self, link_uri, tfprefix):
         self.link_uri = link_uri
+        self.tfprefix = tfprefix
         self._cf = Crazyflie()
 
         self._cf.connected.add_callback(self._connected)
@@ -36,8 +37,8 @@ class CrazyflieROS:
         self._cmdVel = Twist()
         rospy.Subscriber("cmd_vel", Twist, self._cmdVelChanged)
 
-        self._pubImu = rospy.Publisher('crazyflie/imu', Imu, queue_size=10)
-        self._pubTemp = rospy.Publisher('crazyflie/temperature', Temperature, queue_size=10)
+        self._pubImu = rospy.Publisher('imu', Imu, queue_size=10)
+        self._pubTemp = rospy.Publisher('temperature', Temperature, queue_size=10)
 
         self._state = CrazyflieROS.Disconnected
         Thread(target=self._update).start()
@@ -104,7 +105,7 @@ class CrazyflieROS:
         msg = Imu()
         # ToDo: it would be better to convert from timestamp to rospy time
         msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = "map"
+        msg.header.frame_id = self.tfprefix + "/base_link"
         msg.orientation_covariance[0] = -1 # orientation not supported
 
         # ToDo: check units
@@ -125,7 +126,7 @@ class CrazyflieROS:
         msg = Temperature()
         # ToDo: it would be better to convert from timestamp to rospy time
         msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = "map"
+        msg.header.frame_id = self.tfprefix + "/base_link"
         msg.temperature = data["baro.temp"]
         self._pubTemp.publish(msg)
 
@@ -165,6 +166,7 @@ if __name__ == '__main__':
     rospy.init_node('crazyflie', anonymous=True)
     crazyflieSDK = rospy.get_param("~crazyflieSDK")
     uri = rospy.get_param("~uri")
+    tfprefix = rospy.get_param("~tfprefix")
 
     sys.path.append(crazyflieSDK)
     import cflib
@@ -174,5 +176,5 @@ if __name__ == '__main__':
     # Initialize the low-level drivers (don't list the debug drivers)
     cflib.crtp.init_drivers(enable_debug_driver=False)
 
-    CrazyflieROS(uri)
+    CrazyflieROS(uri, tfprefix)
     rospy.spin()
