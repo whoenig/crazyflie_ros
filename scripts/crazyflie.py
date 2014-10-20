@@ -2,9 +2,11 @@
 
 import rospy
 from geometry_msgs.msg import Twist
-from sensor_msgs.msg import Imu, Temperature
+from sensor_msgs.msg import Imu, Temperature, MagneticField
+from std_msgs.msg import Float32
 
 import time, sys
+import math
 from threading import Thread
 
 class CrazyflieROS:
@@ -32,13 +34,19 @@ class CrazyflieROS:
         self._lg_imu.add_variable("gyro.z", "float")
 
         self._lg_log2 = LogConfig(name="LOG2", period_in_ms=100)
+        self._lg_log2.add_variable("mag.x", "float")
+        self._lg_log2.add_variable("mag.y", "float")
+        self._lg_log2.add_variable("mag.z", "float")
         self._lg_log2.add_variable("baro.temp", "float")
+        self._lg_log2.add_variable("baro.pressure", "float")
 
         self._cmdVel = Twist()
         rospy.Subscriber("cmd_vel", Twist, self._cmdVelChanged)
 
         self._pubImu = rospy.Publisher('imu', Imu, queue_size=10)
         self._pubTemp = rospy.Publisher('temperature', Temperature, queue_size=10)
+        self._pubMag = rospy.Publisher('magnetic_field', MagneticField, queue_size=10)
+        self._pubPressure = rospy.Publisher('pressure', Float32, queue_size=10)
 
         self._state = CrazyflieROS.Disconnected
         Thread(target=self._update).start()
@@ -108,14 +116,15 @@ class CrazyflieROS:
         msg.header.frame_id = self.tfprefix + "/base_link"
         msg.orientation_covariance[0] = -1 # orientation not supported
 
-        # ToDo: check units
-        msg.angular_velocity.x = data["gyro.x"]
-        msg.angular_velocity.y = data["gyro.y"]
-        msg.angular_velocity.z = data["gyro.z"]
+        # measured in deg/s; need to convert to rad/s
+        msg.angular_velocity.x = math.radians(data["gyro.x"])
+        msg.angular_velocity.y = math.radians(data["gyro.y"])
+        msg.angular_velocity.z = math.radians(data["gyro.z"])
 
-        msg.linear_acceleration.x = data["acc.x"]
-        msg.linear_acceleration.y = data["acc.y"]
-        msg.linear_acceleration.z = data["acc.z"]
+        # measured in mG; need to convert to m/s^2
+        msg.linear_acceleration.x = data["acc.x"] * 9.81
+        msg.linear_acceleration.y = data["acc.y"] * 9.81
+        msg.linear_acceleration.z = data["acc.z"] * 9.81
 
         self._pubImu.publish(msg)
 
@@ -127,11 +136,26 @@ class CrazyflieROS:
         # ToDo: it would be better to convert from timestamp to rospy time
         msg.header.stamp = rospy.Time.now()
         msg.header.frame_id = self.tfprefix + "/base_link"
+        # measured in degC (but value seems to be wrong/too high?)
         msg.temperature = data["baro.temp"]
         self._pubTemp.publish(msg)
 
-        #print "[%d][%s]: %s" % (timestamp, logconf.name, data)
+        # ToDo: it would be better to convert from timestamp to rospy time
+        msg = MagneticField()
+        msg.header.stamp = rospy.Time.now()
+        msg.header.frame_id = self.tfprefix + "/base_link"
 
+        # measured in Tesla
+        msg.magnetic_field.x = data["mag.x"]
+        msg.magnetic_field.y = data["mag.y"]
+        msg.magnetic_field.z = data["mag.z"]
+
+        self._pubMag.publish(msg)
+
+        msg = Float32()
+        # hPa (=mbar)
+        msg.data = data["baro.pressure"]
+        self._pubPressure.publish(msg)
 
     def _send_setpoint(self):
         roll = self._cmdVel.linear.y

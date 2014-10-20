@@ -40,10 +40,27 @@ Similar to the hector_quadrotor, package the fields are used as following:
 ### Publishers
 
 #### imu
-This node contains the sensor readings of gyroscope and accelerometer.
-The covariance matrices are set to unknown and the orientation is not set. (This could be done by the magnetometer readings in the future.)
-The data is updated every 10ms, however the different time sources (ROS vs. crazyflie) are not synchronized, hence the time_stamp is the time when the packet was received.
-The IMU data can be viewed in rviz.
+* sensor_msgs/IMU
+* contains the sensor readings of gyroscope and accelerometer
+* The covariance matrices are set to unknown 
+* orientation is not set (this could be done by the magnetometer readings in the future.)
+* update: 10ms (time between crazyflie and ROS not synchronized!)
+* can be viewed in rviz
+
+#### temperature
+* sensor_msgs/Temperature
+* From Barometer (10DOF version only) in degree Celcius (Sensor readings seem to be too high)
+* update: 100ms (time between crazyflie and ROS not synchronized!)
+
+#### magnetic_field
+* sensor_msgs/MagneticField
+* update: 100ms (time between crazyflie and ROS not synchronized!)
+
+#### pressure
+* Float32
+* hPa (or mbar)
+* update: 100ms (time between crazyflie and ROS not synchronized!)
+
 
 ## Similar Projects
 
