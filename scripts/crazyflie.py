@@ -2,6 +2,7 @@
 
 import rospy
 from geometry_msgs.msg import Twist
+from sensor_msgs.msg import Imu
 
 import time, sys
 from threading import Thread
@@ -21,8 +22,18 @@ class CrazyflieROS:
         self._cf.connection_failed.add_callback(self._connection_failed)
         self._cf.connection_lost.add_callback(self._connection_lost)
 
+        self._lg_imu = LogConfig(name="IMU", period_in_ms=10)
+        self._lg_imu.add_variable("acc.x", "float")
+        self._lg_imu.add_variable("acc.y", "float")
+        self._lg_imu.add_variable("acc.z", "float")
+        self._lg_imu.add_variable("gyro.x", "float")
+        self._lg_imu.add_variable("gyro.y", "float")
+        self._lg_imu.add_variable("gyro.z", "float")
+
         self._cmdVel = Twist()
         rospy.Subscriber("cmd_vel", Twist, self._cmdVelChanged)
+
+        self._pubImu = rospy.Publisher('crazyflie/imu', Imu, queue_size=10)
 
         self._state = CrazyflieROS.Disconnected
         Thread(target=self._update).start()
@@ -38,6 +49,17 @@ class CrazyflieROS:
 
         rospy.loginfo("Connected to %s" % link_uri)
         self._state = CrazyflieROS.Connected
+
+        self._cf.log.add_config(self._lg_imu)
+        if self._lg_imu.valid:
+            # This callback will receive the data
+            self._lg_imu.data_received_cb.add_callback(self._log_data_imu)
+            # This callback will be called on errors
+            self._lg_imu.error_cb.add_callback(self._log_error_imu)
+            # Start the logging
+            self._lg_imu.start()
+        else:
+            rospy.logfatal("Could not add logconfig since some variables are not in TOC")
 
     def _connection_failed(self, link_uri, msg):
         """Callback when connection initial connection fails (i.e no Crazyflie
@@ -55,6 +77,32 @@ class CrazyflieROS:
         """Callback when the Crazyflie is disconnected (called in all cases)"""
         rospy.logfatal("Disconnected from %s" % link_uri)
         self._state = CrazyflieROS.Disconnected
+
+    def _log_error_imu(self, logconf, msg):
+        """Callback from the log API when an error occurs"""
+        rospy.logfatal("Error when logging %s: %s" % (logconf.name, msg))
+
+
+    def _log_data_imu(self, timestamp, data, logconf):
+        """Callback froma the log API when data arrives"""
+        msg = Imu()
+        # ToDo: it would be better to convert from timestamp to rospy time
+        msg.header.stamp = rospy.Time.now()
+        msg.header.frame_id = "map"
+        msg.orientation_covariance[0] = -1 # orientation not supported
+
+        # ToDo: check units
+        msg.angular_velocity.x = data["gyro.x"]
+        msg.angular_velocity.y = data["gyro.y"]
+        msg.angular_velocity.z = data["gyro.z"]
+
+        msg.linear_acceleration.x = data["acc.x"]
+        msg.linear_acceleration.y = data["acc.y"]
+        msg.linear_acceleration.z = data["acc.z"]
+
+        self._pubImu.publish(msg)
+
+        #print "[%d][%s]: %s" % (timestamp, logconf.name, data)
 
     def _send_setpoint(self):
         roll = self._cmdVel.linear.y
@@ -93,6 +141,7 @@ if __name__ == '__main__':
     sys.path.append(crazyflieSDK)
     import cflib
     from cflib.crazyflie import Crazyflie
+    from cfclient.utils.logconfigreader import LogConfig
 
     # Initialize the low-level drivers (don't list the debug drivers)
     cflib.crtp.init_drivers(enable_debug_driver=False)

@@ -27,4 +27,6 @@
     <param name="yaw_velocity_max" value="-200"/>
   </node>
 
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find crazyflie_ros)/launch/crazyflie.rviz" />
+
 </launch>
