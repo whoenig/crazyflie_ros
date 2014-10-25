@@ -15,9 +15,9 @@ class CrazyflieROS:
     Connected = 2
 
     """Wrapper between ROS and Crazyflie SDK"""
-    def __init__(self, link_uri, tfprefix):
+    def __init__(self, link_uri, tf_prefix):
         self.link_uri = link_uri
-        self.tfprefix = tfprefix
+        self.tf_prefix = tf_prefix
         self._cf = Crazyflie()
 
         self._cf.connected.add_callback(self._connected)
@@ -113,7 +113,7 @@ class CrazyflieROS:
         msg = Imu()
         # ToDo: it would be better to convert from timestamp to rospy time
         msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = self.tfprefix + "/base_link"
+        msg.header.frame_id = self.tf_prefix + "/base_link"
         msg.orientation_covariance[0] = -1 # orientation not supported
 
         # measured in deg/s; need to convert to rad/s
@@ -135,7 +135,7 @@ class CrazyflieROS:
         msg = Temperature()
         # ToDo: it would be better to convert from timestamp to rospy time
         msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = self.tfprefix + "/base_link"
+        msg.header.frame_id = self.tf_prefix + "/base_link"
         # measured in degC (but value seems to be wrong/too high?)
         msg.temperature = data["baro.temp"]
         self._pubTemp.publish(msg)
@@ -143,7 +143,7 @@ class CrazyflieROS:
         # ToDo: it would be better to convert from timestamp to rospy time
         msg = MagneticField()
         msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = self.tfprefix + "/base_link"
+        msg.header.frame_id = self.tf_prefix + "/base_link"
 
         # measured in Tesla
         msg.magnetic_field.x = data["mag.x"]
@@ -190,7 +190,7 @@ if __name__ == '__main__':
     rospy.init_node('crazyflie', anonymous=True)
     crazyflieSDK = rospy.get_param("~crazyflieSDK")
     uri = rospy.get_param("~uri")
-    tfprefix = rospy.get_param("~tfprefix")
+    tf_prefix = rospy.get_param("~tf_prefix")
 
     sys.path.append(crazyflieSDK)
     import cflib
@@ -200,5 +200,5 @@ if __name__ == '__main__':
     # Initialize the low-level drivers (don't list the debug drivers)
     cflib.crtp.init_drivers(enable_debug_driver=False)
 
-    CrazyflieROS(uri, tfprefix)
+    CrazyflieROS(uri, tf_prefix)
     rospy.spin()

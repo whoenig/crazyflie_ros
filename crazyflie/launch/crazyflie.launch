@@ -1,37 +1,13 @@
 <?xml version="1.0"?>
 
 <launch>
-  <arg name="crazyflieSDK" default="/home/whoenig/projects/crazyflie/crazyflie-clients-python/lib" />
+  <arg name="crazyflieSDK" default="~/crazyflie/crazyflie-clients-python/lib" />
   <arg name="uri" default="radio://0/80/2M" />
-  <arg name="joy_dev" default="/dev/input/js0" />
+  <arg name="tf_prefix" default="" />
 
-  <group ns="crazyflie1">
-    <node pkg="crazyflie_ros" type="crazyflie.py" name="crazyflie" output="screen">
-      <param name="crazyflieSDK" value="$(arg crazyflieSDK)" />
-      <param name="uri" value="$(arg uri)" />
-      <param name="tfprefix" value="crazyflie1" />
-    </node>
-
-    <node name="joy" pkg="joy" type="joy_node" output="screen" >
-      <param name="dev" value="$(arg joy_dev)" />
-    </node>
-
-    <!-- Note that axis IDs are those from the joystick message plus one, to be able to invert axes by specifiying either positive or negative axis numbers.-->
-    <!-- Axis 2 from joy message thus has to be set as '3' or '-3'(inverted mode) below-->
-    <node name="quadrotor_teleop" pkg="hector_quadrotor_teleop" type="quadrotor_teleop">
-      <param name="x_axis" value="5"/>
-      <param name="y_axis" value="4"/>
-      <param name="z_axis" value="2"/>
-      <param name="yaw_axis" value="1"/>
-      <param name="x_velocity_max" value="30"/>
-      <param name="y_velocity_max" value="-30"/>
-      <param name="z_velocity_max" value="60000"/>
-      <param name="yaw_velocity_max" value="-200"/>
-    </node>
-  </group>
-
-  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find crazyflie_ros)/launch/crazyflie.rviz" />
-
-    <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot" args="/crazyflie1/temperature/temperature"/>
-
+  <node pkg="crazyflie_ros" type="crazyflie.py" name="crazyflie" output="screen">
+    <param name="crazyflieSDK" value="$(arg crazyflieSDK)" />
+    <param name="uri" value="$(arg uri)" />
+    <param name="tf_prefix" value="$(arg tf_prefix)" />
+  </node>
 </launch>
