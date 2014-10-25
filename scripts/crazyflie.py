@@ -25,21 +25,6 @@ class CrazyflieROS:
         self._cf.connection_failed.add_callback(self._connection_failed)
         self._cf.connection_lost.add_callback(self._connection_lost)
 
-        self._lg_imu = LogConfig(name="IMU", period_in_ms=10)
-        self._lg_imu.add_variable("acc.x", "float")
-        self._lg_imu.add_variable("acc.y", "float")
-        self._lg_imu.add_variable("acc.z", "float")
-        self._lg_imu.add_variable("gyro.x", "float")
-        self._lg_imu.add_variable("gyro.y", "float")
-        self._lg_imu.add_variable("gyro.z", "float")
-
-        self._lg_log2 = LogConfig(name="LOG2", period_in_ms=100)
-        self._lg_log2.add_variable("mag.x", "float")
-        self._lg_log2.add_variable("mag.y", "float")
-        self._lg_log2.add_variable("mag.z", "float")
-        self._lg_log2.add_variable("baro.temp", "float")
-        self._lg_log2.add_variable("baro.pressure", "float")
-
         self._cmdVel = Twist()
         rospy.Subscriber("cmd_vel", Twist, self._cmdVelChanged)
 
@@ -63,6 +48,14 @@ class CrazyflieROS:
         rospy.loginfo("Connected to %s" % link_uri)
         self._state = CrazyflieROS.Connected
 
+        self._lg_imu = LogConfig(name="IMU", period_in_ms=10)
+        self._lg_imu.add_variable("acc.x", "float")
+        self._lg_imu.add_variable("acc.y", "float")
+        self._lg_imu.add_variable("acc.z", "float")
+        self._lg_imu.add_variable("gyro.x", "float")
+        self._lg_imu.add_variable("gyro.y", "float")
+        self._lg_imu.add_variable("gyro.z", "float")
+
         self._cf.log.add_config(self._lg_imu)
         if self._lg_imu.valid:
             # This callback will receive the data
@@ -73,6 +66,13 @@ class CrazyflieROS:
             self._lg_imu.start()
         else:
             rospy.logfatal("Could not add logconfig since some variables are not in TOC")
+
+        self._lg_log2 = LogConfig(name="LOG2", period_in_ms=100)
+        self._lg_log2.add_variable("mag.x", "float")
+        self._lg_log2.add_variable("mag.y", "float")
+        self._lg_log2.add_variable("mag.z", "float")
+        self._lg_log2.add_variable("baro.temp", "float")
+        self._lg_log2.add_variable("baro.pressure", "float")
 
         self._cf.log.add_config(self._lg_log2)
         if self._lg_log2.valid:
