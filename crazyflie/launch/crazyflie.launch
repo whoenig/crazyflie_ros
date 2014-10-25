@@ -5,7 +5,7 @@
   <arg name="uri" default="radio://0/80/2M" />
   <arg name="tf_prefix" default="" />
 
-  <node pkg="crazyflie_ros" type="crazyflie.py" name="crazyflie" output="screen">
+  <node pkg="crazyflie" type="crazyflie.py" name="crazyflie" output="screen">
     <param name="crazyflieSDK" value="$(arg crazyflieSDK)" />
     <param name="uri" value="$(arg uri)" />
     <param name="tf_prefix" value="$(arg tf_prefix)" />

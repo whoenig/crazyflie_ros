@@ -1,19 +1,19 @@
 <?xml version="1.0"?>
 <package>
-  <name>crazyflie_ros</name>
-  <version>0.0.0</version>
-  <description>The crazyflie_ros package</description>
+  <name>crazyflie</name>
+  <version>0.0.1</version>
+  <description>The crazyflie package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="whoenig@todo.todo">whoenig</maintainer>
+  <maintainer email="whoenig@usc.edu">Wolfgang Hoenig</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>TODO</license>
+  <license>MIT</license>
 
 
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->

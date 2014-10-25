@@ -6,7 +6,7 @@
   <arg name="joy_dev" default="/dev/input/js0" />
 
   <group ns="crazyflie1">
-    <include file="$(find crazyflie_ros)/launch/crazyflie.launch">
+    <include file="$(find crazyflie)/launch/crazyflie.launch">
       <arg name="crazyflieSDK" value="$(arg crazyflieSDK)" />
       <arg name="uri" value="$(arg uri)" />
       <arg name="tf_prefix" value="crazyflie1" />

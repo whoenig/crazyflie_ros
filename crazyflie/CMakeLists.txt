@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(crazyflie_ros)
+project(crazyflie)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -77,7 +77,7 @@ find_package(catkin REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES crazyflie_ros
+#  LIBRARIES crazyflie
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -91,19 +91,19 @@ catkin_package(
 # include_directories(include)
 
 ## Declare a cpp library
-# add_library(crazyflie_ros
-#   src/${PROJECT_NAME}/crazyflie_ros.cpp
+# add_library(crazyflie
+#   src/${PROJECT_NAME}/crazyflie.cpp
 # )
 
 ## Declare a cpp executable
-# add_executable(crazyflie_ros_node src/crazyflie_ros_node.cpp)
+# add_executable(crazyflie_node src/crazyflie_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(crazyflie_ros_node crazyflie_ros_generate_messages_cpp)
+# add_dependencies(crazyflie_node crazyflie_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(crazyflie_ros_node
+# target_link_libraries(crazyflie_node
 #   ${catkin_LIBRARIES}
 # )
 
@@ -122,7 +122,7 @@ catkin_package(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS crazyflie_ros crazyflie_ros_node
+# install(TARGETS crazyflie crazyflie_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -147,7 +147,7 @@ catkin_package(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_crazyflie_ros.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_crazyflie.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
