@@ -85,6 +85,17 @@ class CrazyflieROS:
         else:
             rospy.logfatal("Could not add logconfig since some variables are not in TOC")
 
+        p_toc = self._cf.param.toc.toc
+        for group in p_toc.keys():
+            self._cf.param.add_update_callback(group=group, name=None, cb=self._param_callback)
+            for name in p_toc[group].keys():
+                ros_param = "~{}/{}".format(group, name)
+                cf_param = "{}.{}".format(group, name)
+                if rospy.has_param(ros_param):
+                    self._cf.param.set_value(cfparam, rospy.get_param(ros_param))
+                else:
+                    self._cf.param.request_param_update(cf_param)
+
 
     def _connection_failed(self, link_uri, msg):
         """Callback when connection initial connection fails (i.e no Crazyflie
@@ -156,6 +167,10 @@ class CrazyflieROS:
         # hPa (=mbar)
         msg.data = data["baro.pressure"]
         self._pubPressure.publish(msg)
+
+    def _param_callback(self, name, value):
+        ros_param = "~{}".format(name.replace(".", "/"))
+        rospy.set_param(ros_param, value)
 
     def _send_setpoint(self):
         roll = self._cmdVel.linear.y

@@ -6,6 +6,7 @@
   <arg name="joy_dev" default="/dev/input/js0" />
 
   <group ns="crazyflie1">
+    <!--<param name="crazyflie/pid_rate/yaw_kp" value="200"/>-->
     <include file="$(find crazyflie)/launch/crazyflie.launch">
       <arg name="crazyflieSDK" value="$(arg crazyflieSDK)" />
       <arg name="uri" value="$(arg uri)" />
