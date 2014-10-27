@@ -1,8 +1,11 @@
 crazyflie_ros
 =============
 
-ROS Driver for Bitcraze Crazyflie (http://www.bitcraze.se/).
-Unlike other solutions, it is based on the official python SDK (which needs to be installed/copied separately).
+ROS Driver for Bitcraze Crazyflie (http://www.bitcraze.se/), with the following features:
+
+* Uses the official python SDK (which needs to be installed/copied separately)
+* Publishes on-board sensors in ROS standard message formats
+* Supports ROS parameters to reconfigure crazyflie parameters
 
 ## Installation
 
@@ -18,12 +21,18 @@ If you want to use joystick teleoperation, you should setup the hector_quadrotor
 
 ## Usage
 
+There are two packages included: crazyflie and crazyflie_demo.
+Crazyflie contains the driver and a launch file which can be used in your own projects.
+
+Crazyflie_demo contains a small demo for teleoperating the crazyflie with a joystick and visualizing the sensor data in rviz.
+
 You can use
 ```
-roslaunch crazyflie_ros crazyflie.launch
+roslaunch crazyflie_demo teleop_xbox360.launch
 ```
 to teleoperate the crazyflie.
 Please note that there are (optional) arguments to change the device uri and path to the sdk.
+See `crazyflie_demo/launch/teleop_xbox360.launch` for details.
 
 ## ROS Features
 
