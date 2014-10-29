@@ -26,7 +26,7 @@ class CrazyflieROS:
         self._cf.connection_lost.add_callback(self._connection_lost)
 
         self._cmdVel = Twist()
-        rospy.Subscriber("cmd_vel", Twist, self._cmdVelChanged)
+        self._subCmdVel = rospy.Subscriber("cmd_vel", Twist, self._cmdVelChanged)
 
         self._pubImu = rospy.Publisher('imu', Imu, queue_size=10)
         self._pubTemp = rospy.Publisher('temperature', Temperature, queue_size=10)
@@ -197,7 +197,12 @@ class CrazyflieROS:
             elif self._state == CrazyflieROS.Connected:
                 # Crazyflie will shut down if we don't send any command for 500ms
                 # Hence, make sure that we don't wait too long
-                self._send_setpoint()
+                # However, if there is no connection anymore, we try to get the flie down
+                if self._subCmdVel.get_num_connections() > 0:
+                    self._send_setpoint()
+                else:
+                    self._cmdVel = Twist()
+                    self._send_setpoint()
                 rospy.sleep(0.2)
             else:
                 rospy.sleep(0.5)
