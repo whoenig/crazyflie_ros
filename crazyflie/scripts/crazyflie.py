@@ -32,6 +32,7 @@ class CrazyflieROS:
         self._pubTemp = rospy.Publisher('temperature', Temperature, queue_size=10)
         self._pubMag = rospy.Publisher('magnetic_field', MagneticField, queue_size=10)
         self._pubPressure = rospy.Publisher('pressure', Float32, queue_size=10)
+        self._pubBattery = rospy.Publisher('battery', Float32, queue_size=10)
 
         self._state = CrazyflieROS.Disconnected
         Thread(target=self._update).start()
@@ -73,6 +74,7 @@ class CrazyflieROS:
         self._lg_log2.add_variable("mag.z", "float")
         self._lg_log2.add_variable("baro.temp", "float")
         self._lg_log2.add_variable("baro.pressure", "float")
+        self._lg_log2.add_variable("pm.vbat", "float")
 
         self._cf.log.add_config(self._lg_log2)
         if self._lg_log2.valid:
@@ -147,7 +149,7 @@ class CrazyflieROS:
         # ToDo: it would be better to convert from timestamp to rospy time
         msg.header.stamp = rospy.Time.now()
         msg.header.frame_id = self.tf_prefix + "/base_link"
-        # measured in degC (but value seems to be wrong/too high?)
+        # measured in degC
         msg.temperature = data["baro.temp"]
         self._pubTemp.publish(msg)
 
@@ -167,6 +169,10 @@ class CrazyflieROS:
         # hPa (=mbar)
         msg.data = data["baro.pressure"]
         self._pubPressure.publish(msg)
+
+        # V
+        msg.data = data["pm.vbat"]
+        self._pubBattery.publish(msg)
 
     def _param_callback(self, name, value):
         ros_param = "~{}".format(name.replace(".", "/"))

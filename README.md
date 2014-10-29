@@ -58,7 +58,7 @@ Similar to the hector_quadrotor, package the fields are used as following:
 
 #### temperature
 * sensor_msgs/Temperature
-* From Barometer (10DOF version only) in degree Celcius (Sensor readings seem to be too high)
+* From Barometer (10DOF version only) in degree Celcius (Sensor readings might be higher than expected because the PCB warms up; see http://www.bitcraze.se/2014/02/logging-and-parameter-frameworks-turtorial/)
 * update: 100ms (time between crazyflie and ROS not synchronized!)
 
 #### magnetic_field
@@ -70,6 +70,10 @@ Similar to the hector_quadrotor, package the fields are used as following:
 * hPa (or mbar)
 * update: 100ms (time between crazyflie and ROS not synchronized!)
 
+#### battery
+* Float32
+* Volts
+* update: 100ms (time between crazyflie and ROS not synchronized!)
 
 ## Similar Projects
 

@@ -35,4 +35,6 @@
 
   <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot" args="/crazyflie1/temperature/temperature"/>
 
+  <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot2" args="/crazyflie1/battery"/>
+
 </launch>
