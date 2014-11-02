@@ -2,7 +2,7 @@
 <package>
   <name>crazyflie_description</name>
   <version>0.0.1</version>
-  <description>The crazyflie_description package</description>
+  <description>URDF Model for the Crazyflie Nano Quadcopter from Bitcraze</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
@@ -15,18 +15,12 @@
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
   <license>MIT</license>
 
-
-  <!-- Url tags are optional, but mutiple are allowed, one per tag -->
-  <!-- Optional attribute type can be: website, bugtracker, or repository -->
-  <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/crazyflie_description</url> -->
-
+  <url type="website">http://ros.org/wiki/crazyflie</url>
+  <url type="bugtracker">https://github.com/whoenig/crazyflie_ros/issues</url>
 
   <!-- Author tags are optional, mutiple are allowed, one per tag -->
   <!-- Authors do not have to be maintianers, but could be -->
-  <!-- Example: -->
-  <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
-
+  <author email="whoenig@usc.edu">Wolfgang Hoenig</author>
 
   <!-- The *_depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->
