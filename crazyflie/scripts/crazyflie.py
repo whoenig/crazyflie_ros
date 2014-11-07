@@ -15,9 +15,11 @@ class CrazyflieROS:
     Connected = 2
 
     """Wrapper between ROS and Crazyflie SDK"""
-    def __init__(self, link_uri, tf_prefix):
+    def __init__(self, link_uri, tf_prefix, roll_trim, pitch_trim):
         self.link_uri = link_uri
         self.tf_prefix = tf_prefix
+        self.roll_trim = roll_trim
+        self.pitch_trim = pitch_trim
         self._cf = Crazyflie()
 
         self._cf.connected.add_callback(self._connected)
@@ -179,8 +181,8 @@ class CrazyflieROS:
         rospy.set_param(ros_param, value)
 
     def _send_setpoint(self):
-        roll = self._cmdVel.linear.y
-        pitch = self._cmdVel.linear.x
+        roll = self._cmdVel.linear.y + self.roll_trim
+        pitch = self._cmdVel.linear.x + self.pitch_trim
         yawrate = self._cmdVel.angular.z
         thrust = max(10000, int(self._cmdVel.linear.z))
         #print(roll, pitch, yawrate, thrust)
@@ -217,6 +219,8 @@ if __name__ == '__main__':
     crazyflieSDK = rospy.get_param("~crazyflieSDK")
     uri = rospy.get_param("~uri")
     tf_prefix = rospy.get_param("~tf_prefix")
+    roll_trim = float(rospy.get_param("~roll_trim", "0"))
+    pitch_trim = float(rospy.get_param("~pitch_trim", "0"))
 
     sys.path.append(crazyflieSDK)
     import cflib
@@ -226,5 +230,5 @@ if __name__ == '__main__':
     # Initialize the low-level drivers (don't list the debug drivers)
     cflib.crtp.init_drivers(enable_debug_driver=False)
 
-    CrazyflieROS(uri, tf_prefix)
+    CrazyflieROS(uri, tf_prefix, roll_trim, pitch_trim)
     rospy.spin()

@@ -36,6 +36,17 @@ See `crazyflie_demo/launch/teleop_xbox360.launch` for details.
 
 ## ROS Features
 
+### Parameters
+
+The launch file supports the following arguments:
+* crazyflieSDK: Path to the official SDK from Bitcraze, e.g. ~/crazyflie/crazyflie-clients-python/lib
+* uri: Specifier for the crazyflie, e.g. radio://0/80/2M
+* tf_prefix: tf prefix for the crazyflie frame(s)
+* roll_trim: Trim in degrees, e.g. negative if flie drifts to the left
+* pitch_trim: Trim in degrees, e.g. negative if flie drifts forward
+
+See http://wiki.bitcraze.se/projects:crazyflie:userguide:tips_and_tricks for details on how to obtain good trim values.
+
 ### Subscribers
 
 #### cmd_vel

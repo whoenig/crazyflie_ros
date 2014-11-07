@@ -4,10 +4,14 @@
   <arg name="crazyflieSDK" default="~/crazyflie/crazyflie-clients-python/lib" />
   <arg name="uri" default="radio://0/80/2M" />
   <arg name="tf_prefix" default="" />
+  <arg name="roll_trim" default="0" />
+  <arg name="pitch_trim" default="0" />
 
   <node pkg="crazyflie" type="crazyflie.py" name="crazyflie" output="screen">
     <param name="crazyflieSDK" value="$(arg crazyflieSDK)" />
     <param name="uri" value="$(arg uri)" />
     <param name="tf_prefix" value="$(arg tf_prefix)" />
+    <param name="roll_trim" value="$(arg roll_trim)" />
+    <param name="pitch_trim" value="$(arg pitch_trim)" />
   </node>
 </launch>
