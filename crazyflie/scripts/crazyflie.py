@@ -77,6 +77,7 @@ class CrazyflieROS:
         self._lg_log2.add_variable("baro.temp", "float")
         self._lg_log2.add_variable("baro.pressure", "float")
         self._lg_log2.add_variable("pm.vbat", "float")
+        # self._lg_log2.add_variable("pm.state", "uint8_t")
 
         self._cf.log.add_config(self._lg_log2)
         if self._lg_log2.valid:
@@ -88,6 +89,28 @@ class CrazyflieROS:
             self._lg_log2.start()
         else:
             rospy.logfatal("Could not add logconfig since some variables are not in TOC")
+
+        # self._lg_log3 = LogConfig(name="LOG3", period_in_ms=100)
+        # self._lg_log3.add_variable("motor.m1", "int32_t")
+        # self._lg_log3.add_variable("motor.m2", "int32_t")
+        # self._lg_log3.add_variable("motor.m3", "int32_t")
+        # self._lg_log3.add_variable("motor.m4", "int32_t")
+        # self._lg_log3.add_variable("stabalizer.pitch", "float")
+        # self._lg_log3.add_variable("stabalizer.roll", "float")
+        # self._lg_log3.add_variable("stabalizer.thrust", "uint16_")
+        # self._lg_log3.add_variable("stabalizer.yaw", "float")
+        #
+        # self._cf.log.add_config(self._lg_log3)
+        #if self._lg_log3.valid:
+        #    # This callback will receive the data
+        #    self._lg_log3.data_received_cb.add_callback(self._log_data_log3)
+        #    # This callback will be called on errors
+        #    self._lg_log3.error_cb.add_callback(self._log_error)
+        #    # Start the logging
+        #    self._lg_log3.start()
+        #else:
+        #    rospy.logfatal("Could not add logconfig since some variables are not in TOC")
+
 
         p_toc = self._cf.param.toc.toc
         for group in p_toc.keys():
