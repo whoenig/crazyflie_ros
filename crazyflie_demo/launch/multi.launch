@@ -1,16 +1,19 @@
 <?xml version="1.0"?>
 
 <launch>
-  <arg name="crazyflieSDK" default="/home/whoenig/projects/crazyflie/crazyflie-clients-python/lib" />
-  <arg name="uri1" default="radio://0/90/250K" />
-  <arg name="uri2" default="radio://1/80/2M" />
+  <arg name="crazyflieSDK" default="~/crazyflie/crazyflie-clients-python/lib" />
+  <arg name="uri1" default="radio://0/90/2M" />
+  <arg name="uri2" default="radio://0/80/2M" />
   <arg name="joy_dev1" default="/dev/input/js0" />
   <arg name="joy_dev2" default="/dev/input/js1" />
 
+  <include file="$(find crazyflie)/launch/crazyflie_server.launch">
+    <arg name="crazyflieSDK" value="$(arg crazyflieSDK)" />
+  </include>
+
   <group ns="crazyflie1">
     <!--<param name="crazyflie/pid_rate/yaw_kp" value="200"/>-->
-    <include file="$(find crazyflie)/launch/crazyflie.launch">
-      <arg name="crazyflieSDK" value="$(arg crazyflieSDK)" />
+    <include file="$(find crazyflie)/launch/crazyflie_add.launch">
       <arg name="uri" value="$(arg uri1)" />
       <arg name="tf_prefix" value="crazyflie1" />
     </include>
@@ -38,8 +41,7 @@
 
   <group ns="crazyflie2">
     <!--<param name="crazyflie/pid_rate/yaw_kp" value="200"/>-->
-    <include file="$(find crazyflie)/launch/crazyflie.launch">
-      <arg name="crazyflieSDK" value="$(arg crazyflieSDK)" />
+    <include file="$(find crazyflie)/launch/crazyflie_add.launch">
       <arg name="uri" value="$(arg uri2)" />
       <arg name="tf_prefix" value="crazyflie2" />
     </include>

@@ -4,6 +4,7 @@ import rospy
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu, Temperature, MagneticField
 from std_msgs.msg import Float32
+from crazyflie.srv import *
 
 import time, sys
 import math
@@ -28,13 +29,13 @@ class CrazyflieROS:
         self._cf.connection_lost.add_callback(self._connection_lost)
 
         self._cmdVel = Twist()
-        self._subCmdVel = rospy.Subscriber("cmd_vel", Twist, self._cmdVelChanged)
+        self._subCmdVel = rospy.Subscriber(tf_prefix + "/cmd_vel", Twist, self._cmdVelChanged)
 
-        self._pubImu = rospy.Publisher('imu', Imu, queue_size=10)
-        self._pubTemp = rospy.Publisher('temperature', Temperature, queue_size=10)
-        self._pubMag = rospy.Publisher('magnetic_field', MagneticField, queue_size=10)
-        self._pubPressure = rospy.Publisher('pressure', Float32, queue_size=10)
-        self._pubBattery = rospy.Publisher('battery', Float32, queue_size=10)
+        self._pubImu = rospy.Publisher(tf_prefix + "/imu", Imu, queue_size=10)
+        self._pubTemp = rospy.Publisher(tf_prefix + "/temperature", Temperature, queue_size=10)
+        self._pubMag = rospy.Publisher(tf_prefix + "/magnetic_field", MagneticField, queue_size=10)
+        self._pubPressure = rospy.Publisher(tf_prefix + "/pressure", Float32, queue_size=10)
+        self._pubBattery = rospy.Publisher(tf_prefix + "/battery", Float32, queue_size=10)
 
         self._state = CrazyflieROS.Disconnected
         Thread(target=self._update).start()
@@ -237,13 +238,14 @@ class CrazyflieROS:
         rospy.sleep(0.1)
         self._cf.close_link()
 
+def add_crazyflie(req):
+    rospy.loginfo("Adding %s as %s with trim(%f, %f)" % (req.uri, req.tf_prefix, req.roll_trim, req.pitch_trim))
+    CrazyflieROS(req.uri, req.tf_prefix, req.roll_trim, req.pitch_trim)
+    return AddCrazyflieResponse()
+
 if __name__ == '__main__':
-    rospy.init_node('crazyflie', anonymous=True)
+    rospy.init_node('crazyflie_server')
     crazyflieSDK = rospy.get_param("~crazyflieSDK")
-    uri = rospy.get_param("~uri")
-    tf_prefix = rospy.get_param("~tf_prefix")
-    roll_trim = float(rospy.get_param("~roll_trim", "0"))
-    pitch_trim = float(rospy.get_param("~pitch_trim", "0"))
 
     sys.path.append(crazyflieSDK)
     import cflib
@@ -253,5 +255,5 @@ if __name__ == '__main__':
     # Initialize the low-level drivers (don't list the debug drivers)
     cflib.crtp.init_drivers(enable_debug_driver=False)
 
-    CrazyflieROS(uri, tf_prefix, roll_trim, pitch_trim)
+    s = rospy.Service("add_crazyflie", AddCrazyflie, add_crazyflie)
     rospy.spin()

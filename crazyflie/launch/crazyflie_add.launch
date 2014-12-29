@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="uri" default="radio://0/80/2M" />
+  <arg name="tf_prefix" default="" />
+  <arg name="roll_trim" default="0" />
+  <arg name="pitch_trim" default="0" />
+
+  <node pkg="crazyflie" type="crazyflie_add.py" name="crazyflie_add" output="screen">
+    <param name="uri" value="$(arg uri)" />
+    <param name="tf_prefix" value="$(arg tf_prefix)" />
+    <param name="roll_trim" value="$(arg roll_trim)" />
+    <param name="pitch_trim" value="$(arg pitch_trim)" />
+  </node>
+</launch>
