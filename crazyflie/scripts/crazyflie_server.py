@@ -117,7 +117,7 @@ class CrazyflieROS:
         for group in p_toc.keys():
             self._cf.param.add_update_callback(group=group, name=None, cb=self._param_callback)
             for name in p_toc[group].keys():
-                ros_param = "~{}/{}".format(group, name)
+                ros_param = "/{}/{}/{}".format(self.tf_prefix, group, name)
                 cf_param = "{}.{}".format(group, name)
                 if rospy.has_param(ros_param):
                     self._cf.param.set_value(cfparam, rospy.get_param(ros_param))
@@ -201,7 +201,7 @@ class CrazyflieROS:
         self._pubBattery.publish(msg)
 
     def _param_callback(self, name, value):
-        ros_param = "~{}".format(name.replace(".", "/"))
+        ros_param = "{}/{}".format(self.tf_prefix, name.replace(".", "/"))
         rospy.set_param(ros_param, value)
 
     def _send_setpoint(self):
