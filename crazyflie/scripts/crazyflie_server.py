@@ -38,6 +38,9 @@ class CrazyflieROS:
         self._pubBattery = rospy.Publisher(tf_prefix + "/battery", Float32, queue_size=10)
 
         self._state = CrazyflieROS.Disconnected
+
+        rospy.Service(tf_prefix + "/update_params", UpdateParams, self._update_params)
+
         Thread(target=self._update).start()
 
     def _try_to_connect(self):
@@ -120,7 +123,7 @@ class CrazyflieROS:
                 ros_param = "/{}/{}/{}".format(self.tf_prefix, group, name)
                 cf_param = "{}.{}".format(group, name)
                 if rospy.has_param(ros_param):
-                    self._cf.param.set_value(cfparam, rospy.get_param(ros_param))
+                    self._cf.param.set_value(cf_param, rospy.get_param(ros_param))
                 else:
                     self._cf.param.request_param_update(cf_param)
 
@@ -204,6 +207,16 @@ class CrazyflieROS:
         ros_param = "{}/{}".format(self.tf_prefix, name.replace(".", "/"))
         rospy.set_param(ros_param, value)
 
+    def _update_params(self, req):
+        rospy.loginfo("Update parameters %s" % (str(req.params)))
+        for param in req.params:
+            ros_param = "/{}/{}".format(self.tf_prefix, param)
+            cf_param = param.replace("/", ".")
+            print(cf_param)
+            #if rospy.has_param(ros_param):
+            self._cf.param.set_value(cf_param, str(rospy.get_param(ros_param)))
+        return UpdateParamsResponse()
+
     def _send_setpoint(self):
         roll = self._cmdVel.linear.y + self.roll_trim
         pitch = self._cmdVel.linear.x + self.pitch_trim
@@ -255,5 +268,5 @@ if __name__ == '__main__':
     # Initialize the low-level drivers (don't list the debug drivers)
     cflib.crtp.init_drivers(enable_debug_driver=False)
 
-    s = rospy.Service("add_crazyflie", AddCrazyflie, add_crazyflie)
+    rospy.Service("add_crazyflie", AddCrazyflie, add_crazyflie)
     rospy.spin()

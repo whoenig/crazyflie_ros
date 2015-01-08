@@ -52,17 +52,17 @@ See http://wiki.bitcraze.se/projects:crazyflie:userguide:tips_and_tricks for det
 #### cmd_vel
 
 Similar to the hector_quadrotor, package the fields are used as following:
-* linear.y: roll [e.g. -30 to 30]
-* linear.x: pitch [e.g. -30 to 30]
-* angular.z: yawrate [e.g. -200 to 200]
-* linear.z: thrust [10000 to 60000]
+* linear.y: roll [e.g. -30 to 30 degrees]
+* linear.x: pitch [e.g. -30 to 30 degrees]
+* angular.z: yawrate [e.g. -200 to 200 degrees/second]
+* linear.z: thrust [10000 to 60000 (mapped to PWM output)]
 
 ### Publishers
 
 #### imu
 * sensor_msgs/IMU
 * contains the sensor readings of gyroscope and accelerometer
-* The covariance matrices are set to unknown 
+* The covariance matrices are set to unknown
 * orientation is not set (this could be done by the magnetometer readings in the future.)
 * update: 10ms (time between crazyflie and ROS not synchronized!)
 * can be viewed in rviz
@@ -101,3 +101,10 @@ Similar to the hector_quadrotor, package the fields are used as following:
   * no support for logging
 * https://github.com/mchenryc/crazyflie
   * no documentation
+
+## Notes
+
+* The dynamic_reconfigure package (http://wiki.ros.org/dynamic_reconfigure/) seems like a good fit to map the parameters, however it has severe limitations:
+  * Changed-Callback does not include which parameter(s) were changed. There is only a notion of a level which is a simple bitmask. This would cause that on any parameter change we would need to update all parameters on the Crazyflie.
+  * Parameters are statically generated. There are hacks to add parameters at runtime, however those might not work with future versions of dynamic_reconfigure.
+  * Groups not fully supported (https://github.com/ros-visualization/rqt_common_plugins/issues/162; This seems to be closed now, however the Indigo binary packages did not pick up the fixes yet).

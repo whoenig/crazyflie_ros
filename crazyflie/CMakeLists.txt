@@ -50,6 +50,7 @@ find_package(catkin REQUIRED COMPONENTS message_generation std_msgs tf)
 add_service_files(
   FILES
   AddCrazyflie.srv
+  UpdateParams.srv
 )
 
 ## Generate actions in the 'action' folder
