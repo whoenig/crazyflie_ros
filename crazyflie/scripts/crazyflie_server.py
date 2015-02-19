@@ -27,6 +27,7 @@ class CrazyflieROS:
         self._cf.disconnected.add_callback(self._disconnected)
         self._cf.connection_failed.add_callback(self._connection_failed)
         self._cf.connection_lost.add_callback(self._connection_lost)
+        self._cf.link_quality_updated.add_callback(self._link_quality_updated)
 
         self._cmdVel = Twist()
         self._subCmdVel = rospy.Subscriber(tf_prefix + "/cmd_vel", Twist, self._cmdVelChanged)
@@ -144,6 +145,11 @@ class CrazyflieROS:
         """Callback when the Crazyflie is disconnected (called in all cases)"""
         rospy.logfatal("Disconnected from %s" % link_uri)
         self._state = CrazyflieROS.Disconnected
+
+    def _link_quality_updated(self, percentage):
+        """Called when the link driver updates the link quality measurement"""
+        if percentage < 80:
+            rospy.logwarn("Connection quality is: %f" % (percentage))
 
     def _log_error(self, logconf, msg):
         """Callback from the log API when an error occurs"""
