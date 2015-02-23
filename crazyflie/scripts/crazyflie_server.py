@@ -5,6 +5,7 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu, Temperature, MagneticField
 from std_msgs.msg import Float32
 from crazyflie.srv import *
+from std_srvs.srv import Empty, EmptyResponse
 
 import time, sys
 import math
@@ -41,6 +42,8 @@ class CrazyflieROS:
         self._state = CrazyflieROS.Disconnected
 
         rospy.Service(tf_prefix + "/update_params", UpdateParams, self._update_params)
+        rospy.Service(tf_prefix + "/emergency", Empty, self._emergency)
+        self._isEmergency = False
 
         Thread(target=self._update).start()
 
@@ -223,6 +226,11 @@ class CrazyflieROS:
             self._cf.param.set_value(cf_param, str(rospy.get_param(ros_param)))
         return UpdateParamsResponse()
 
+    def _emergency(self, req):
+        rospy.logfatal("Emergency requested!")
+        self._isEmergency = True
+        return EmptyResponse()
+
     def _send_setpoint(self):
         roll = self._cmdVel.linear.y + self.roll_trim
         pitch = self._cmdVel.linear.x + self.pitch_trim
@@ -233,10 +241,14 @@ class CrazyflieROS:
 
     def _cmdVelChanged(self, data):
         self._cmdVel = data
-        self._send_setpoint()
+        if not self._isEmergency:
+            self._send_setpoint()
 
     def _update(self):
         while not rospy.is_shutdown():
+            if self._isEmergency:
+                break
+
             if self._state == CrazyflieROS.Disconnected:
                 self._try_to_connect()
             elif self._state == CrazyflieROS.Connected:
@@ -251,7 +263,9 @@ class CrazyflieROS:
                 rospy.sleep(0.2)
             else:
                 rospy.sleep(0.5)
-        self._cf.commander.send_setpoint(0, 0, 0, 0)
+        for i in range(0, 100):
+            self._cf.commander.send_setpoint(0, 0, 0, 0)
+            rospy.sleep(0.01)
         # Make sure that the last packet leaves before the link is closed
         # since the message queue is not flushed before closing
         rospy.sleep(0.1)
