@@ -274,7 +274,7 @@ class CrazyflieROS:
         self._cf.close_link()
 
 def add_crazyflie(req):
-    rospy.loginfo("Adding %s as %s with trim(%f, %f). Logging: %d" % (req.uri, req.tf_prefix, req.roll_trim, req.pitch_trim, req.enable_logging))
+    rospy.loginfo("Adding %s as %s with trim(%f, %f). Logging: %s" % (req.uri, req.tf_prefix, req.roll_trim, req.pitch_trim, str(req.enable_logging)))
     CrazyflieROS(req.uri, req.tf_prefix, req.roll_trim, req.pitch_trim, req.enable_logging)
     return AddCrazyflieResponse()
 

@@ -6,7 +6,7 @@ from crazyflie.srv import UpdateParams
 from std_srvs.srv import Empty
 
 class Controller():
-    def __init__(self, use_controller):
+    def __init__(self, use_controller, joy_topic):
         rospy.wait_for_service('update_params')
         rospy.loginfo("found update_params service")
         self._update_params = rospy.ServiceProxy('update_params', UpdateParams)
@@ -30,7 +30,7 @@ class Controller():
         # subscribe to the joystick at the end to make sure that all required
         # services were found
         self._buttons = None
-        rospy.Subscriber("joy", Joy, self._joyChanged)
+        rospy.Subscriber(joy_topic, Joy, self._joyChanged)
 
     def _joyChanged(self, data):
         for i in range(0, len(data.buttons)):
@@ -52,6 +52,7 @@ class Controller():
 
 if __name__ == '__main__':
     rospy.init_node('crazyflie_demo_controller', anonymous=True)
-    use_controller = rospy.get_param("~use_crazyflie_controller", False)
-    controller = Controller(use_controller)
+    use_controller = rospy.get_param("~use_crazyflie_controller", "False")
+    joy_topic = rospy.get_param("~joy_topic", "joy")
+    controller = Controller(use_controller, joy_topic)
     rospy.spin()

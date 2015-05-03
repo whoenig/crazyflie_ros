@@ -12,6 +12,6 @@
     <param name="tf_prefix" value="$(arg tf_prefix)" />
     <param name="roll_trim" value="$(arg roll_trim)" />
     <param name="pitch_trim" value="$(arg pitch_trim)" />
-    <param name="pitch_trim" value="$(arg enable_logging)" />
+    <param name="enable_logging" value="$(arg enable_logging)" />
   </node>
 </launch>

@@ -39,10 +39,10 @@ class Controller:
                 position, quaternion = self.listener.lookupTransform(source_frame, target_frame, t)
                 success = True
             delta = (now - t).to_sec() * 1000 #ms
-            if delta > 50:
-                rospy.logwarn("Latency: %f ms. Clearing TF Buffer.", delta)
-                self.listener.clear()
-                rospy.sleep(0.02)
+            if delta > 25:
+                rospy.logwarn("Latency: %f ms.", delta)
+            #     self.listener.clear()
+            #     rospy.sleep(0.02)
         if success:
             return position, quaternion, t
 

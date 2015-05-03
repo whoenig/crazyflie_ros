@@ -9,7 +9,7 @@ if __name__ == "__main__":
     tf_prefix = rospy.get_param("~tf_prefix")
     roll_trim = float(rospy.get_param("~roll_trim", "0"))
     pitch_trim = float(rospy.get_param("~pitch_trim", "0"))
-    enable_logging = bool(rospy.get_param("~enable_logging", "True"))
+    enable_logging = rospy.get_param("~enable_logging", "True")
     rospy.loginfo("wait_for_service /add_crazyflie")
     rospy.wait_for_service('/add_crazyflie')
     rospy.loginfo("found /add_crazyflie")
