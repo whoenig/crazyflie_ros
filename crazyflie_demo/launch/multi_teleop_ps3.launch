@@ -24,7 +24,7 @@
       <param name="dev" value="$(arg joy_dev1)" />
     </node>
 
-    <include file="$(find crazyflie_demo)/launch/xbox360.launch">
+    <include file="$(find crazyflie_demo)/launch/ps3.launch">
     </include>
 
     <node name="crazyflie_demo_controller" pkg="crazyflie_demo" type="controller.py">
@@ -44,7 +44,7 @@
       <param name="dev" value="$(arg joy_dev2)" />
     </node>
 
-    <include file="$(find crazyflie_demo)/launch/xbox360.launch">
+    <include file="$(find crazyflie_demo)/launch/ps3.launch">
     </include>
 
     <node name="crazyflie_demo_controller" pkg="crazyflie_demo" type="controller.py">
