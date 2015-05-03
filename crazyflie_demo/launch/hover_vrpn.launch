@@ -1,11 +1,12 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="crazyflieSDK" default="~/crazyflie/crazyflie-clients-python/lib" />
+  <arg name="joy_dev" default="/dev/input/js0" />
   <arg name="ip" default="vicon" />
   <arg name="port" default="3883" />
+
   <arg name="uri1" default="radio://0/90/2M" />
   <arg name="frame1" default="crazyflie1" />
-  <arg name="joy_dev" default="/dev/input/js0" />
   <arg name="x" default="0" />
   <arg name="y" default="0" />
   <arg name="z" default="0.5" />
