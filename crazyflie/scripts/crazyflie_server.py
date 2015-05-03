@@ -17,11 +17,12 @@ class CrazyflieROS:
     Connected = 2
 
     """Wrapper between ROS and Crazyflie SDK"""
-    def __init__(self, link_uri, tf_prefix, roll_trim, pitch_trim):
+    def __init__(self, link_uri, tf_prefix, roll_trim, pitch_trim, enable_logging):
         self.link_uri = link_uri
         self.tf_prefix = tf_prefix
         self.roll_trim = roll_trim
         self.pitch_trim = pitch_trim
+        self.enable_logging = enable_logging
         self._cf = Crazyflie()
 
         self._cf.connected.add_callback(self._connected)
@@ -59,44 +60,45 @@ class CrazyflieROS:
         rospy.loginfo("Connected to %s" % link_uri)
         self._state = CrazyflieROS.Connected
 
-        self._lg_imu = LogConfig(name="IMU", period_in_ms=10)
-        self._lg_imu.add_variable("acc.x", "float")
-        self._lg_imu.add_variable("acc.y", "float")
-        self._lg_imu.add_variable("acc.z", "float")
-        self._lg_imu.add_variable("gyro.x", "float")
-        self._lg_imu.add_variable("gyro.y", "float")
-        self._lg_imu.add_variable("gyro.z", "float")
+        if self.enable_logging:
+            self._lg_imu = LogConfig(name="IMU", period_in_ms=10)
+            self._lg_imu.add_variable("acc.x", "float")
+            self._lg_imu.add_variable("acc.y", "float")
+            self._lg_imu.add_variable("acc.z", "float")
+            self._lg_imu.add_variable("gyro.x", "float")
+            self._lg_imu.add_variable("gyro.y", "float")
+            self._lg_imu.add_variable("gyro.z", "float")
 
-        self._cf.log.add_config(self._lg_imu)
-        if self._lg_imu.valid:
-            # This callback will receive the data
-            self._lg_imu.data_received_cb.add_callback(self._log_data_imu)
-            # This callback will be called on errors
-            self._lg_imu.error_cb.add_callback(self._log_error)
-            # Start the logging
-            self._lg_imu.start()
-        else:
-            rospy.logfatal("Could not add logconfig since some variables are not in TOC")
+            self._cf.log.add_config(self._lg_imu)
+            if self._lg_imu.valid:
+                # This callback will receive the data
+                self._lg_imu.data_received_cb.add_callback(self._log_data_imu)
+                # This callback will be called on errors
+                self._lg_imu.error_cb.add_callback(self._log_error)
+                # Start the logging
+                self._lg_imu.start()
+            else:
+                rospy.logfatal("Could not add logconfig since some variables are not in TOC")
 
-        self._lg_log2 = LogConfig(name="LOG2", period_in_ms=100)
-        self._lg_log2.add_variable("mag.x", "float")
-        self._lg_log2.add_variable("mag.y", "float")
-        self._lg_log2.add_variable("mag.z", "float")
-        self._lg_log2.add_variable("baro.temp", "float")
-        self._lg_log2.add_variable("baro.pressure", "float")
-        self._lg_log2.add_variable("pm.vbat", "float")
-        # self._lg_log2.add_variable("pm.state", "uint8_t")
+            self._lg_log2 = LogConfig(name="LOG2", period_in_ms=100)
+            self._lg_log2.add_variable("mag.x", "float")
+            self._lg_log2.add_variable("mag.y", "float")
+            self._lg_log2.add_variable("mag.z", "float")
+            self._lg_log2.add_variable("baro.temp", "float")
+            self._lg_log2.add_variable("baro.pressure", "float")
+            self._lg_log2.add_variable("pm.vbat", "float")
+            # self._lg_log2.add_variable("pm.state", "uint8_t")
 
-        self._cf.log.add_config(self._lg_log2)
-        if self._lg_log2.valid:
-            # This callback will receive the data
-            self._lg_log2.data_received_cb.add_callback(self._log_data_log2)
-            # This callback will be called on errors
-            self._lg_log2.error_cb.add_callback(self._log_error)
-            # Start the logging
-            self._lg_log2.start()
-        else:
-            rospy.logfatal("Could not add logconfig since some variables are not in TOC")
+            self._cf.log.add_config(self._lg_log2)
+            if self._lg_log2.valid:
+                # This callback will receive the data
+                self._lg_log2.data_received_cb.add_callback(self._log_data_log2)
+                # This callback will be called on errors
+                self._lg_log2.error_cb.add_callback(self._log_error)
+                # Start the logging
+                self._lg_log2.start()
+            else:
+                rospy.logfatal("Could not add logconfig since some variables are not in TOC")
 
         # self._lg_log3 = LogConfig(name="LOG3", period_in_ms=100)
         # self._lg_log3.add_variable("motor.m1", "int32_t")
@@ -272,8 +274,8 @@ class CrazyflieROS:
         self._cf.close_link()
 
 def add_crazyflie(req):
-    rospy.loginfo("Adding %s as %s with trim(%f, %f)" % (req.uri, req.tf_prefix, req.roll_trim, req.pitch_trim))
-    CrazyflieROS(req.uri, req.tf_prefix, req.roll_trim, req.pitch_trim)
+    rospy.loginfo("Adding %s as %s with trim(%f, %f). Logging: %d" % (req.uri, req.tf_prefix, req.roll_trim, req.pitch_trim, req.enable_logging))
+    CrazyflieROS(req.uri, req.tf_prefix, req.roll_trim, req.pitch_trim, req.enable_logging)
     return AddCrazyflieResponse()
 
 if __name__ == '__main__':
