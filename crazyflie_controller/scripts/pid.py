@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
+from std_msgs.msg import Float32
 
 class PID:
     def __init__(self, kp, kd, ki, minOutput, maxOutput, name):

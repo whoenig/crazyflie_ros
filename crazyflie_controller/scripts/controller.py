@@ -39,7 +39,7 @@ class Controller:
                 position, quaternion = self.listener.lookupTransform(source_frame, target_frame, t)
                 success = True
             delta = (now - t).to_sec() * 1000 #ms
-            if delta > 20:
+            if delta > 50:
                 rospy.logwarn("Latency: %f ms. Clearing TF Buffer.", delta)
                 self.listener.clear()
                 rospy.sleep(0.02)
@@ -67,7 +67,6 @@ class Controller:
 
     def run(self):
         thrust = 0
-        self.listener.waitForTransform("/world", self.frame, rospy.Time(), rospy.Duration(5.0))
         while not rospy.is_shutdown():
             now = rospy.Time.now()
             if self.state == Controller.TakingOff:
@@ -101,11 +100,10 @@ class Controller:
                 else:
                     rospy.logerr("Could not transform from /world to %s.", self.frame)
 
-
             if self.state == Controller.Automatic or self.state == Controller.Landing:
                 # transform target world coordinates into local coordinates
                 r = self.getTransform("/world", self.frame)
-                if r and self.listener.canTransform("/world", self.frame, t):
+                if r:
                     position, quaternion, t = r
                     targetWorld = PoseStamped()
                     targetWorld.header.stamp = t
