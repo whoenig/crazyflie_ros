@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="crazyflieSDK" default="~/crazyflie/crazyflie-clients-python/lib" />
+  <arg name="ip" default="vicon" />
+  <arg name="port" default="3883" />
+  <arg name="uri1" default="radio://0/90/2M" />
+  <arg name="frame1" default="crazyflie1" />
+  <arg name="joy_dev" default="/dev/input/js0" />
+  <arg name="x" default="0" />
+  <arg name="y" default="0" />
+  <arg name="z" default="0.5" />
+
+  <include file="$(find crazyflie)/launch/crazyflie_server.launch">
+    <arg name="crazyflieSDK" value="$(arg crazyflieSDK)" />
+  </include>
+
+  <group ns="crazyflie1">
+    <include file="$(find crazyflie)/launch/crazyflie_add.launch">
+      <arg name="uri" value="$(arg uri1)" />
+      <arg name="tf_prefix" value="crazyflie1" />
+    </include>
+
+    <node name="joy" pkg="joy" type="joy_node" output="screen">
+      <param name="dev" value="$(arg joy_dev)" />
+    </node>
+
+    <node name="joystick_controller" pkg="crazyflie_demo" type="controller.py" output="screen">
+      <param name="use_crazyflie_controller" value="True" />
+    </node>
+
+    <node name="controller" pkg="crazyflie_controller" type="controller.py" output="screen">
+      <param name="frame" value="$(arg frame1)" />
+    </node>
+
+    <node name="pose" pkg="crazyflie_demo" type="publish_pose.py" output="screen">
+      <param name="name" value="goal" />
+      <param name="rate" value="10" />
+      <param name="x" value="$(arg x)" />
+      <param name="y" value="$(arg y)" />
+      <param name="z" value="$(arg z)" />
+    </node>
+
+    <!-- run vrpn client -->
+    <node pkg="ros_vrpn_client" name="vrpn" output="screen" type="ros_vrpn_client" required="true">
+      <param name="ip" value="$(arg ip)" />
+      <param name="port" value="$(arg port)" />
+      <param name="frame_id" value="/world" />
+      <param name="child_frame_id" value="$(arg frame1)" />
+    </node>
+  </group>
+
+</launch>
