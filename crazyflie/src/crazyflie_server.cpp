@@ -80,7 +80,7 @@ private:
     m_setpoint.roll = msg->linear.y + m_roll_trim;
     m_setpoint.pitch = - (msg->linear.x + m_pitch_trim);
     m_setpoint.yawrate = msg->angular.z;
-    m_setpoint.thrust = std::min<uint16_t>(msg->linear.z, 60000);
+    m_setpoint.thrust = std::min<uint16_t>(std::max<float>(msg->linear.z, 0.0), 60000);
   }
 
   void run(int devId, int channel, Crazyradio::Datarate dr, uint64_t address)
@@ -88,7 +88,7 @@ private:
     Crazyradio radio(devId);
     radio.setChannel(channel);
     radio.setDatarate(dr);
-    radio.setAddress((const uint8_t*)&address);
+    radio.setAddress(address);
 
     m_setpoint.link = 3;
     m_setpoint.port = 0x03;

@@ -39,7 +39,7 @@ public:
     ~Crazyradio();
 
     void setChannel(uint8_t channel);
-    void setAddress(const uint8_t address[5]);
+    void setAddress(uint64_t address);
     void setDatarate(Datarate datarate);
     void setPower(Power power);
     void setArc(uint8_t arc);

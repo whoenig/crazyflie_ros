@@ -1,12 +1,10 @@
 <?xml version="1.0"?>
 
 <launch>
-  <arg name="crazyflieSDK" default="~/crazyflie/crazyflie-clients-python/lib" />
   <arg name="uri" default="radio://0/80/2M" />
   <arg name="joy_dev" default="/dev/input/js0" />
 
   <include file="$(find crazyflie)/launch/crazyflie_server.launch">
-    <arg name="crazyflieSDK" value="$(arg crazyflieSDK)" />
   </include>
 
   <group ns="crazyflie1">
@@ -23,14 +21,15 @@
     <include file="$(find crazyflie_demo)/launch/xbox360.launch">
     </include>
 
-    <node name="crazyflie_demo_controller" pkg="crazyflie_demo" type="controller.py">
+    <node name="crazyflie_demo_controller" pkg="crazyflie_demo" type="controller.py" output="screen">
     </node>
   </group>
 
+  <!--
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find crazyflie_demo)/launch/crazyflie.rviz" />
 
   <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot" args="/crazyflie1/temperature/temperature"/>
 
   <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot2" args="/crazyflie1/battery"/>
-
+  -->
 </launch>

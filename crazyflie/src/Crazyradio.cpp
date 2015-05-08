@@ -122,8 +122,7 @@ void Crazyradio::open(uint32_t devid)
         setDatarate(Datarate_2MPS);
         setChannel(2);
         setContCarrier(false);
-        const uint8_t address[5] = {0xE7, 0xE7, 0xE7, 0xE7, 0xE7};
-        setAddress(address);
+        setAddress(0xE7E7E7E7E7);
         setPower(Power_0DBM);
         setArc(3);
         setArdBytes(32);
@@ -137,9 +136,9 @@ void Crazyradio::setChannel(uint8_t channel)
     sendVendorSetup(SET_RADIO_CHANNEL, channel, 0, NULL, 0);
 }
 
-void Crazyradio::setAddress(const uint8_t address[5])
+void Crazyradio::setAddress(uint64_t address)
 {
-    sendVendorSetup(SET_RADIO_ADDRESS, 0, 0, address, 5);
+    sendVendorSetup(SET_RADIO_ADDRESS, 0, 0, (const unsigned char*)&address, 5);
 }
 
 void Crazyradio::setDatarate(Datarate datarate)
