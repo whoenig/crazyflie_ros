@@ -5,8 +5,14 @@
 
 //#include <regex>
 #include <thread>
+#include <mutex>
 
 #include "Crazyradio.h"
+
+#define MAX_RADIOS 4
+
+Crazyradio* g_crazyradios[MAX_RADIOS];
+std::mutex g_mutex[MAX_RADIOS];
 
 class CrazyflieROS
 {
@@ -17,7 +23,8 @@ public:
     float roll_trim,
     float pitch_trim,
     bool enable_logging)
-    : m_setpoint()
+    : m_radio(NULL)
+    , m_setpoint()
     , m_isEmergency(false)
     , m_roll_trim(roll_trim)
     , m_pitch_trim(pitch_trim)
@@ -31,9 +38,7 @@ public:
     // }
 
     ros::NodeHandle n;
-
     m_subscribeCmdVel = n.subscribe(tf_prefix + "/cmd_vel", 1, &CrazyflieROS::cmdVelChanged, this);
-
     m_serviceEmergency = n.advertiseService(tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
 
     int devId;
@@ -55,6 +60,12 @@ public:
       else if (datarate == 2 && datarateType == 'M') {
         dr = Crazyradio::Datarate_2MPS;
       }
+
+      if (!g_crazyradios[devId]) {
+        g_crazyradios[devId] = new Crazyradio(devId);
+      }
+
+      m_radio = g_crazyradios[devId];
 
       std::thread t(&CrazyflieROS::run, this, devId, channel, dr, address);
       t.detach();
@@ -83,32 +94,37 @@ private:
     m_setpoint.thrust = std::min<uint16_t>(std::max<float>(msg->linear.z, 0.0), 60000);
   }
 
+  void sendSetpoint(int devId, uint64_t address) {
+    std::unique_lock<std::mutex> mlock(g_mutex[devId]);
+    m_radio->setAddress(address);
+    Crazyradio::Ack result;
+    m_radio->sendPacket((const uint8_t*)&m_setpoint, sizeof(m_setpoint), result);
+  }
+
   void run(int devId, int channel, Crazyradio::Datarate dr, uint64_t address)
   {
-    Crazyradio radio(devId);
-    radio.setChannel(channel);
-    radio.setDatarate(dr);
-    radio.setAddress(address);
+
+    m_radio->setChannel(channel);
+    m_radio->setDatarate(dr);
+    m_radio->setAddress(address);
 
     m_setpoint.link = 3;
     m_setpoint.port = 0x03;
 
-    Crazyradio::Ack result;
-
     // Send 0 thrust initially for thrust-lock
     for (int i = 0; i < 100; ++i) {
-        radio.sendPacket((const uint8_t*)&m_setpoint, sizeof(m_setpoint), result);
+      sendSetpoint(devId, address);
     }
 
     while(!m_isEmergency) {
-      radio.sendPacket((const uint8_t*)&m_setpoint, sizeof(m_setpoint), result);
+      sendSetpoint(devId, address);
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     // Make sure we turn the engines off
     m_setpoint.thrust = 0;
     for (int i = 0; i < 100; ++i) {
-        radio.sendPacket((const uint8_t*)&m_setpoint, sizeof(m_setpoint), result);
+      sendSetpoint(devId, address);
     }
 
   }

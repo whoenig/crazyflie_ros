@@ -138,7 +138,28 @@ void Crazyradio::setChannel(uint8_t channel)
 
 void Crazyradio::setAddress(uint64_t address)
 {
-    sendVendorSetup(SET_RADIO_ADDRESS, 0, 0, (const unsigned char*)&address, 5);
+    unsigned char a[5];
+    a[4] = (address >> 0) & 0xFF;
+    a[3] = (address >> 8) & 0xFF;
+    a[2] = (address >> 16) & 0xFF;
+    a[1] = (address >> 24) & 0xFF;
+    a[0] = (address >> 32) & 0xFF;
+
+    // sendVendorSetup(SET_RADIO_ADDRESS, 0, 0, a, 5);
+    // unsigned char a[] = {0xe7, 0xe7, 0xe7, 0xe7, 0x02};
+
+    int status = libusb_control_transfer(
+        m_handle,
+        LIBUSB_REQUEST_TYPE_VENDOR,
+        SET_RADIO_ADDRESS,
+        0,
+        0,
+        a,
+        5,
+        /*timeout*/ 1000);
+    // if (status != LIBUSB_SUCCESS) {
+    //     std::cerr << "sendVendorSetup: " << libusb_error_name(status) << std::endl;
+    // }
 }
 
 void Crazyradio::setDatarate(Datarate datarate)
