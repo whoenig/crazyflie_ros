@@ -5,6 +5,13 @@ project(crazyflie)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS message_generation std_msgs tf)
+find_library(USB_LIB usb-1.0)
+
+# clang + libc++ cause linker errors; however we can use gcc-4.9 (or above instead)
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -std=c++11")
+#SET(CMAKE_CXX_COMPILER             "/usr/bin/clang++-3.5")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+#SET(CMAKE_CXX_COMPILER             "gcc-4.9")
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -99,16 +106,19 @@ catkin_package(
 # )
 
 ## Declare a cpp executable
-# add_executable(crazyflie_node src/crazyflie_node.cpp)
+add_executable(crazyflie_server
+    src/Crazyradio.cpp
+    src/crazyflie_server.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(crazyflie_node crazyflie_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(crazyflie_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(crazyflie_server
+  ${catkin_LIBRARIES}
+  ${USB_LIB}
+)
 
 #############
 ## Install ##

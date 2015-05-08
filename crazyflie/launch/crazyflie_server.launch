@@ -3,7 +3,7 @@
 <launch>
   <arg name="crazyflieSDK" default="~/crazyflie/crazyflie-clients-python/lib" />
 
-  <node pkg="crazyflie" type="crazyflie_server.py" name="crazyflie_server" output="screen">
+  <node pkg="crazyflie" type="crazyflie_server" name="crazyflie_server" output="screen">
     <param name="crazyflieSDK" value="$(arg crazyflieSDK)" />
   </node>
 </launch>
