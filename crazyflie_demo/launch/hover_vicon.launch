@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="crazyflieSDK" default="~/crazyflie/crazyflie-clients-python/lib" />
   <arg name="uri1" default="radio://0/90/2M" />
   <arg name="frame1" default="/vicon/crazyflie1/crazyflie1" />
   <arg name="joy_dev" default="/dev/input/js0" />
@@ -9,7 +8,6 @@
   <arg name="z" default="0.5" />
 
   <include file="$(find crazyflie)/launch/crazyflie_server.launch">
-    <arg name="crazyflieSDK" value="$(arg crazyflieSDK)" />
   </include>
 
   <group ns="crazyflie1">
@@ -26,7 +24,7 @@
       <param name="use_crazyflie_controller" value="True" />
     </node>
 
-    <node name="controller" pkg="crazyflie_controller" type="controller.py" output="screen">
+    <node name="controller" pkg="crazyflie_controller" type="crazyflie_controller" output="screen">
       <param name="frame" value="$(arg frame1)" />
     </node>
 

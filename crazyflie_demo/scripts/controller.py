@@ -55,7 +55,7 @@ class Controller():
 
 if __name__ == '__main__':
     rospy.init_node('crazyflie_demo_controller', anonymous=True)
-    use_controller = rospy.get_param("~use_crazyflie_controller", "False") == "True"
+    use_controller = rospy.get_param("~use_crazyflie_controller", False)
     joy_topic = rospy.get_param("~joy_topic", "joy")
     controller = Controller(use_controller, joy_topic)
     rospy.spin()

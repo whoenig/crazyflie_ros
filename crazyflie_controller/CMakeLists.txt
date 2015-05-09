@@ -4,7 +4,7 @@ project(crazyflie_controller)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED COMPONENTS message_generation std_msgs tf)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -95,17 +95,18 @@ catkin_package(
 #   src/${PROJECT_NAME}/crazyflie_controller.cpp
 # )
 
-## Declare a cpp executable
-# add_executable(crazyflie_controller_node src/crazyflie_controller_node.cpp)
+# Declare a cpp executable
+add_executable(crazyflie_controller
+	src/controller.cpp)
 
-## Add cmake target dependencies of the executable/library
-## as an example, message headers may need to be generated before nodes
-# add_dependencies(crazyflie_controller_node crazyflie_controller_generate_messages_cpp)
+# Add cmake target dependencies of the executable/library
+# as an example, message headers may need to be generated before nodes
+add_dependencies(crazyflie_controller crazyflie_controller_generate_messages_cpp)
 
-## Specify libraries to link a library or executable target against
-# target_link_libraries(crazyflie_controller_node
-#   ${catkin_LIBRARIES}
-# )
+# Specify libraries to link a library or executable target against
+target_link_libraries(crazyflie_controller
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
