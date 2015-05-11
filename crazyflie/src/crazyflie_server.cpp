@@ -88,10 +88,12 @@ private:
   void cmdVelChanged(
     const geometry_msgs::Twist::ConstPtr& msg)
   {
-    m_setpoint.roll = msg->linear.y + m_roll_trim;
-    m_setpoint.pitch = - (msg->linear.x + m_pitch_trim);
-    m_setpoint.yawrate = msg->angular.z;
-    m_setpoint.thrust = std::min<uint16_t>(std::max<float>(msg->linear.z, 0.0), 60000);
+    if (!m_isEmergency) {
+      m_setpoint.roll = msg->linear.y + m_roll_trim;
+      m_setpoint.pitch = - (msg->linear.x + m_pitch_trim);
+      m_setpoint.yawrate = msg->angular.z;
+      m_setpoint.thrust = std::min<uint16_t>(std::max<float>(msg->linear.z, 0.0), 60000);
+    }
   }
 
   void sendSetpoint(int devId, uint64_t address) {
