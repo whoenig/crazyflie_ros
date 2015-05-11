@@ -14,9 +14,9 @@ public:
         : m_frame(frame)
         , m_pubNav()
         , m_listener()
-        , m_pidX(45, 30, 0.0, -30, 30, "x")
-        , m_pidY(-45, -30, -0.0, -30, 30, "y")
-        , m_pidZ(4000, 3000.0, 2000.0, 10000, 60000, "z")
+        , m_pidX(40, 25, 0.0, -20, 20, "x")
+        , m_pidY(-40, -25, -0.0, -20, 20, "y")
+        , m_pidZ(5000.0, 6000.0, 3500.0, 10000, 60000, "z")
         , m_pidYaw(-50.0, 0.0, 0.0, -200.0, 200.0, "yaw")
         , m_state(Idle)
         , m_goal()
@@ -67,7 +67,7 @@ public:
                     m_goal.position.z = 0.05;
                     tf::StampedTransform transform;
                     m_listener.lookupTransform("/world", m_frame, ros::Time(0), transform);
-                    if (transform.getOrigin().z() <= 0.1) {
+                    if (transform.getOrigin().z() <= 0.05) {
                         m_state = Idle;
                         geometry_msgs::Twist msg;
                         m_pubNav.publish(msg);
