@@ -6,6 +6,7 @@ import tf
 import numpy as np
 import time
 from tf import TransformListener
+#from std_msgs.msg import Empty, Float32
 from geometry_msgs.msg import Pose
 
 class Demo():
@@ -37,10 +38,10 @@ class Demo():
             if self.listener.canTransform("/world", self.frame, t):
                 position, quaternion = self.listener.lookupTransform("/world", self.frame, t)
                 rpy = tf.transformations.euler_from_quaternion(quaternion)
-                if     math.fabs(position[0] - self.goals[self.goalIndex][0]) < 0.2 \
-                   and math.fabs(position[1] - self.goals[self.goalIndex][1]) < 0.2 \
-                   and math.fabs(position[2] - self.goals[self.goalIndex][2]) < 0.2 \
-                   and math.fabs(rpy[2] - self.goals[self.goalIndex][3]) < math.radians(5) \
+                if     math.fabs(position[0] - self.goals[self.goalIndex][0]) < 0.3 \
+                   and math.fabs(position[1] - self.goals[self.goalIndex][1]) < 0.3 \
+                   and math.fabs(position[2] - self.goals[self.goalIndex][2]) < 0.3 \
+                   and math.fabs(rpy[2] - self.goals[self.goalIndex][3]) < math.radians(10) \
                    and self.goalIndex < len(self.goals) - 1:
                         rospy.sleep(self.goals[self.goalIndex][4])
                         self.goalIndex += 1

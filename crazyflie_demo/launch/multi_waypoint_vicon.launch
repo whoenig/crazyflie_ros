@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="joy_dev" default="/dev/input/js0" />
+
+  <arg name="uri1" default="radio://0/80/2M/E7E7E7E701" />
+  <arg name="frame1" default="/vicon/crazyflie1/crazyflie1" />
+
+  <arg name="uri2" default="radio://0/80/2M/E7E7E7E702" />
+  <arg name="frame2" default="/vicon/crazyflie2/crazyflie2" />
+
+  <include file="$(find crazyflie)/launch/crazyflie_server.launch">
+  </include>
+
+  <node name="joy" pkg="joy" type="joy_node" output="screen">
+    <param name="dev" value="$(arg joy_dev)" />
+  </node>
+
+  <group ns="crazyflie1">
+    <include file="$(find crazyflie)/launch/crazyflie_add.launch">
+      <arg name="uri" value="$(arg uri1)" />
+      <arg name="tf_prefix" value="crazyflie1" />
+      <arg name="enable_logging" value="False" />
+    </include>
+
+    <node name="joystick_controller" pkg="crazyflie_demo" type="controller.py" output="screen">
+      <param name="use_crazyflie_controller" value="True" />
+      <param name="joy_topic" value="/joy" />
+    </node>
+
+   <node name="controller" pkg="crazyflie_controller" type="crazyflie_controller" output="screen">
+      <param name="frame" value="$(arg frame1)" />
+    </node>
+
+    <node name="pose" pkg="crazyflie_demo" type="demo1.py" output="screen">
+      <param name="frame" value="$(arg frame1)" />
+    </node>
+  </group>
+
+  <group ns="crazyflie2">
+    <include file="$(find crazyflie)/launch/crazyflie_add.launch">
+      <arg name="uri" value="$(arg uri2)" />
+      <arg name="tf_prefix" value="crazyflie2" />
+      <arg name="enable_logging" value="False" />
+    </include>
+
+    <node name="joystick_controller" pkg="crazyflie_demo" type="controller.py" output="screen">
+      <param name="use_crazyflie_controller" value="True" />
+      <param name="joy_topic" value="/joy" />
+    </node>
+
+    <node name="controller" pkg="crazyflie_controller" type="crazyflie_controller" output="screen">
+      <param name="frame" value="$(arg frame2)" />
+    </node>
+
+    <node name="pose" pkg="crazyflie_demo" type="demo2.py" output="screen">
+      <param name="frame" value="$(arg frame2)" />
+    </node>
+  </group>
+
+  <!-- run vicon bridge -->
+  <include file="$(find vicon_bridge)/launch/vicon.launch"/>
+
+</launch>
