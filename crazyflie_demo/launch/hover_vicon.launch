@@ -30,7 +30,7 @@
 
     <node name="pose" pkg="crazyflie_demo" type="publish_pose.py" output="screen">
       <param name="name" value="goal" />
-      <param name="rate" value="10" />
+      <param name="rate" value="30" />
       <param name="x" value="$(arg x)" />
       <param name="y" value="$(arg y)" />
       <param name="z" value="$(arg z)" />

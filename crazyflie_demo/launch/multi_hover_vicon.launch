@@ -3,20 +3,20 @@
   <arg name="crazyflieSDK" default="~/crazyflie/crazyflie-clients-python/lib" />
   <arg name="joy_dev" default="/dev/input/js0" />
 
-  <arg name="uri1" default="radio://0/90/2M/E7E7E7E701" />
+  <arg name="uri1" default="radio://0/80/2M/E7E7E7E701" />
   <arg name="frame1" default="/vicon/crazyflie1/crazyflie1" />
   <arg name="x1" default="0" />
-  <arg name="y1" default="0" />
+  <arg name="y1" default="0.0" />
   <arg name="z1" default="0.5" />
 
-  <arg name="uri2" default="radio://0/90/2M/E7E7E7E702" />
+  <arg name="uri2" default="radio://0/80/2M/E7E7E7E702" />
   <arg name="frame2" default="/vicon/crazyflie2/crazyflie2" />
   <arg name="x2" default="0" />
-  <arg name="y2" default="0" />
+  <arg name="y2" default="-0.75" />
   <arg name="z2" default="0.5" />
 
   <include file="$(find crazyflie)/launch/crazyflie_server.launch">
-    <arg name="crazyflieSDK" value="$(arg crazyflieSDK)" />
+<!--     <arg name="crazyflieSDK" value="$(arg crazyflieSDK)" /> -->
   </include>
 
   <node name="joy" pkg="joy" type="joy_node" output="screen">
@@ -35,7 +35,7 @@
       <param name="joy_topic" value="/joy" />
     </node>
 
-   <node name="controller" pkg="crazyflie_controller" type="controller.py" output="screen">
+   <node name="controller" pkg="crazyflie_controller" type="crazyflie_controller" output="screen">
       <param name="frame" value="$(arg frame1)" />
     </node>
 
@@ -60,7 +60,7 @@
       <param name="joy_topic" value="/joy" />
     </node>
 
-    <node name="controller" pkg="crazyflie_controller" type="controller.py" output="screen">
+    <node name="controller" pkg="crazyflie_controller" type="crazyflie_controller" output="screen">
       <param name="frame" value="$(arg frame2)" />
     </node>
 
