@@ -14,15 +14,16 @@ public:
         : m_frame(frame)
         , m_pubNav()
         , m_listener()
-        , m_pidX(40, 25, 0.0, -20, 20, "x")
-        , m_pidY(-40, -25, -0.0, -20, 20, "y")
-        , m_pidZ(5000.0, 6000.0, 3500.0, 10000, 60000, "z")
-        , m_pidYaw(-50.0, 0.0, 0.0, -200.0, 200.0, "yaw")
+        , m_pidX(40, 20, 2.0, -10, 10, -0.1, 0.1, "x")
+        , m_pidY(-40, -20, -2.0, -10, 10, -0.1, 0.1, "y")
+        , m_pidZ(5000.0, 6000.0, 3500.0, 10000, 60000, -1000, 1000, "z")
+        , m_pidYaw(-200.0, -20.0, 0.0, -200.0, 200.0, 0, 0, "yaw")
         , m_state(Idle)
         , m_goal()
         , m_subscribeGoal()
         , m_serviceTakeoff()
         , m_serviceLand()
+        , m_thrust(0)
     {
         ros::NodeHandle n;
         m_pubNav = n.advertise<geometry_msgs::Twist>("cmd_vel", 1);
@@ -33,93 +34,9 @@ public:
 
     void run()
     {
-        float thrust = 0;
         ros::NodeHandle node;
-        while (node.ok())
-        // while(true)
-        {
-
-            switch(m_state)
-            {
-            case TakingOff:
-                {
-                    tf::StampedTransform transform;
-                    m_listener.lookupTransform("/world", m_frame, ros::Time(0), transform);
-                    if (transform.getOrigin().z() > 0.05 || thrust > 50000)
-                    {
-                        pidReset();
-                        m_pidZ.setIntegral(thrust / m_pidZ.ki());
-                        m_state = Automatic;
-                        thrust = 0;
-                    }
-                    else
-                    {
-                        thrust += 100;
-                        geometry_msgs::Twist msg;
-                        msg.linear.z = thrust;
-                        m_pubNav.publish(msg);
-                    }
-
-                }
-                break;
-            case Landing:
-                {
-                    m_goal.position.z = 0.05;
-                    tf::StampedTransform transform;
-                    m_listener.lookupTransform("/world", m_frame, ros::Time(0), transform);
-                    if (transform.getOrigin().z() <= 0.05) {
-                        m_state = Idle;
-                        geometry_msgs::Twist msg;
-                        m_pubNav.publish(msg);
-                    }
-                }
-                // intentional fall-thru
-            case Automatic:
-                {
-                    tf::StampedTransform transform;
-                    m_listener.lookupTransform("/world", m_frame, ros::Time(0), transform);
-
-                    //tf::Stamped< tf::Pose > targetWorld(m_goal, transform.stamp_, "world");
-                    geometry_msgs::PoseStamped targetWorld;
-                    //(m_goal, transform.stamp_, "world");
-                    targetWorld.header.stamp = transform.stamp_;
-                    targetWorld.header.frame_id = "world";
-                    targetWorld.pose = m_goal;
-
-                    //tf::Stamped< tf::Pose > targetDrone;
-                    geometry_msgs::PoseStamped targetDrone;
-                    m_listener.transformPose(m_frame, targetWorld, targetDrone);
-
-                    tfScalar roll, pitch, yaw;
-                    tf::Matrix3x3(
-                        tf::Quaternion(
-                            targetDrone.pose.orientation.x,
-                            targetDrone.pose.orientation.y,
-                            targetDrone.pose.orientation.z,
-                            targetDrone.pose.orientation.w
-                        )).getRPY(roll, pitch, yaw);
-
-                    geometry_msgs::Twist msg;
-                    msg.linear.x = m_pidX.update(0, targetDrone.pose.position.x);
-                    msg.linear.y = m_pidY.update(0.0, targetDrone.pose.position.y);
-                    msg.linear.z = m_pidZ.update(0.0, targetDrone.pose.position.z);
-                    msg.angular.z = m_pidYaw.update(0.0, yaw);
-                    m_pubNav.publish(msg);
-
-
-                }
-                break;
-            case Idle:
-                {
-                    geometry_msgs::Twist msg;
-                    m_pubNav.publish(msg);
-                }
-                break;
-            }
-
-            ros::spinOnce();
-            ros::Duration(0.01).sleep();
-        }
+        ros::Timer timer = node.createTimer(ros::Duration(1.0/50.0), &Controller::iteration, this);
+        ros::spin();
     }
 
 private:
@@ -165,6 +82,89 @@ private:
         m_pidYaw.reset();
     }
 
+    void iteration(const ros::TimerEvent& e)
+    {
+        float dt = e.current_real.toSec() - e.last_real.toSec();
+
+        switch(m_state)
+        {
+        case TakingOff:
+            {
+                tf::StampedTransform transform;
+                m_listener.lookupTransform("/world", m_frame, ros::Time(0), transform);
+                if (transform.getOrigin().z() > 0.05 || m_thrust > 50000)
+                {
+                    pidReset();
+                    m_pidZ.setIntegral(m_thrust / m_pidZ.ki());
+                    m_state = Automatic;
+                    m_thrust = 0;
+                }
+                else
+                {
+                    m_thrust += 10000 * dt;
+                    geometry_msgs::Twist msg;
+                    msg.linear.z = m_thrust;
+                    m_pubNav.publish(msg);
+                }
+
+            }
+            break;
+        case Landing:
+            {
+                m_goal.position.z = 0.05;
+                tf::StampedTransform transform;
+                m_listener.lookupTransform("/world", m_frame, ros::Time(0), transform);
+                if (transform.getOrigin().z() <= 0.05) {
+                    m_state = Idle;
+                    geometry_msgs::Twist msg;
+                    m_pubNav.publish(msg);
+                }
+            }
+            // intentional fall-thru
+        case Automatic:
+            {
+                tf::StampedTransform transform;
+                m_listener.lookupTransform("/world", m_frame, ros::Time(0), transform);
+
+                //tf::Stamped< tf::Pose > targetWorld(m_goal, transform.stamp_, "world");
+                geometry_msgs::PoseStamped targetWorld;
+                //(m_goal, transform.stamp_, "world");
+                targetWorld.header.stamp = transform.stamp_;
+                targetWorld.header.frame_id = "world";
+                targetWorld.pose = m_goal;
+
+                //tf::Stamped< tf::Pose > targetDrone;
+                geometry_msgs::PoseStamped targetDrone;
+                m_listener.transformPose(m_frame, targetWorld, targetDrone);
+
+                tfScalar roll, pitch, yaw;
+                tf::Matrix3x3(
+                    tf::Quaternion(
+                        targetDrone.pose.orientation.x,
+                        targetDrone.pose.orientation.y,
+                        targetDrone.pose.orientation.z,
+                        targetDrone.pose.orientation.w
+                    )).getRPY(roll, pitch, yaw);
+
+                geometry_msgs::Twist msg;
+                msg.linear.x = m_pidX.update(0, targetDrone.pose.position.x);
+                msg.linear.y = m_pidY.update(0.0, targetDrone.pose.position.y);
+                msg.linear.z = m_pidZ.update(0.0, targetDrone.pose.position.z);
+                msg.angular.z = m_pidYaw.update(0.0, yaw);
+                m_pubNav.publish(msg);
+
+
+            }
+            break;
+        case Idle:
+            {
+                geometry_msgs::Twist msg;
+                m_pubNav.publish(msg);
+            }
+            break;
+        }
+    }
+
 private:
 
     enum State
@@ -188,6 +188,7 @@ private:
     ros::Subscriber m_subscribeGoal;
     ros::ServiceServer m_serviceTakeoff;
     ros::ServiceServer m_serviceLand;
+    float m_thrust;
 };
 
 int main(int argc, char **argv)

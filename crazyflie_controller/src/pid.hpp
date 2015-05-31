@@ -11,12 +11,16 @@ public:
         float ki,
         float minOutput,
         float maxOutput,
+        float integratorMin,
+        float integratorMax,
         const std::string& name)
         : m_kp(kp)
         , m_kd(kd)
         , m_ki(ki)
         , m_minOutput(minOutput)
         , m_maxOutput(maxOutput)
+        , m_integratorMin(integratorMin)
+        , m_integratorMax(integratorMax)
         , m_integral(0)
         , m_previousError(0)
         , m_previousTime(ros::Time::now())
@@ -46,6 +50,7 @@ public:
         float dt = time.toSec() - m_previousTime.toSec();
         float error = targetValue - value;
         m_integral += error * dt;
+        m_integral = std::max(std::min(m_integral, m_integratorMax), m_integratorMin);
         float p = m_kp * error;
         float d = 0;
         if (dt > 0)
@@ -70,6 +75,8 @@ private:
     float m_ki;
     float m_minOutput;
     float m_maxOutput;
+    float m_integratorMin;
+    float m_integratorMax;
     float m_integral;
     float m_previousError;
     ros::Time m_previousTime;
