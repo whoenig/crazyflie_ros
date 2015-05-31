@@ -41,15 +41,13 @@ public:
     m_subscribeCmdVel = n.subscribe(tf_prefix + "/cmd_vel", 1, &CrazyflieROS::cmdVelChanged, this);
     m_serviceEmergency = n.advertiseService(tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
 
-    int devId;
     int channel;
     int datarate;
     char datarateType;
-    uint64_t address;
 
     if(std::sscanf(link_uri.c_str(), "radio://%d/%d/%d%c/%lx",
-       &devId, &channel, &datarate,
-       &datarateType, &address) != EOF) {
+       &m_devId, &channel, &datarate,
+       &datarateType, &m_address) != EOF) {
       Crazyradio::Datarate dr;
       if (datarate == 250 && datarateType == 'K') {
         dr = Crazyradio::Datarate_250KPS;
@@ -61,13 +59,16 @@ public:
         dr = Crazyradio::Datarate_2MPS;
       }
 
-      if (!g_crazyradios[devId]) {
-        g_crazyradios[devId] = new Crazyradio(devId);
+      if (!g_crazyradios[m_devId]) {
+        g_crazyradios[m_devId] = new Crazyradio(m_devId);
+        // g_crazyradios[m_devId]->setAckEnable(false);
+        g_crazyradios[m_devId]->setAckEnable(true);
+        g_crazyradios[m_devId]->setArc(0);
       }
 
-      m_radio = g_crazyradios[devId];
+      m_radio = g_crazyradios[m_devId];
 
-      std::thread t(&CrazyflieROS::run, this, devId, channel, dr, address);
+      std::thread t(&CrazyflieROS::run, this, channel, dr);
       t.detach();
 
     }
@@ -93,40 +94,43 @@ private:
       m_setpoint.pitch = - (msg->linear.x + m_pitch_trim);
       m_setpoint.yawrate = msg->angular.z;
       m_setpoint.thrust = std::min<uint16_t>(std::max<float>(msg->linear.z, 0.0), 60000);
+
+      sendSetpoint();
     }
   }
 
-  void sendSetpoint(int devId, uint64_t address) {
-    std::unique_lock<std::mutex> mlock(g_mutex[devId]);
-    m_radio->setAddress(address);
+  void sendSetpoint() {
+    std::unique_lock<std::mutex> mlock(g_mutex[m_devId]);
+    m_radio->setAddress(m_address);
     Crazyradio::Ack result;
     m_radio->sendPacket((const uint8_t*)&m_setpoint, sizeof(m_setpoint), result);
+    // m_radio->sendPacketNoAck((const uint8_t*)&m_setpoint, sizeof(m_setpoint));
   }
 
-  void run(int devId, int channel, Crazyradio::Datarate dr, uint64_t address)
+  void run(int channel, Crazyradio::Datarate dr)
   {
 
     m_radio->setChannel(channel);
     m_radio->setDatarate(dr);
-    m_radio->setAddress(address);
+    m_radio->setAddress(m_address);
 
     m_setpoint.link = 3;
     m_setpoint.port = 0x03;
 
     // Send 0 thrust initially for thrust-lock
     for (int i = 0; i < 100; ++i) {
-      sendSetpoint(devId, address);
+      sendSetpoint();
     }
 
     while(!m_isEmergency) {
-      sendSetpoint(devId, address);
+      // sendSetpoint();
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     // Make sure we turn the engines off
     m_setpoint.thrust = 0;
     for (int i = 0; i < 100; ++i) {
-      sendSetpoint(devId, address);
+      sendSetpoint();
     }
 
   }
@@ -147,6 +151,8 @@ private:
 private:
   Crazyradio* m_radio;
   setpoint m_setpoint;
+  int m_devId;
+  uint64_t m_address;
   bool m_isEmergency;
   float m_roll_trim;
   float m_pitch_trim;
