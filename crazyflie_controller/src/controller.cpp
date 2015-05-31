@@ -41,7 +41,7 @@ public:
 
 private:
     void goalChanged(
-        const geometry_msgs::Pose::ConstPtr& msg)
+        const geometry_msgs::PoseStamped::ConstPtr& msg)
     {
         m_goal = *msg;
     }
@@ -111,7 +111,7 @@ private:
             break;
         case Landing:
             {
-                m_goal.position.z = 0.05;
+                m_goal.pose.position.z = 0.05;
                 tf::StampedTransform transform;
                 m_listener.lookupTransform("/world", m_frame, ros::Time(0), transform);
                 if (transform.getOrigin().z() <= 0.05) {
@@ -131,7 +131,7 @@ private:
                 //(m_goal, transform.stamp_, "world");
                 targetWorld.header.stamp = transform.stamp_;
                 targetWorld.header.frame_id = "world";
-                targetWorld.pose = m_goal;
+                targetWorld.pose = m_goal.pose;
 
                 //tf::Stamped< tf::Pose > targetDrone;
                 geometry_msgs::PoseStamped targetDrone;
@@ -184,7 +184,7 @@ private:
     PID m_pidZ;
     PID m_pidYaw;
     State m_state;
-    geometry_msgs::Pose m_goal;
+    geometry_msgs::PoseStamped m_goal;
     ros::Subscriber m_subscribeGoal;
     ros::ServiceServer m_serviceTakeoff;
     ros::ServiceServer m_serviceLand;
