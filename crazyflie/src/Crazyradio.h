@@ -45,12 +45,17 @@ public:
     void setArc(uint8_t arc);
     void setArdTime(uint8_t us);
     void setArdBytes(uint8_t nbytes);
+    void setAckEnable(bool enable);
     void setContCarrier(bool active);
 
     void sendPacket(
         const uint8_t* data,
         uint32_t length,
         Ack& result);
+
+    void sendPacketNoAck(
+        const uint8_t* data,
+        uint32_t length);
 
 private:
     void open(uint32_t devid);

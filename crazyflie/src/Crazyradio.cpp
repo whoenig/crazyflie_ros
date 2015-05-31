@@ -202,6 +202,11 @@ void Crazyradio::setArdBytes(uint8_t nbytes)
     sendVendorSetup(SET_RADIO_ARD, 0x80 | nbytes, 0, NULL, 0);
 }
 
+void Crazyradio::setAckEnable(bool enable)
+{
+    sendVendorSetup(ACK_ENABLE, enable, 0, NULL, 0);
+}
+
 void Crazyradio::setContCarrier(bool active)
 {
     sendVendorSetup(SET_CONT_CARRIER, active, 0, NULL, 0);
@@ -261,6 +266,33 @@ void Crazyradio::sendPacket(
     }
 }
 
+void Crazyradio::sendPacketNoAck(
+    const uint8_t* data,
+    uint32_t length)
+{
+    int status;
+    int transferred;
+
+    if (!m_handle) {
+        std::cerr << "No valid Crazyradio handle!" << std::endl;
+        return;
+    }
+
+    // Send data
+    status = libusb_bulk_transfer(
+        m_handle,
+        /* endpoint*/ (0x01 | LIBUSB_ENDPOINT_OUT),
+        (uint8_t*)data,
+        length,
+        &transferred,
+        /*timeout*/ 1000);
+    if (status != LIBUSB_SUCCESS) {
+        std::cerr << "Send " << libusb_error_name(status) << std::endl;
+    }
+    if (length != transferred) {
+        std::cerr << "Did transfer " << transferred << " but " << length << " was requested!" << std::endl;
+    }
+}
 
 void Crazyradio::sendVendorSetup(
     uint8_t request,
