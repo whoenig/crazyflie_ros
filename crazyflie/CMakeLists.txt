@@ -108,6 +108,7 @@ catkin_package(
 ## Declare a cpp executable
 add_executable(crazyflie_server
     src/Crazyradio.cpp
+    src/Crazyflie.cpp
     src/crazyflie_server.cpp)
 
 ## Add cmake target dependencies of the executable/library

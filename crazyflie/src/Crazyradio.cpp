@@ -23,6 +23,9 @@ Crazyradio::Crazyradio(uint32_t devid)
     : m_ctx(NULL)
     , m_handle(NULL)
     , m_version(0.0)
+    , m_channel(0)
+    , m_address(0)
+    , m_datarate(Datarate_250KPS)
 {
     int result = libusb_init(&m_ctx);
     if (result != LIBUSB_SUCCESS) {
@@ -134,6 +137,7 @@ void Crazyradio::open(uint32_t devid)
 void Crazyradio::setChannel(uint8_t channel)
 {
     sendVendorSetup(SET_RADIO_CHANNEL, channel, 0, NULL, 0);
+    m_channel = channel;
 }
 
 void Crazyradio::setAddress(uint64_t address)
@@ -160,11 +164,13 @@ void Crazyradio::setAddress(uint64_t address)
     // if (status != LIBUSB_SUCCESS) {
     //     std::cerr << "sendVendorSetup: " << libusb_error_name(status) << std::endl;
     // }
+    m_address = address;
 }
 
 void Crazyradio::setDatarate(Datarate datarate)
 {
     sendVendorSetup(SET_DATA_RATE, datarate, 0, NULL, 0);
+    m_datarate = datarate;
 }
 
 void Crazyradio::setPower(Power power)
@@ -241,29 +247,20 @@ void Crazyradio::sendPacket(
     }
 
     // Read result
-    result.data.resize(64);
     result.ack = false;
+    result.size = 0;
     status = libusb_bulk_transfer(
         m_handle,
         /* endpoint*/ (0x81 | LIBUSB_ENDPOINT_IN),
-        &result.data[0],
-        result.data.size(),
+        (unsigned char*)&result,
+        sizeof(result) - 1,
         &transferred,
         /*timeout*/ 1000);
     if (status != LIBUSB_SUCCESS) {
         std::cerr << "Receive " << libusb_error_name(status) << std::endl;
     }
 
-    // decode data
-    // ToDo: erase is slow; maybe use another datastructure?
-    result.data.resize(transferred);
-    if (transferred > 0) {
-        result.ack = (result.data[0] & 0x01) != 0;
-        result.powerDet = (result.data[0] & 0x02) != 0;
-        result.retry = result.data[0] >> 4;
-        result.data.erase(result.data.begin());
-        result.data.resize(transferred - 1);
-    }
+    result.size = transferred - 1;
 }
 
 void Crazyradio::sendPacketNoAck(

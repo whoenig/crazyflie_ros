@@ -7,12 +7,7 @@
 #include <thread>
 #include <mutex>
 
-#include "Crazyradio.h"
-
-#define MAX_RADIOS 4
-
-Crazyradio* g_crazyradios[MAX_RADIOS];
-std::mutex g_mutex[MAX_RADIOS];
+#include "Crazyflie.h"
 
 class CrazyflieROS
 {
@@ -23,59 +18,22 @@ public:
     float roll_trim,
     float pitch_trim,
     bool enable_logging)
-    : m_radio(NULL)
-    , m_setpoint()
+    : m_cf(link_uri)
     , m_isEmergency(false)
     , m_roll_trim(roll_trim)
     , m_pitch_trim(pitch_trim)
     , m_serviceEmergency()
     , m_subscribeCmdVel()
   {
-    // std::regex re("^radio://([0-9]+)((/([0-9]+))((/(250K|1M|2M))?(/([A-F0-9]+))?)?)?$");
-    // std::smatch match;
-    // if (std::regex_search(link_uri, match, re)) {
-    //   std::cout << match.str(1);
-    // }
-
     ros::NodeHandle n;
     m_subscribeCmdVel = n.subscribe(tf_prefix + "/cmd_vel", 1, &CrazyflieROS::cmdVelChanged, this);
     m_serviceEmergency = n.advertiseService(tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
 
-    int channel;
-    int datarate;
-    char datarateType;
-
-    if(std::sscanf(link_uri.c_str(), "radio://%d/%d/%d%c/%lx",
-       &m_devId, &channel, &datarate,
-       &datarateType, &m_address) != EOF) {
-      Crazyradio::Datarate dr;
-      if (datarate == 250 && datarateType == 'K') {
-        dr = Crazyradio::Datarate_250KPS;
-      }
-      else if (datarate == 1 && datarateType == 'M') {
-        dr = Crazyradio::Datarate_1MPS;
-      }
-      else if (datarate == 2 && datarateType == 'M') {
-        dr = Crazyradio::Datarate_2MPS;
-      }
-
-      if (!g_crazyradios[m_devId]) {
-        g_crazyradios[m_devId] = new Crazyradio(m_devId);
-        // g_crazyradios[m_devId]->setAckEnable(false);
-        g_crazyradios[m_devId]->setAckEnable(true);
-        g_crazyradios[m_devId]->setArc(0);
-      }
-
-      m_radio = g_crazyradios[m_devId];
-
-      std::thread t(&CrazyflieROS::run, this, channel, dr);
-      t.detach();
-
-    }
+    std::thread t(&CrazyflieROS::run, this);
+    t.detach();
   }
 
 private:
-
   bool emergency(
     std_srvs::Empty::Request& req,
     std_srvs::Empty::Response& res)
@@ -90,36 +48,21 @@ private:
     const geometry_msgs::Twist::ConstPtr& msg)
   {
     if (!m_isEmergency) {
-      m_setpoint.roll = msg->linear.y + m_roll_trim;
-      m_setpoint.pitch = - (msg->linear.x + m_pitch_trim);
-      m_setpoint.yawrate = msg->angular.z;
-      m_setpoint.thrust = std::min<uint16_t>(std::max<float>(msg->linear.z, 0.0), 60000);
+      float roll = msg->linear.y + m_roll_trim;
+      float pitch = - (msg->linear.x + m_pitch_trim);
+      float yawrate = msg->angular.z;
+      uint16_t thrust = std::min<uint16_t>(std::max<float>(msg->linear.z, 0.0), 60000);
 
-      sendSetpoint();
+      m_cf.sendSetpoint(roll, pitch, yawrate, thrust);
     }
   }
 
-  void sendSetpoint() {
-    std::unique_lock<std::mutex> mlock(g_mutex[m_devId]);
-    m_radio->setAddress(m_address);
-    Crazyradio::Ack result;
-    m_radio->sendPacket((const uint8_t*)&m_setpoint, sizeof(m_setpoint), result);
-    // m_radio->sendPacketNoAck((const uint8_t*)&m_setpoint, sizeof(m_setpoint));
-  }
-
-  void run(int channel, Crazyradio::Datarate dr)
+  void run()
   {
-
-    m_radio->setChannel(channel);
-    m_radio->setDatarate(dr);
-    m_radio->setAddress(m_address);
-
-    m_setpoint.link = 3;
-    m_setpoint.port = 0x03;
 
     // Send 0 thrust initially for thrust-lock
     for (int i = 0; i < 100; ++i) {
-      sendSetpoint();
+       m_cf.sendSetpoint(0, 0, 0, 0);
     }
 
     while(!m_isEmergency) {
@@ -128,31 +71,14 @@ private:
     }
 
     // Make sure we turn the engines off
-    m_setpoint.thrust = 0;
     for (int i = 0; i < 100; ++i) {
-      sendSetpoint();
+       m_cf.sendSetpoint(0, 0, 0, 0);
     }
 
   }
 
 private:
-  struct setpoint
-  {
-      uint8_t channel:2;
-      uint8_t link:2;
-      uint8_t port:4;
-      float roll;
-      float pitch;
-      float yawrate;
-      uint16_t thrust;
-  }  __attribute__((packed));
-
-
-private:
-  Crazyradio* m_radio;
-  setpoint m_setpoint;
-  int m_devId;
-  uint64_t m_address;
+  Crazyflie m_cf;
   bool m_isEmergency;
   float m_roll_trim;
   float m_pitch_trim;

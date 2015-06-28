@@ -27,11 +27,13 @@ public:
 
     struct Ack
     {
-        bool ack;
-        bool powerDet;
-        uint32_t retry;
-        std::vector<uint8_t> data;
-    };
+        uint8_t ack:1;
+        uint8_t powerDet:1;
+        uint8_t retry:4;
+        uint8_t data[32];
+
+        uint8_t size;
+    }__attribute__((packed));
 
 public:
     Crazyradio(uint32_t devid);
@@ -39,8 +41,17 @@ public:
     ~Crazyradio();
 
     void setChannel(uint8_t channel);
+    uint8_t getChannel() const {
+        return m_channel;
+    }
     void setAddress(uint64_t address);
+    uint64_t getAddress() const {
+        return m_address;
+    }
     void setDatarate(Datarate datarate);
+    Datarate getDatarate() const {
+        return m_datarate;
+    }
     void setPower(Power power);
     void setArc(uint8_t arc);
     void setArdTime(uint8_t us);
@@ -71,7 +82,7 @@ private:
     libusb_device_handle *m_handle;
 
     float m_version;
-
-
-
+    uint8_t m_channel;
+    uint64_t m_address;
+    Datarate m_datarate;
 };
