@@ -12,6 +12,7 @@
     <include file="$(find crazyflie)/launch/crazyflie_add.launch">
       <arg name="uri" value="$(arg uri)" />
       <arg name="tf_prefix" value="crazyflie1" />
+      <arg name="enable_logging" value="True" />
     </include>
 
     <node name="joy" pkg="joy" type="joy_node" output="screen" >
@@ -25,11 +26,9 @@
     </node>
   </group>
 
-  <!--
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find crazyflie_demo)/launch/crazyflie.rviz" />
 
   <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot" args="/crazyflie1/temperature/temperature"/>
 
   <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot2" args="/crazyflie1/battery"/>
-  -->
 </launch>

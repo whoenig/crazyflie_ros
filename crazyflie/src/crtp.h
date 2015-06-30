@@ -1,5 +1,6 @@
 #pragma once
 
+// Header
 struct crtp
 {
   constexpr crtp(uint8_t port, uint8_t channel)
@@ -25,16 +26,20 @@ struct crtp
   uint8_t port:4;
 } __attribute__((packed));
 
+// Port 0 (Console)
 struct crtpConsoleResponse
 {
     static bool match(const Crazyradio::Ack& response) {
-      return response.size > 1 &&
-             crtp(response.data[0]) == crtp(0, 0);
+      return crtp(response.data[0]) == crtp(0, 0);
     }
 
     crtp header;
     char text[31];
 };
+
+// Port 2 (Parameters)
+
+// Port 3 (Commander)
 
 struct crtpSetpointRequest
 {
@@ -57,187 +62,196 @@ struct crtpSetpointRequest
   uint16_t thrust;
 }  __attribute__((packed));
 
+// Port 4 (Memory access)
 
-////////
+// Port 5 (Data logging)
 
-  // struct logGetInfoRequest
-  // {
-  //   logGetInfoRequest()
-  //     : header(5, 0)
-  //     , command(1)
-  //     {
-  //     }
+struct crtpLogGetInfoRequest
+{
+  crtpLogGetInfoRequest()
+    : header(5, 0)
+    , command(1)
+    {
+    }
 
-  //     const crtp header;
-  //     const uint8_t command;
-  // } __attribute__((packed));
+    const crtp header;
+    const uint8_t command;
+} __attribute__((packed));
 
-  // struct logGetInfoResponse
-  // {
-  //     static bool match(const Crazyradio::Ack& response) {
-  //       return response.ack &&
-  //              response.size == 9 &&
-  //              crtp(response.data[0]) == crtp(5, 0) &&
-  //              response.data[1] == 1;
-  //     }
+struct crtpLogGetInfoResponse
+{
+  static bool match(const Crazyradio::Ack& response) {
+    return response.size == 9 &&
+           crtp(response.data[0]) == crtp(5, 0) &&
+           response.data[1] == 1;
+  }
 
-  //     logGetInfoResponse(const Crazyradio::Ack& response) {
-  //       memcpy(this, &response.data[2], sizeof(this));
-  //     }
+  crtpLogGetInfoRequest request;
+  // Number of log items contained in the log table of content
+  uint8_t log_len;
+  // CRC values of the log TOC memory content. This is a fingerprint of the copter build that can be used to cache the TOC
+  uint32_t log_crc;
+  // Maximum number of log packets that can be programmed in the copter
+  uint8_t log_max_packet;
+  // Maximum number of operation programmable in the copter. An operation is one log variable retrieval programming
+  uint8_t log_max_ops;
+} __attribute__((packed));
 
-  //     // Number of log items contained in the log table of content
-  //     uint8_t log_len;
-  //     // CRC values of the log TOC memory content. This is a fingerprint of the copter build that can be used to cache the TOC
-  //     uint32_t log_crc;
-  //     // Maximum number of log packets that can be programmed in the copter
-  //     uint8_t log_max_packet;
-  //     // Maximum number of operation programmable in the copter. An operation is one log variable retrieval programming
-  //     uint8_t log_max_ops;
-  // } __attribute__((packed));
+struct crtpLogGetItemRequest
+{
+  crtpLogGetItemRequest(uint8_t id)
+    : header(5, 0)
+    , command(0)
+    , id(id)
+    {
+    }
 
-  // struct logGetItemRequest
-  // {
-  //   logGetItemRequest(uint8_t id)
-  //     : header(5, 0)
-  //     , command(0)
-  //     , id(id)
-  //     {
-  //     }
+    const crtp header;
+    const uint8_t command;
+    uint8_t id;
+} __attribute__((packed));
 
-  //     const crtp header;
-  //     const uint8_t command;
-  //     uint8_t id;
-  // } __attribute__((packed));
+struct crtpLogGetItemResponse
+{
+    static bool match(const Crazyradio::Ack& response) {
+      return response.size > 5 &&
+             crtp(response.data[0]) == crtp(5, 0) &&
+             response.data[1] == 0;
+    }
 
-  // struct logGetItemResponse
-  // {
-  //     static bool match(const Crazyradio::Ack& response) {
-  //       return response.ack &&
-  //              response.size > 5 &&
-  //              crtp(response.data[0]) == crtp(5, 0) &&
-  //              response.data[1] == 0;
-  //     }
+    crtpLogGetItemRequest request;
+    uint8_t type;
+    char text[28]; // group, name
+} __attribute__((packed));
 
-  //     logGetItemResponse(const Crazyradio::Ack& response) {
-  //       id = response.data[2];
-  //       type = response.data[3];
-  //       group = std::string((const char*)&response.data[4]);
-  //       name = std::string((const char*)&response.data[5 + group.size()]);
-  //     }
+struct logBlockItem {
+  uint8_t logType;
+  uint8_t id;
+} __attribute__((packed));
 
-  //     uint8_t id;
-  //     uint8_t type;
-  //     std::string group;
-  //     std::string name;
-  // };
+struct crtpLogCreateBlockRequest
+{
+  crtpLogCreateBlockRequest()
+  : header(5, 1)
+  , command(0)
+  {
+  }
 
-  // struct logBlockItem {
-  //   uint8_t logType;
-  //   uint8_t id;
-  // } __attribute__((packed));
+  const crtp header;
+  const uint8_t command;
+  uint8_t id;
+  logBlockItem items[16];
+} __attribute__((packed));
 
-  // struct logCreateBlockRequest
-  // {
-  //   logCreateBlockRequest()
-  //     : header(5, 1)
-  //     , command(0)
-  //     {
-  //     }
+// struct logAppendBlockRequest
+// {
+//   logAppendBlockRequest()
+//     : header(5, 1)
+//     , command(1)
+//     {
+//     }
 
-  //     const crtp header;
-  //     const uint8_t command;
-  //     uint8_t id;
-  //     logBlockItem items[16];
-  // } __attribute__((packed));
+//     const crtp header;
+//     const uint8_t command;
+//     uint8_t id;
+//     logBlockItem items[16];
+// } __attribute__((packed));
 
-  // struct logAppendBlockRequest
-  // {
-  //   logAppendBlockRequest()
-  //     : header(5, 1)
-  //     , command(1)
-  //     {
-  //     }
+// struct logDeleteBlockRequest
+// {
+//   logDeleteBlockRequest()
+//     : header(5, 1)
+//     , command(2)
+//     {
+//     }
 
-  //     const crtp header;
-  //     const uint8_t command;
-  //     uint8_t id;
-  //     logBlockItem items[16];
-  // } __attribute__((packed));
+//     const crtp header;
+//     const uint8_t command;
+//     uint8_t id;
+// } __attribute__((packed));
 
-  // struct logDeleteBlockRequest
-  // {
-  //   logDeleteBlockRequest()
-  //     : header(5, 1)
-  //     , command(2)
-  //     {
-  //     }
+struct crtpLogStartRequest
+{
+  crtpLogStartRequest(
+    uint8_t id,
+    uint8_t period)
+    : header(5, 1)
+    , command(3)
+    , id(id)
+    , period(period)
+    {
+    }
 
-  //     const crtp header;
-  //     const uint8_t command;
-  //     uint8_t id;
-  // } __attribute__((packed));
+    const crtp header;
+    const uint8_t command;
+    uint8_t id;
+    uint8_t period; // in increments of 10ms
+} __attribute__((packed));
 
-  // struct logStartRequest
-  // {
-  //   logStartRequest()
-  //     : header(5, 1)
-  //     , command(3)
-  //     {
-  //     }
+struct crtpLogStopRequest
+{
+  crtpLogStopRequest(
+    uint8_t id)
+    : header(5, 1)
+    , command(4)
+    , id(id)
+    {
+    }
 
-  //     const crtp header;
-  //     const uint8_t command;
-  //     uint8_t id;
-  //     uint8_t period; // in increments of 10ms
-  // } __attribute__((packed));
+    const crtp header;
+    const uint8_t command;
+    uint8_t id;
+} __attribute__((packed));
 
-  // struct logStopRequest
-  // {
-  //   logStopRequest()
-  //     : header(5, 1)
-  //     , command(4)
-  //     {
-  //     }
+struct crtpLogResetRequest
+{
+  crtpLogResetRequest()
+    : header(5, 1)
+    , command(5)
+    {
+    }
 
-  //     const crtp header;
-  //     const uint8_t command;
-  //     uint8_t id;
-  // } __attribute__((packed));
+    const crtp header;
+    const uint8_t command;
+} __attribute__((packed));
 
-  // struct logResetRequest
-  // {
-  //   logResetRequest()
-  //     : header(5, 1)
-  //     , command(5)
-  //     {
-  //     }
+enum crtpLogControlResult {
+  crtpLogControlResultOk            = 0,
+  crtpLogControlResultOutOfMemory   = 12, // ENOMEM
+  crtpLogControlResultCmdNotFound   = 8,  // ENOEXEC
+  crtpLogControlResultWrongBlockId  = 2,  // ENOENT
+  crtpLogControlResultBlockTooLarge = 7,  // E2BIG
+  crtpLogControlResultBlockExists   = 17, // EEXIST
 
-  //     const crtp header;
-  //     const uint8_t command;
-  // } __attribute__((packed));
+};
 
-  // enum LogType {
-  //   LogTypeUint8  = 1,
-  //   LogTypeUint16 = 2,
-  //   LogTypeUint32 = 3,
-  //   LogTypeInt8   = 4,
-  //   LogTypeInt16  = 5,
-  //   LogTypeInt32  = 6,
-  //   LogTypeFloat  = 7,
-  //   LogTypeFP16   = 8,
-  // };
+struct crtpLogControlResponse
+{
+    static bool match(const Crazyradio::Ack& response) {
+      return response.size == 4 &&
+             crtp(response.data[0]) == crtp(5, 1);
+    }
 
-  // struct consoleResponse
-  // {
-  //     static bool match(const Crazyradio::Ack& response) {
-  //       return response.ack &&
-  //              response.size > 1 &&
-  //              crtp(response.data[0]) == crtp(0, 0);
-  //     }
+    crtp header;
+    uint8_t command;
+    uint8_t requestByte1;
+    uint8_t result; // one of crtpLogControlResult
+} __attribute__((packed));
 
-  //     consoleResponse(const Crazyradio::Ack& response) {
-  //       text = std::string((const char*)&response.data[1]);
-  //     }
+struct crtpLogDataResponse
+{
+    static bool match(const Crazyradio::Ack& response) {
+      return response.size > 4 &&
+             crtp(response.data[0]) == crtp(5, 2);
+    }
 
-  //     std::string text;
-  // };
+    crtp header;
+    uint8_t blockId;
+    uint8_t timestampHi;
+    uint16_t timestampLo;
+    uint8_t data[28];
+} __attribute__((packed));
+
+
+
+// Port 13 (Platform)
