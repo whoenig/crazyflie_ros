@@ -7,6 +7,7 @@
 #include "Crazyradio.h"
 
 #include <iostream>
+#include <cstring>
 
 #define MAX_RADIOS 4
 
@@ -27,6 +28,9 @@ Crazyflie::Crazyflie(
   , m_blockCreated()
   , m_blockStarted()
   , m_blockStopped()
+  , m_paramInfo()
+  , m_paramTocEntries()
+  , m_paramValues()
 {
   int datarate;
   int channel;
@@ -130,6 +134,94 @@ void Crazyflie::requestLogToc()
   }
 }
 
+void Crazyflie::requestParamToc()
+{
+  m_paramInfo.len = 0;
+  m_paramTocEntries.clear();
+  m_paramValues.clear();
+  do
+  {
+    crtpParamTocGetInfoRequest request;
+    sendPacket((const uint8_t*)&request, sizeof(request));
+  } while(m_paramInfo.len == 0);
+  std::cout << "Params: " << (int)m_paramInfo.len << std::endl;
+
+  for (size_t i = 0; i < m_paramInfo.len; ++i)
+  {
+    // std::cout << i << std::endl;
+    do
+    {
+      crtpParamTocGetItemRequest request(i);
+      sendPacket((const uint8_t*)&request, sizeof(request));
+    } while(m_paramTocEntries.size() < i + 1);
+
+    do
+    {
+      crtpParamReadRequest request(i);
+      sendPacket((const uint8_t*)&request, sizeof(request));
+    } while(m_paramValues.find(i) == m_paramValues.end());
+  }
+}
+
+void Crazyflie::setParam(uint8_t id, const ParamValue& value) {
+
+  m_paramValues.erase(id);
+  for (auto&& entry : m_paramTocEntries) {
+    if (entry.id == id) {
+      do
+      {
+        switch (entry.type) {
+          case ParamTypeUint8:
+            {
+              crtpParamWriteRequest<uint8_t> request(id, value.valueUint8);
+              sendPacket((const uint8_t*)&request, sizeof(request));
+              break;
+            }
+          case ParamTypeInt8:
+            {
+              crtpParamWriteRequest<int8_t> request(id, value.valueInt8);
+              sendPacket((const uint8_t*)&request, sizeof(request));
+              break;
+            }
+          case ParamTypeUint16:
+            {
+              crtpParamWriteRequest<uint16_t> request(id, value.valueUint16);
+              sendPacket((const uint8_t*)&request, sizeof(request));
+              break;
+            }
+          case ParamTypeInt16:
+            {
+              crtpParamWriteRequest<int16_t> request(id, value.valueInt16);
+              sendPacket((const uint8_t*)&request, sizeof(request));
+              break;
+            }
+          case ParamTypeUint32:
+            {
+              crtpParamWriteRequest<uint32_t> request(id, value.valueUint32);
+              sendPacket((const uint8_t*)&request, sizeof(request));
+              break;
+            }
+          case ParamTypeInt32:
+            {
+              crtpParamWriteRequest<int32_t> request(id, value.valueInt32);
+              sendPacket((const uint8_t*)&request, sizeof(request));
+              break;
+            }
+          case ParamTypeFloat:
+            {
+              crtpParamWriteRequest<float> request(id, value.valueFloat);
+              sendPacket((const uint8_t*)&request, sizeof(request));
+              break;
+            }
+        }
+      } while(m_paramValues.find(id) == m_paramValues.end());
+      break;
+    }
+  }
+
+
+}
+
 void Crazyflie::sendPacket(
   const uint8_t* data,
   uint32_t length)
@@ -204,6 +296,27 @@ void Crazyflie::handleAck(
       std::cout << "Received unrequested data for block: " << (int)r->blockId << std::endl;
     }
   }
+  else if (crtpParamTocGetInfoResponse::match(result)) {
+    crtpParamTocGetInfoResponse* r = (crtpParamTocGetInfoResponse*)result.data;
+    m_paramInfo.len = r->numParam;
+  }
+  else if (crtpParamTocGetItemResponse::match(result)) {
+    crtpParamTocGetItemResponse* r = (crtpParamTocGetItemResponse*)result.data;
+    m_paramTocEntries.resize(r->request.id + 1);
+    ParamTocEntry& entry = m_paramTocEntries[r->request.id];
+    entry.id = r->request.id;
+    entry.type = (ParamType)(r->length | r-> type << 2 | r->sign << 3);
+    entry.readonly = r->readonly;
+    entry.group = std::string(&r->text[0]);
+    entry.name = std::string(&r->text[entry.group.size() + 1]);
+  }
+  else if (crtpParamValueResponse::match(result)) {
+    crtpParamValueResponse* r = (crtpParamValueResponse*)result.data;
+    ParamValue v;
+    std::memcpy(&v, &r->valueFloat, 4);
+    // *v = r->valueFloat;
+    m_paramValues[r->id] = v;//(ParamValue)(r->valueFloat);
+  }
   else {
     crtp* header = (crtp*)result.data;
     std::cout << "Don't know ack: Port: " << (int)header->port << " Channel: " << (int)header->channel << " Len: " << (int)result.size << std::endl;
@@ -219,6 +332,18 @@ const Crazyflie::LogTocEntry* Crazyflie::getLogTocEntry(
   const std::string& name) const
 {
   for (auto&& entry : m_logTocEntries) {
+    if (entry.group == group && entry.name == name) {
+      return &entry;
+    }
+  }
+  return nullptr;
+}
+
+const Crazyflie::ParamTocEntry* Crazyflie::getParamTocEntry(
+  const std::string& group,
+  const std::string& name) const
+{
+  for (auto&& entry : m_paramTocEntries) {
     if (entry.group == group && entry.name == name) {
       return &entry;
     }

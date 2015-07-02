@@ -10,6 +10,41 @@
 class Crazyflie
 {
 public:
+  enum ParamType {
+    ParamTypeUint8  = 0x00 | (0x00<<2) | (0x01<<3),
+    ParamTypeInt8   = 0x00 | (0x00<<2) | (0x00<<3),
+    ParamTypeUint16 = 0x01 | (0x00<<2) | (0x01<<3),
+    ParamTypeInt16  = 0x01 | (0x00<<2) | (0x00<<3),
+    ParamTypeUint32 = 0x02 | (0x00<<2) | (0x01<<3),
+    ParamTypeInt32  = 0x02 | (0x00<<2) | (0x00<<3),
+    ParamTypeFloat  = 0x02 | (0x01<<2) | (0x00<<3),
+  };
+
+  struct ParamTocEntry {
+    uint8_t id;
+    ParamType type;
+    bool readonly;
+    // ParamLength length;
+    // ParamType type;
+    // ParamSign sign;
+    // bool readonly;
+    // ParamGroup paramGroup;
+    std::string group;
+    std::string name;
+  };
+
+  union ParamValue{
+    uint8_t valueUint8;
+    int8_t valueInt8;
+    uint16_t valueUint16;
+    int16_t valueInt16;
+    uint32_t valueUint32;
+    int32_t valueInt32;
+    float valueFloat;
+  };
+
+
+public:
   Crazyflie(
     const std::string& link_uri);
 
@@ -24,6 +59,32 @@ public:
   void reboot();
 
   void requestLogToc();
+
+  void requestParamToc();
+
+  std::vector<ParamTocEntry>::const_iterator paramsBegin() const {
+    return m_paramTocEntries.begin();
+  }
+  std::vector<ParamTocEntry>::const_iterator paramsEnd() const {
+    return m_paramTocEntries.end();
+  }
+
+  template<class T>
+  void setParam(uint8_t id, const T& value) {
+    ParamValue v;
+    memcpy(&v, &value, sizeof(value));
+    setParam(id, v);
+  }
+
+  template<class T>
+  T getParam(uint8_t id) const {
+    ParamValue v = getParam(id);
+    return *(reinterpret_cast<T*>(&v));
+  }
+
+  const ParamTocEntry* getParamTocEntry(
+    const std::string& group,
+    const std::string& name) const;
 
 protected:
   void sendPacket(
@@ -59,6 +120,36 @@ private:
     std::string name;
   };
 
+  /////////
+
+  struct paramInfo {
+    uint8_t len;
+    uint32_t crc;
+  };
+
+  // enum ParamLength {
+  //   ParamLength1Byte  = 0,
+  //   ParamLength2Bytes = 1,
+  //   ParamLength3Bytes = 2,
+  //   ParamLength4Bytes = 3,
+  // };
+
+  // enum ParamType {
+  //   ParamTypeInt   = 0,
+  //   ParamTypeFloat = 1,
+  // };
+
+  // enum ParamSign {
+  //   ParamSignSigned   = 0,
+  //   ParamSignUnsigned = 1,
+  // };
+
+  // enum ParamGroup {
+  //   ParamGroupVariable = 0,
+  //   ParamGroupGroup    = 1,
+  // };
+
+
 private:
   const LogTocEntry* getLogTocEntry(
     const std::string& group,
@@ -69,6 +160,11 @@ private:
 
   bool unregisterLogBlock(
     uint8_t id);
+
+  void setParam(uint8_t id, const ParamValue& value);
+  const ParamValue& getParam(uint8_t id) const {
+    return m_paramValues.at(id);
+  }
 
 private:
   Crazyradio* m_radio;
@@ -87,6 +183,10 @@ private:
   std::set<uint8_t> m_blockCreated;
   std::set<uint8_t> m_blockStarted;
   std::set<uint8_t> m_blockStopped;
+
+  paramInfo m_paramInfo;
+  std::vector<ParamTocEntry> m_paramTocEntries;
+  std::map<uint8_t, ParamValue> m_paramValues;
 
   template<typename T>
   friend class LogBlock;

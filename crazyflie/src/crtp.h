@@ -39,6 +39,115 @@ struct crtpConsoleResponse
 
 // Port 2 (Parameters)
 
+struct crtpParamTocGetItemRequest
+{
+  crtpParamTocGetItemRequest(
+    uint8_t id)
+    : header(2, 0)
+    , command(0)
+    , id(id)
+    {
+    }
+
+    const crtp header;
+    const uint8_t command;
+    uint8_t id;
+} __attribute__((packed));
+
+struct crtpParamTocGetItemResponse
+{
+  static bool match(const Crazyradio::Ack& response) {
+    return response.size > 5 &&
+           crtp(response.data[0]) == crtp(2, 0) &&
+           response.data[1] == 0;
+  }
+
+  crtpParamTocGetItemRequest request;
+  uint8_t length:2; // one of ParamLength
+  uint8_t type:1;   // one of ParamType
+  uint8_t sign:1;   // one of ParamSign
+  uint8_t res0:2;   // reserved
+  uint8_t readonly:1;
+  uint8_t group:1;  // one of ParamGroup
+  char text[28]; // group, name
+} __attribute__((packed));
+
+struct crtpParamTocGetInfoRequest
+{
+  crtpParamTocGetInfoRequest()
+    : header(2, 0)
+    , command(1)
+    {
+    }
+
+    const crtp header;
+    const uint8_t command;
+} __attribute__((packed));
+
+struct crtpParamTocGetInfoResponse
+{
+  static bool match(const Crazyradio::Ack& response) {
+    return response.size == 7 &&
+           crtp(response.data[0]) == crtp(2, 0) &&
+           response.data[1] == 1;
+  }
+
+  crtpParamTocGetInfoRequest request;
+  uint8_t numParam;
+  uint32_t crc;
+} __attribute__((packed));
+
+struct crtpParamReadRequest
+{
+  crtpParamReadRequest(
+    uint8_t id)
+    : header(2, 1)
+    , id(id)
+    {
+    }
+
+    const crtp header;
+    const uint8_t id;
+} __attribute__((packed));
+
+template <class T>
+struct crtpParamWriteRequest
+{
+  crtpParamWriteRequest(
+    uint8_t id,
+    const T& value)
+    : header(2, 2)
+    , id(id)
+    , value(value)
+    {
+    }
+
+    const crtp header;
+    const uint8_t id;
+    const T value;
+} __attribute__((packed));
+
+struct crtpParamValueResponse
+{
+  static bool match(const Crazyradio::Ack& response) {
+    return response.size > 2 &&
+           (crtp(response.data[0]) == crtp(2, 1) ||
+            crtp(response.data[0]) == crtp(2, 2));
+  }
+
+  crtp header;
+  uint8_t id;
+  union {
+    uint8_t valueUint8;
+    int8_t valueInt8;
+    uint16_t valueUint16;
+    int16_t valueInt16;
+    uint32_t valueUint32;
+    int32_t valueInt32;
+    float valueFloat;
+  };
+} __attribute__((packed));
+
 // Port 3 (Commander)
 
 struct crtpSetpointRequest

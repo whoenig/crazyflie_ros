@@ -1,5 +1,6 @@
 #include "ros/ros.h"
 #include "crazyflie/AddCrazyflie.h"
+#include "crazyflie/UpdateParams.h"
 #include "std_srvs/Empty.h"
 #include "geometry_msgs/Twist.h"
 #include "sensor_msgs/Imu.h"
@@ -39,6 +40,7 @@ public:
     , m_pitch_trim(pitch_trim)
     , m_enableLogging(enable_logging)
     , m_serviceEmergency()
+    , m_serviceUpdateParams()
     , m_subscribeCmdVel()
     , m_pubImu()
     , m_pubTemp()
@@ -50,6 +52,7 @@ public:
     ros::NodeHandle n;
     m_subscribeCmdVel = n.subscribe(tf_prefix + "/cmd_vel", 1, &CrazyflieROS::cmdVelChanged, this);
     m_serviceEmergency = n.advertiseService(tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
+    m_serviceUpdateParams = n.advertiseService(tf_prefix + "/update_params", &CrazyflieROS::updateParams, this);
 
     m_pubImu = n.advertise<sensor_msgs::Imu>(tf_prefix + "/imu", 10);
     m_pubTemp = n.advertise<sensor_msgs::Temperature>(tf_prefix + "/temperature", 10);
@@ -91,6 +94,58 @@ private:
     return true;
   }
 
+  template<class T, class U>
+  void updateParam(uint8_t id, const std::string& ros_param) {
+      U value;
+      ros::param::get(ros_param, value);
+      m_cf.setParam<T>(id, (T)value);
+  }
+
+  bool updateParams(
+    crazyflie::UpdateParams::Request& req,
+    crazyflie::UpdateParams::Response& res)
+  {
+    ROS_INFO("Update parameters");
+    for (auto&& p : req.params) {
+      std::string ros_param = "/" + m_tf_prefix + "/" + p;
+      size_t pos = p.find("/");
+      std::string group(p.begin(), p.begin() + pos);
+      std::string name(p.begin() + pos + 1, p.end());
+
+      auto entry = m_cf.getParamTocEntry(group, name);
+      if (entry)
+      {
+        switch (entry->type) {
+          case Crazyflie::ParamTypeUint8:
+            updateParam<uint8_t, int>(entry->id, ros_param);
+            break;
+          case Crazyflie::ParamTypeInt8:
+            updateParam<int8_t, int>(entry->id, ros_param);
+            break;
+          case Crazyflie::ParamTypeUint16:
+            updateParam<uint16_t, int>(entry->id, ros_param);
+            break;
+          case Crazyflie::ParamTypeInt16:
+            updateParam<int16_t, int>(entry->id, ros_param);
+            break;
+          case Crazyflie::ParamTypeUint32:
+            updateParam<uint32_t, int>(entry->id, ros_param);
+            break;
+          case Crazyflie::ParamTypeInt32:
+            updateParam<int32_t, int>(entry->id, ros_param);
+            break;
+          case Crazyflie::ParamTypeFloat:
+            updateParam<float, float>(entry->id, ros_param);
+            break;
+        }
+      }
+      else {
+        ROS_ERROR("Could not find param %s/%s", group.c_str(), name.c_str());
+      }
+    }
+    return true;
+  }
+
   void cmdVelChanged(
     const geometry_msgs::Twist::ConstPtr& msg)
   {
@@ -108,9 +163,41 @@ private:
   void run()
   {
     // m_cf.reboot();
+
+    ROS_INFO("Requesting parameters...");
+    m_cf.requestParamToc();
+    for (auto iter = m_cf.paramsBegin(); iter != m_cf.paramsEnd(); ++iter) {
+      auto entry = *iter;
+      std::string paramName = "/" + m_tf_prefix + "/" + entry.group + "/" + entry.name;
+      switch (entry.type) {
+        case Crazyflie::ParamTypeUint8:
+          ros::param::set(paramName, m_cf.getParam<uint8_t>(entry.id));
+          break;
+        case Crazyflie::ParamTypeInt8:
+          ros::param::set(paramName, m_cf.getParam<int8_t>(entry.id));
+          break;
+        case Crazyflie::ParamTypeUint16:
+          ros::param::set(paramName, m_cf.getParam<uint16_t>(entry.id));
+          break;
+        case Crazyflie::ParamTypeInt16:
+          ros::param::set(paramName, m_cf.getParam<int16_t>(entry.id));
+          break;
+        case Crazyflie::ParamTypeUint32:
+          ros::param::set(paramName, (int)m_cf.getParam<uint32_t>(entry.id));
+          break;
+        case Crazyflie::ParamTypeInt32:
+          ros::param::set(paramName, m_cf.getParam<int32_t>(entry.id));
+          break;
+        case Crazyflie::ParamTypeFloat:
+          ros::param::set(paramName, m_cf.getParam<float>(entry.id));
+          break;
+      }
+    }
+
     std::unique_ptr<LogBlock<logImu> > logBlockImu;
     std::unique_ptr<LogBlock<log2> > logBlock2;
     if (m_enableLogging) {
+      ROS_INFO("Requesting Logging variables...");
       m_cf.requestLogToc();
 
       std::function<void(logImu*)> cb = std::bind(&CrazyflieROS::onImuData, this, std::placeholders::_1);
@@ -140,6 +227,8 @@ private:
       logBlock2->start(10); // 100ms
 
     }
+
+    ROS_INFO("Ready...");
 
     // Send 0 thrust initially for thrust-lock
     for (int i = 0; i < 100; ++i) {
@@ -228,6 +317,7 @@ private:
   bool m_enableLogging;
 
   ros::ServiceServer m_serviceEmergency;
+  ros::ServiceServer m_serviceUpdateParams;
   ros::Subscriber m_subscribeCmdVel;
   ros::Publisher m_pubImu;
   ros::Publisher m_pubTemp;

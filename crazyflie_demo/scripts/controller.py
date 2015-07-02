@@ -7,9 +7,9 @@ from std_srvs.srv import Empty
 
 class Controller():
     def __init__(self, use_controller, joy_topic):
-        # rospy.wait_for_service('update_params')
-        # rospy.loginfo("found update_params service")
-        # self._update_params = rospy.ServiceProxy('update_params', UpdateParams)
+        rospy.wait_for_service('update_params')
+        rospy.loginfo("found update_params service")
+        self._update_params = rospy.ServiceProxy('update_params', UpdateParams)
 
         rospy.loginfo("waiting for emergency service")
         rospy.wait_for_service('emergency')
@@ -45,9 +45,11 @@ class Controller():
                 if i == 2 and data.buttons[i] == 1 and self._takeoff != None:
                     self._takeoff()
                 if i == 4 and data.buttons[i] == 1:
-                    value = bool(int(rospy.get_param("ring/headlightEnable")))
-                    print(value)
-                    rospy.set_param("ring/headlightEnable", not value)
+                    value = int(rospy.get_param("ring/headlightEnable"))
+                    if value == 0:
+                        rospy.set_param("ring/headlightEnable", 1)
+                    else:
+                        rospy.set_param("ring/headlightEnable", 0)
                     self._update_params(["ring/headlightEnable"])
                     print(not value)
 
