@@ -27,6 +27,11 @@ public:
 
     struct Ack
     {
+        Ack()
+          : ack(0)
+          , size(0)
+        {}
+
         uint8_t ack:1;
         uint8_t powerDet:1;
         uint8_t retry:4;
@@ -69,7 +74,7 @@ public:
         uint32_t length);
 
 private:
-    void open(uint32_t devid);
+    bool open(uint32_t devid);
     void sendVendorSetup(
         uint8_t request,
         uint16_t value,

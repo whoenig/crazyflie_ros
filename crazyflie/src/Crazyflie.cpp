@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <cstring>
+#include <stdexcept>
 
 #define MAX_RADIOS 4
 
@@ -70,7 +71,7 @@ Crazyflie::Crazyflie(
     m_radio = g_crazyradios[m_devId];
   }
   else {
-    std::cerr << "Uri is not valid!" << std::endl;
+    throw std::runtime_error("Uri is not valid!");
   }
 
   m_blockReset = false;
@@ -129,9 +130,9 @@ void Crazyflie::requestLogToc()
     } while(m_logTocEntries.size() < i + 1);
   }
 
-  for (auto&& entry : m_logTocEntries) {
-    std::cout << entry.group << "." << entry.name << " type: " << (int)entry.type << std::endl;
-  }
+  // for (auto&& entry : m_logTocEntries) {
+  //   std::cout << entry.group << "." << entry.name << " type: " << (int)entry.type << std::endl;
+  // }
 }
 
 void Crazyflie::requestParamToc()
@@ -320,9 +321,9 @@ void Crazyflie::handleAck(
   else {
     crtp* header = (crtp*)result.data;
     std::cout << "Don't know ack: Port: " << (int)header->port << " Channel: " << (int)header->channel << " Len: " << (int)result.size << std::endl;
-    for (size_t i = 1; i < result.size; ++i) {
-      std::cout << "    " << (int)result.data[i] << std::endl;
-    }
+    // for (size_t i = 1; i < result.size; ++i) {
+    //   std::cout << "    " << (int)result.data[i] << std::endl;
+    // }
   }
 
 }

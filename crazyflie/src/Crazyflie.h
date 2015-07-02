@@ -213,7 +213,6 @@ public:
       if (entry) {
         request.items[i].logType = entry->type;
         request.items[i].id = entry->id;
-        std::cout << "entry: " << (int)request.items[i].logType << " " << (int)request.items[i].id << std::endl;
         ++i;
       }
       else {

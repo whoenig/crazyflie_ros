@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 
 #include <libusb-1.0/libusb.h>
 
@@ -29,9 +30,12 @@ Crazyradio::Crazyradio(uint32_t devid)
 {
     int result = libusb_init(&m_ctx);
     if (result != LIBUSB_SUCCESS) {
-        std::cerr << libusb_error_name(result) << std::endl;
+        throw std::runtime_error(libusb_error_name(result));
     }
-    open(devid);
+    if (!open(devid)) {
+        libusb_exit(m_ctx);
+        throw std::runtime_error("Could not find Crazyradio with given devId!");
+    }
 }
 
 Crazyradio::~Crazyradio()
@@ -57,7 +61,7 @@ Crazyradio::~Crazyradio()
     libusb_exit(m_ctx);
 }
 
-void Crazyradio::open(uint32_t devid)
+bool Crazyradio::open(uint32_t devid)
 {
     // discover devices
     libusb_device **list;
@@ -68,7 +72,7 @@ void Crazyradio::open(uint32_t devid)
     int err = 0;
     if (cnt < 0) {
         std::cerr << "Error during get_device_list" << std::endl;
-        return;
+        return false;
     }
     for (i = 0; i < cnt; i++) {
         libusb_device *device = list[i];
@@ -77,7 +81,7 @@ void Crazyradio::open(uint32_t devid)
         if (err != LIBUSB_SUCCESS) {
             std::cerr << libusb_error_name(err) << std::endl;
             libusb_free_device_list(list, 1);
-            return;
+            return false;
         }
         else if (deviceDescriptor.idVendor == 0x1915 &&
                  deviceDescriptor.idProduct == 0x7777) {
@@ -93,13 +97,13 @@ void Crazyradio::open(uint32_t devid)
         if (err != LIBUSB_SUCCESS) {
             std::cerr << libusb_error_name(err) << std::endl;
             libusb_free_device_list(list, 1);
-            return;
+            return false;
         }
         libusb_device_descriptor deviceDescriptor;
         err = libusb_get_device_descriptor(found, &deviceDescriptor);
         if (err != LIBUSB_SUCCESS) {
             std::cerr << libusb_error_name(err) << std::endl;
-            return;
+            return false;
         }
         std::stringstream sstr;
         sstr << std::hex << (deviceDescriptor.bcdDevice >> 8) << "." << (deviceDescriptor.bcdDevice & 0xFF);
@@ -113,13 +117,13 @@ void Crazyradio::open(uint32_t devid)
         err = libusb_set_configuration(m_handle, 1);
         if (err != LIBUSB_SUCCESS) {
             std::cerr << libusb_error_name(err) << std::endl;
-            return;
+            return false;
         }
 
         err = libusb_claim_interface(m_handle, 0);
         if (err != LIBUSB_SUCCESS) {
             std::cerr << libusb_error_name(err) << std::endl;
-            return;
+            return false;
         }
 
         setDatarate(Datarate_2MPS);
@@ -131,6 +135,11 @@ void Crazyradio::open(uint32_t devid)
         setArdBytes(32);
 
         std::cout << "Configured Dongle with version " << m_version << std::endl;
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
 
