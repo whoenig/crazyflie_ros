@@ -1,11 +1,14 @@
 crazyflie_ros
 =============
 
-ROS Driver for Bitcraze Crazyflie (http://www.bitcraze.se/), with the following features:
+ROS stack for Bitcraze Crazyflie (http://www.bitcraze.se/), with the following features:
 
-* Uses the official python SDK (which needs to be installed/copied separately)
+* Support for Crazyflie 1.0 and Crazyflie 2.0 (using stock firmware)
 * Publishes on-board sensors in ROS standard message formats
 * Supports ROS parameters to reconfigure crazyflie parameters
+* Support for using multiple Crazyflies with a single Crazyradio
+* Includes external controller for waypoint navigation (if motion capture system is available)
+* No dependency to the Bitcraze SDK (Driver and Controller written in C++)
 
 ## Installation
 
@@ -14,32 +17,56 @@ Clone the package into your catkin workspace:
 git clone https://github.com/whoenig/crazyflie_ros.git
 ```
 
-Additionally, you should have the bitcraze SDK on your file system.
-See https://github.com/bitcraze/crazyflie-clients-python for details.
-
 If you want to use joystick teleoperation, you should setup the hector_quadrotor package (http://wiki.ros.org/hector_quadrotor).
 
 ## Usage
 
-There are two packages included: crazyflie and crazyflie_demo.
-Crazyflie contains the driver and a launch file which can be used in your own projects.
+There are four packages included: crazyflie, crazyflie_description, crazyflie_controller, and crazyflie_demo.
 
-Crazyflie_demo contains a small demo for teleoperating the crazyflie with a joystick and visualizing the sensor data in rviz.
+### Crazyflie
 
-You can use
+This package contains the driver. In order to support multiple Crazyflies with a single Crazyradio, there is crazyflie_server (communicating with all Crazyflies) and crazyflie_add to dynamically add Crazyflies.
+The server does not communicate to any Crazyflie initially, hence crazyflie_add needs to be used.
+
+### Crazyflie_description
+
+This package contains a 3D model of the Crazyflie (1.0). This is for visualization purposes in rviz.
+
+### Crazyflie_controller
+
+This package contains a simple PID controller for hovering or waypoint navigation.
+It can be used with external motion capture systems, such as VICON.
+
+### Crazyflie_demo
+
+This package contains a rich set of examples to get quickly started with the Crazyflie.
+
+For teleoperation using a joystick, use:
 ```
-roslaunch crazyflie_demo teleop_xbox360.launch
+roslaunch crazyflie_demo teleop_xbox360.launch uri:=radio://0/100/2M
 ```
-to teleoperate the crazyflie.
-Please note that there are (optional) arguments to change the device uri and path to the sdk.
-See `crazyflie_demo/launch/teleop_xbox360.launch` for details.
+where the uri specifies the uri of your Crazyflie.
+
+For hovering at (0,0,1) using VICON, use:
+```
+roslaunch crazyflie_demo hover_vicon.launch uri:=radio://0/100/2M frame:=/vicon/crazyflie/crazyflie x:=0 y:=0 z:=1
+```
+where the uri specifies the uri of your Crazyflie and frame the tf-frame. The launch file runs vicon_bridge automatically.
+
+For multiple Crazyflies make sure that all Crazyflies have a different address.
+Crazyflies which share a dongle should use the same channel and datarate for best performance.
+The performance degrades with the number of Crazyflies per dongle due to bandwidth limitations, however it was tested successfully to use 3 CFs per Crazyradio.
+```
+roslaunch crazyflie_demo multi_teleop_xbox360.launch uri1:=radio://0/100/2M/E7E7E7E7E7 uri2:=radio://0/100/2M/E7E7E7E705
+```
+
+Please check the launch files in the crazyflie_demo package for other examples, including simple waypoint navigation.
 
 ## ROS Features
 
 ### Parameters
 
 The launch file supports the following arguments:
-* crazyflieSDK: Path to the official SDK from Bitcraze, e.g. ~/crazyflie/crazyflie-clients-python/lib
 * uri: Specifier for the crazyflie, e.g. radio://0/80/2M
 * tf_prefix: tf prefix for the crazyflie frame(s)
 * roll_trim: Trim in degrees, e.g. negative if flie drifts to the left
