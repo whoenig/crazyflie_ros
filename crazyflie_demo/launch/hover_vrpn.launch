@@ -5,8 +5,8 @@
   <arg name="ip" default="vicon" />
   <arg name="port" default="3883" />
 
-  <arg name="uri1" default="radio://0/90/2M" />
-  <arg name="frame1" default="crazyflie1" />
+  <arg name="uri" default="radio://0/90/2M" />
+  <arg name="frame" default="crazyflie" />
   <arg name="x" default="0" />
   <arg name="y" default="0" />
   <arg name="z" default="0.5" />
@@ -15,10 +15,10 @@
     <arg name="crazyflieSDK" value="$(arg crazyflieSDK)" />
   </include>
 
-  <group ns="crazyflie1">
+  <group ns="crazyflie">
     <include file="$(find crazyflie)/launch/crazyflie_add.launch">
-      <arg name="uri" value="$(arg uri1)" />
-      <arg name="tf_prefix" value="crazyflie1" />
+      <arg name="uri" value="$(arg uri)" />
+      <arg name="tf_prefix" value="crazyflie" />
     </include>
 
     <node name="joy" pkg="joy" type="joy_node" output="screen">
@@ -30,7 +30,7 @@
     </node>
 
     <node name="controller" pkg="crazyflie_controller" type="controller.py" output="screen">
-      <param name="frame" value="$(arg frame1)" />
+      <param name="frame" value="$(arg frame)" />
     </node>
 
     <node name="pose" pkg="crazyflie_demo" type="publish_pose.py" output="screen">
@@ -46,7 +46,7 @@
       <param name="ip" value="$(arg ip)" />
       <param name="port" value="$(arg port)" />
       <param name="frame_id" value="/world" />
-      <param name="child_frame_id" value="$(arg frame1)" />
+      <param name="child_frame_id" value="$(arg frame)" />
     </node>
   </group>
 

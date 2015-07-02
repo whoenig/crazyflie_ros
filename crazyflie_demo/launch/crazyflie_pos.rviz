@@ -63,7 +63,7 @@ Visualization Manager:
           Value: true
       Name: RobotModel
       Robot Description: robot_description
-      TF Prefix: crazyflie1
+      TF Prefix: crazyflie
       Update Interval: 0
       Value: true
       Visual Enabled: true
@@ -79,7 +79,7 @@ Visualization Manager:
       Shaft Length: 0.1
       Shaft Radius: 0.02
       Shape: Arrow
-      Topic: /crazyflie1/goal
+      Topic: /crazyflie/goal
       Value: true
   Enabled: true
   Global Options:

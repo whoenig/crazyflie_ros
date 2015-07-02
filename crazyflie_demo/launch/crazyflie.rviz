@@ -55,12 +55,12 @@ Visualization Manager:
       Enabled: true
       History Length: 1
       Name: Imu
-      Topic: /crazyflie1/imu
+      Topic: /crazyflie/imu
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: crazyflie1/base_link
+    Fixed Frame: crazyflie/base_link
     Frame Rate: 30
   Name: root
   Tools:

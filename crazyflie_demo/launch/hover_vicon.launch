@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="uri1" default="radio://0/90/2M" />
-  <arg name="frame1" default="/vicon/crazyflie1/crazyflie1" />
+  <arg name="uri" default="radio://0/90/2M" />
+  <arg name="frame" default="/vicon/crazyflie/crazyflie" />
   <arg name="joy_dev" default="/dev/input/js0" />
   <arg name="x" default="0" />
   <arg name="y" default="0" />
@@ -10,10 +10,10 @@
   <include file="$(find crazyflie)/launch/crazyflie_server.launch">
   </include>
 
-  <group ns="crazyflie1">
+  <group ns="crazyflie">
     <include file="$(find crazyflie)/launch/crazyflie_add.launch">
-      <arg name="uri" value="$(arg uri1)" />
-      <arg name="tf_prefix" value="crazyflie1" />
+      <arg name="uri" value="$(arg uri)" />
+      <arg name="tf_prefix" value="crazyflie" />
     </include>
 
     <node name="joy" pkg="joy" type="joy_node" output="screen">
@@ -25,7 +25,7 @@
     </node>
 
     <node name="controller" pkg="crazyflie_controller" type="crazyflie_controller" output="screen">
-      <param name="frame" value="$(arg frame1)" />
+      <param name="frame" value="$(arg frame)" />
     </node>
 
     <node name="pose" pkg="crazyflie_demo" type="publish_pose.py" output="screen">
@@ -36,7 +36,7 @@
       <param name="z" value="$(arg z)" />
     </node>
 
-    <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster" args="0 0 0 0 0 0 1 $(arg frame1) /crazyflie1/base_link 100" />
+    <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster" args="0 0 0 0 0 0 1 $(arg frame) /crazyflie/base_link 100" />
   </group>
 
   <!-- run vicon bridge -->

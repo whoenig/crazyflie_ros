@@ -1,14 +1,12 @@
 <?xml version="1.0"?>
 
 <launch>
-  <arg name="crazyflieSDK" default="~/crazyflie/crazyflie-clients-python/lib" />
   <arg name="uri1" default="radio://0/90/2M" />
   <arg name="uri2" default="radio://0/80/2M" />
   <arg name="joy_dev1" default="/dev/input/js0" />
   <arg name="joy_dev2" default="/dev/input/js1" />
 
   <include file="$(find crazyflie)/launch/crazyflie_server.launch">
-    <arg name="crazyflieSDK" value="$(arg crazyflieSDK)" />
   </include>
 
   <group ns="crazyflie1">
