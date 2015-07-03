@@ -12,8 +12,9 @@
 
   <group ns="crazyflie">
     <include file="$(find crazyflie)/launch/crazyflie_add.launch">
-      <arg name="uri" value="$(arg uri1)" />
+      <arg name="uri" value="$(arg uri)" />
       <arg name="tf_prefix" value="crazyflie" />
+      <arg name="enable_logging" value="False" />
     </include>
 
     <node name="joy" pkg="joy" type="joy_node" output="screen">
@@ -24,9 +25,9 @@
       <param name="use_crazyflie_controller" value="True" />
     </node>
 
-    <node name="controller" pkg="crazyflie_controller" type="crazyflie_controller" output="screen">
-      <param name="frame" value="$(arg frame)" />
-    </node>
+    <include file="$(find crazyflie_controller)/launch/crazyflie2.launch">
+      <arg name="frame" value="$(arg frame)" />
+    </include>
 
     <node name="pose" pkg="crazyflie_demo" type="publish_pose_teleop.py" output="screen">
       <param name="name" value="goal" />

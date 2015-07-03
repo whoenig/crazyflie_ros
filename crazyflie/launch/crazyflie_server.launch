@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 
 <launch>
-
   <node pkg="crazyflie" type="crazyflie_server" name="crazyflie_server" output="screen">
   </node>
 </launch>

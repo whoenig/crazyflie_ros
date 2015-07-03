@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="frame"/>
+
+  <node name="controller" pkg="crazyflie_controller" type="crazyflie_controller" output="screen">
+    <param name="frame" value="$(arg frame)" />
+    <rosparam command="load" file="$(find crazyflie_controller)/config/crazyflie2.yaml" />
+  </node>
+</launch>

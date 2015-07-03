@@ -6,18 +6,60 @@
 
 #include "pid.hpp"
 
+double get(
+    const ros::NodeHandle& n,
+    const std::string& name) {
+    double value;
+    n.getParam(name, value);
+    return value;
+}
+
 class Controller
 {
 public:
 
-    Controller(const std::string& frame)
+    Controller(
+        const std::string& frame,
+        const ros::NodeHandle& n)
         : m_frame(frame)
         , m_pubNav()
         , m_listener()
-        , m_pidX(40, 20, 2.0, -10, 10, -0.1, 0.1, "x")
-        , m_pidY(-40, -20, -2.0, -10, 10, -0.1, 0.1, "y")
-        , m_pidZ(5000.0, 6000.0, 3500.0, 10000, 60000, -1000, 1000, "z")
-        , m_pidYaw(-200.0, -20.0, 0.0, -200.0, 200.0, 0, 0, "yaw")
+        , m_pidX(
+            get(n, "PIDs/X/kp"),
+            get(n, "PIDs/X/kd"),
+            get(n, "PIDs/X/ki"),
+            get(n, "PIDs/X/minOutput"),
+            get(n, "PIDs/X/maxOutput"),
+            get(n, "PIDs/X/integratorMin"),
+            get(n, "PIDs/X/integratorMax"),
+            "x")
+        , m_pidY(
+            get(n, "PIDs/Y/kp"),
+            get(n, "PIDs/Y/kd"),
+            get(n, "PIDs/Y/ki"),
+            get(n, "PIDs/Y/minOutput"),
+            get(n, "PIDs/Y/maxOutput"),
+            get(n, "PIDs/Y/integratorMin"),
+            get(n, "PIDs/Y/integratorMax"),
+            "y")
+        , m_pidZ(
+            get(n, "PIDs/Z/kp"),
+            get(n, "PIDs/Z/kd"),
+            get(n, "PIDs/Z/ki"),
+            get(n, "PIDs/Z/minOutput"),
+            get(n, "PIDs/Z/maxOutput"),
+            get(n, "PIDs/Z/integratorMin"),
+            get(n, "PIDs/Z/integratorMax"),
+            "z")
+        , m_pidYaw(
+            get(n, "PIDs/Yaw/kp"),
+            get(n, "PIDs/Yaw/kd"),
+            get(n, "PIDs/Yaw/ki"),
+            get(n, "PIDs/Yaw/minOutput"),
+            get(n, "PIDs/Yaw/maxOutput"),
+            get(n, "PIDs/Yaw/integratorMin"),
+            get(n, "PIDs/Yaw/integratorMax"),
+            "yaw")
         , m_state(Idle)
         , m_goal()
         , m_subscribeGoal()
@@ -25,17 +67,17 @@ public:
         , m_serviceLand()
         , m_thrust(0)
     {
-        ros::NodeHandle n;
-        m_pubNav = n.advertise<geometry_msgs::Twist>("cmd_vel", 1);
-        m_subscribeGoal = n.subscribe("goal", 1, &Controller::goalChanged, this);
-        m_serviceTakeoff = n.advertiseService("takeoff", &Controller::takeoff, this);
-        m_serviceLand = n.advertiseService("land", &Controller::land, this);
+        ros::NodeHandle nh;
+        m_pubNav = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+        m_subscribeGoal = nh.subscribe("goal", 1, &Controller::goalChanged, this);
+        m_serviceTakeoff = nh.advertiseService("takeoff", &Controller::takeoff, this);
+        m_serviceLand = nh.advertiseService("land", &Controller::land, this);
     }
 
-    void run()
+    void run(double frequency)
     {
         ros::NodeHandle node;
-        ros::Timer timer = node.createTimer(ros::Duration(1.0/50.0), &Controller::iteration, this);
+        ros::Timer timer = node.createTimer(ros::Duration(1.0/frequency), &Controller::iteration, this);
         ros::spin();
     }
 
@@ -200,8 +242,11 @@ int main(int argc, char **argv)
   n.getParam("frame", frame);
   std::cout << frame << std::endl;
 
-  Controller controller(frame);
-  controller.run();
+  Controller controller(frame, n);
+
+  double frequency;
+  n.param("frequency", frequency, 50.0);
+  controller.run(frequency);
 
   // std::thread t(&Controlle::run, &controller);
   // t.detach();

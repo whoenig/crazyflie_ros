@@ -37,9 +37,9 @@
       <param name="joy_topic" value="/joy" />
     </node>
 
-   <node name="controller" pkg="crazyflie_controller" type="controller.py" output="screen">
-      <param name="frame" value="$(arg frame1)" />
-    </node>
+    <include file="$(find crazyflie_controller)/launch/crazyflie2.launch">
+      <arg name="frame" value="$(arg frame1)" />
+    </include>
 
     <node name="pose" pkg="crazyflie_demo" type="publish_pose.py" output="screen">
       <param name="name" value="goal" />
@@ -70,9 +70,9 @@
       <param name="joy_topic" value="/joy" />
     </node>
 
-    <node name="controller" pkg="crazyflie_controller" type="controller.py" output="screen">
-      <param name="frame" value="$(arg frame2)" />
-    </node>
+    <include file="$(find crazyflie_controller)/launch/crazyflie2.launch">
+      <arg name="frame" value="$(arg frame2)" />
+    </include>
 
     <node name="pose" pkg="crazyflie_demo" type="publish_pose.py" output="screen">
       <param name="name" value="goal" />
