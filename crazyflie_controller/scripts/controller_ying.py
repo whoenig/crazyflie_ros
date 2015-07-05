@@ -28,15 +28,15 @@ class Controller:
 
         self.MAX_ANGLE = np.pi/4
         self.MAX_THRUST = 65000.0
-        self.MASS_THRUST = 42000.0
-        self.kp = 20000.0
-        self.kd = 10000.0
-        self.ki = 0.0 #2000.0
+        self.MASS_THRUST = 40000.0
+        self.kp = 30000.0
+        self.kd = 15000.0
+        self.ki = 2000.0
 
         self.old_position = np.array([0.0, 0.0, 0.0])
         self.current_r_error_integration = np.array([0.0, 0.0, 0.0])
 
-        self.pidYaw = PID(-50.0, 0.0, 0.0, -200.0, 200.0, "yaw")
+        self.pidYaw = PID(-100.0, -25.0, 0.0, -200.0, 200.0, "yaw", isAngle=True)
 
     def getTransform(self, source_frame, target_frame):
         now = rospy.Time.now()
@@ -99,11 +99,11 @@ class Controller:
                     rospy.logerr("Could not transform from /world to %s.", self.frame)
 
             if self.state == Controller.Landing:
-                self.goal.pose.position.z = 0.05
+                self.goal.pose.position.z = 0.04
                 r = self.getTransform("/world", self.frame)
                 if r:
                     position, quaternion, t = r
-                    if position[2] <= 0.1:
+                    if position[2] <= 0.05:
                         self.state = Controller.Idle
                         msg = Twist()
                         self.pubNav.publish(msg)

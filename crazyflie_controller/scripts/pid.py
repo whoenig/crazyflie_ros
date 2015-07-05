@@ -1,15 +1,20 @@
 #!/usr/bin/env python
 
 import rospy
+import math
 from std_msgs.msg import Float32
 
+def mod(a, n):
+    return math.fmod(math.fmod(a, n) + n, n)
+
 class PID:
-    def __init__(self, kp, kd, ki, minOutput, maxOutput, name):
+    def __init__(self, kp, kd, ki, minOutput, maxOutput, name, isAngle=False):
         self.kp = kp
         self.kd = kd
         self.ki = ki
         self.minOutput = minOutput
         self.maxOutput = maxOutput
+        self.isAngle = isAngle
         self.integral = 0.0
         self.previousError = 0.0
         self.previousTime = rospy.get_time()
@@ -28,6 +33,8 @@ class PID:
         time = rospy.get_time()
         dt = time - self.previousTime
         error = targetValue - value
+        if self.isAngle:
+            error = mod(error + math.pi, 2 * math.pi) - math.pi
         self.integral += error * dt
         p = self.kp * error
         d = 0
