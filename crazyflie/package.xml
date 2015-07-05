@@ -1,0 +1,27 @@
+<package>
+  <name>crazyflie</name>
+  <version>0.0.1</version>
+  <description>ROS integration for Crazyflie Nano Quadcopter from Bitcraze</description>
+
+  <maintainer email="whoenig@usc.edu">Wolfgang Hoenig</maintainer>
+
+  <license>MIT</license>
+
+  <url type="website">http://ros.org/wiki/crazyflie</url>
+  <url type="bugtracker">https://github.com/whoenig/crazyflie_ros/issues</url>
+
+  <author email="whoenig@usc.edu">Wolfgang Hoenig</author>
+
+  <!-- Dependencies which this package needs to build itself. -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Dependencies needed after this package is compiled. -->
+  <run_depend>crazyflie_driver</run_depend>
+  <run_depend>crazyflie_description</run_depend>
+  <run_depend>crazyflie_controller</run_depend>
+  <run_depend>crazyflie_demo</run_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+</package>
