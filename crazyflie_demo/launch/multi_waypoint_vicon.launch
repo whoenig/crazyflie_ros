@@ -8,7 +8,7 @@
   <arg name="uri2" default="radio://0/80/2M/E7E7E7E702" />
   <arg name="frame2" default="/vicon/crazyflie2/crazyflie2" />
 
-  <include file="$(find crazyflie)/launch/crazyflie_server.launch">
+  <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
   </include>
 
   <node name="joy" pkg="joy" type="joy_node" output="screen">
@@ -16,7 +16,7 @@
   </node>
 
   <group ns="crazyflie1">
-    <include file="$(find crazyflie)/launch/crazyflie_add.launch">
+    <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
       <arg name="uri" value="$(arg uri1)" />
       <arg name="tf_prefix" value="crazyflie1" />
       <arg name="enable_logging" value="False" />
@@ -37,7 +37,7 @@
   </group>
 
   <group ns="crazyflie2">
-    <include file="$(find crazyflie)/launch/crazyflie_add.launch">
+    <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
       <arg name="uri" value="$(arg uri2)" />
       <arg name="tf_prefix" value="crazyflie2" />
       <arg name="enable_logging" value="False" />

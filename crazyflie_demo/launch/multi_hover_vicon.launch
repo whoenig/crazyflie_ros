@@ -15,7 +15,7 @@
   <arg name="y2" default="-0.75" />
   <arg name="z2" default="0.5" />
 
-  <include file="$(find crazyflie)/launch/crazyflie_server.launch">
+  <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
 <!--     <arg name="crazyflieSDK" value="$(arg crazyflieSDK)" /> -->
   </include>
 
@@ -24,7 +24,7 @@
   </node>
 
   <group ns="crazyflie1">
-    <include file="$(find crazyflie)/launch/crazyflie_add.launch">
+    <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
       <arg name="uri" value="$(arg uri1)" />
       <arg name="tf_prefix" value="crazyflie1" />
       <arg name="enable_logging" value="False" />
@@ -51,7 +51,7 @@
   </group>
 
   <group ns="crazyflie2">
-    <include file="$(find crazyflie)/launch/crazyflie_add.launch">
+    <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
       <arg name="uri" value="$(arg uri2)" />
       <arg name="tf_prefix" value="crazyflie2" />
       <arg name="enable_logging" value="False" />

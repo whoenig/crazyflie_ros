@@ -4,12 +4,12 @@
   <arg name="uri1" default="radio://0/0/250K" />
   <arg name="frame1" default="/vicon/crazyflie1/crazyflie1" />
 
-  <include file="$(find crazyflie)/launch/crazyflie_server.launch">
+  <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
     <arg name="crazyflieSDK" value="$(arg crazyflieSDK)" />
   </include>
 
   <group ns="crazyflie1">
-    <include file="$(find crazyflie)/launch/crazyflie_add.launch">
+    <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
       <arg name="uri" value="$(arg uri1)" />
       <arg name="tf_prefix" value="crazyflie1" />
     </include>

@@ -11,12 +11,12 @@
   <arg name="y" default="0" />
   <arg name="z" default="0.5" />
 
-  <include file="$(find crazyflie)/launch/crazyflie_server.launch">
+  <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
     <arg name="crazyflieSDK" value="$(arg crazyflieSDK)" />
   </include>
 
   <group ns="crazyflie">
-    <include file="$(find crazyflie)/launch/crazyflie_add.launch">
+    <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
       <arg name="uri" value="$(arg uri)" />
       <arg name="tf_prefix" value="crazyflie" />
     </include>

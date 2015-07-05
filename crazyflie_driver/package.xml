@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>crazyflie</name>
+  <name>crazyflie_driver</name>
   <version>0.0.1</version>
   <description>ROS driver for Crazyflie Nano Quadcopter from Bitcraze</description>
 

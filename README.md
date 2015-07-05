@@ -23,7 +23,7 @@ If you want to use joystick teleoperation, you should setup the hector_quadrotor
 
 There are four packages included: crazyflie, crazyflie_description, crazyflie_controller, and crazyflie_demo.
 
-### Crazyflie
+### Crazyflie_driver
 
 This package contains the driver. In order to support multiple Crazyflies with a single Crazyradio, there is crazyflie_server (communicating with all Crazyflies) and crazyflie_add to dynamically add Crazyflies.
 The server does not communicate to any Crazyflie initially, hence crazyflie_add needs to be used.
