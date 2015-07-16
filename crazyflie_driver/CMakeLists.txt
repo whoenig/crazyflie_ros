@@ -115,7 +115,7 @@ add_executable(crazyflie_server
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 add_dependencies(crazyflie_server
-  crazyflie_generate_messages_cpp
+  crazyflie_driver_generate_messages_cpp
 )
 
 ## Specify libraries to link a library or executable target against
@@ -130,7 +130,7 @@ add_executable(crazyflie_add
 )
 
 add_dependencies(crazyflie_add
-  crazyflie_generate_messages_cpp
+  crazyflie_driver_generate_messages_cpp
 )
 
 target_link_libraries(crazyflie_add
