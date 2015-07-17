@@ -1,6 +1,6 @@
 #include "ros/ros.h"
-#include "crazyflie/AddCrazyflie.h"
-#include "crazyflie/UpdateParams.h"
+#include "crazyflie_driver/AddCrazyflie.h"
+#include "crazyflie_driver/UpdateParams.h"
 #include "std_srvs/Empty.h"
 #include "geometry_msgs/Twist.h"
 #include "sensor_msgs/Imu.h"
@@ -102,8 +102,8 @@ private:
   }
 
   bool updateParams(
-    crazyflie::UpdateParams::Request& req,
-    crazyflie::UpdateParams::Response& res)
+    crazyflie_driver::UpdateParams::Request& req,
+    crazyflie_driver::UpdateParams::Response& res)
   {
     ROS_INFO("Update parameters");
     for (auto&& p : req.params) {
@@ -329,8 +329,8 @@ private:
 };
 
 bool add_crazyflie(
-  crazyflie::AddCrazyflie::Request  &req,
-  crazyflie::AddCrazyflie::Response &res)
+  crazyflie_driver::AddCrazyflie::Request  &req,
+  crazyflie_driver::AddCrazyflie::Response &res)
 {
   ROS_INFO("Adding %s as %s with trim(%f, %f). Logging: %d",
     req.uri.c_str(),

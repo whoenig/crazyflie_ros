@@ -1,5 +1,5 @@
 #include "ros/ros.h"
-#include "crazyflie/AddCrazyflie.h"
+#include "crazyflie_driver/AddCrazyflie.h"
 
 int main(int argc, char **argv)
 {
@@ -20,10 +20,10 @@ int main(int argc, char **argv)
   n.param("enable_logging", enable_logging, true);
 
   ROS_INFO("wait_for_service /add_crazyflie");
-  ros::ServiceClient addCrazyflieService = n.serviceClient<crazyflie::AddCrazyflie>("/add_crazyflie");
+  ros::ServiceClient addCrazyflieService = n.serviceClient<crazyflie_driver::AddCrazyflie>("/add_crazyflie");
   addCrazyflieService.waitForExistence();
   ROS_INFO("found /add_crazyflie");
-  crazyflie::AddCrazyflie addCrazyflie;
+  crazyflie_driver::AddCrazyflie addCrazyflie;
   addCrazyflie.request.uri = uri;
   addCrazyflie.request.tf_prefix = tf_prefix;
   addCrazyflie.request.roll_trim = roll_trim;
