@@ -24,33 +24,6 @@ public:
         : m_frame(frame)
         , m_pubNav()
         , m_listener()
-        , m_pidX(
-            get(n, "PIDs/X/kp"),
-            get(n, "PIDs/X/kd"),
-            get(n, "PIDs/X/ki"),
-            get(n, "PIDs/X/minOutput"),
-            get(n, "PIDs/X/maxOutput"),
-            get(n, "PIDs/X/integratorMin"),
-            get(n, "PIDs/X/integratorMax"),
-            "x")
-        , m_pidY(
-            get(n, "PIDs/Y/kp"),
-            get(n, "PIDs/Y/kd"),
-            get(n, "PIDs/Y/ki"),
-            get(n, "PIDs/Y/minOutput"),
-            get(n, "PIDs/Y/maxOutput"),
-            get(n, "PIDs/Y/integratorMin"),
-            get(n, "PIDs/Y/integratorMax"),
-            "y")
-        , m_pidZ(
-            get(n, "PIDs/Z/kp"),
-            get(n, "PIDs/Z/kd"),
-            get(n, "PIDs/Z/ki"),
-            get(n, "PIDs/Z/minOutput"),
-            get(n, "PIDs/Z/maxOutput"),
-            get(n, "PIDs/Z/integratorMin"),
-            get(n, "PIDs/Z/integratorMax"),
-            "z")
         , m_pidYaw(
             get(n, "PIDs/Yaw/kp"),
             get(n, "PIDs/Yaw/kd"),
@@ -59,13 +32,21 @@ public:
             get(n, "PIDs/Yaw/maxOutput"),
             get(n, "PIDs/Yaw/integratorMin"),
             get(n, "PIDs/Yaw/integratorMax"),
-            "yaw")
+            "yaw",
+            true)
         , m_state(Idle)
         , m_goal()
         , m_subscribeGoal()
         , m_serviceTakeoff()
         , m_serviceLand()
         , m_thrust(0)
+        , m_kp(get(n, "PIDs/Body/kp"))
+        , m_kd(get(n, "PIDs/Body/kd"))
+        , m_ki(get(n, "PIDs/Body/ki"))
+        , m_oldPosition(0,0,0)
+        , m_current_r_error_integration(0,0,0)
+        , m_massThrust(get(n, "MassThrust"))
+        , m_maxAngle(get(n, "MaxAngle"))
     {
         ros::NodeHandle nh;
         m_pubNav = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
@@ -118,9 +99,7 @@ private:
 
     void pidReset()
     {
-        m_pidX.reset();
-        m_pidZ.reset();
-        m_pidZ.reset();
+        m_current_r_error_integration = tf::Vector3(0,0,0);
         m_pidYaw.reset();
     }
 
@@ -137,7 +116,6 @@ private:
                 if (transform.getOrigin().z() > 0.05 || m_thrust > 50000)
                 {
                     pidReset();
-                    m_pidZ.setIntegral(m_thrust / m_pidZ.ki());
                     m_state = Automatic;
                     m_thrust = 0;
                 }
@@ -168,33 +146,89 @@ private:
                 tf::StampedTransform transform;
                 m_listener.lookupTransform("/world", m_frame, ros::Time(0), transform);
 
-                //tf::Stamped< tf::Pose > targetWorld(m_goal, transform.stamp_, "world");
-                geometry_msgs::PoseStamped targetWorld;
-                //(m_goal, transform.stamp_, "world");
-                targetWorld.header.stamp = transform.stamp_;
-                targetWorld.header.frame_id = "world";
-                targetWorld.pose = m_goal.pose;
+                tf::Vector3 position = transform.getOrigin();
+                tf::Vector3 current_velocity = (position - m_oldPosition) / dt;
+                m_oldPosition = position;
 
-                //tf::Stamped< tf::Pose > targetDrone;
-                geometry_msgs::PoseStamped targetDrone;
-                m_listener.transformPose(m_frame, targetWorld, targetDrone);
+                tf::Vector3 current_z_axis = transform.getRotation().getAxis();
+                current_z_axis /= transform.getRotation().length();
 
-                tfScalar roll, pitch, yaw;
-                tf::Matrix3x3(
-                    tf::Quaternion(
-                        targetDrone.pose.orientation.x,
-                        targetDrone.pose.orientation.y,
-                        targetDrone.pose.orientation.z,
-                        targetDrone.pose.orientation.w
-                    )).getRPY(roll, pitch, yaw);
+                tf::Vector3 target_position(
+                    m_goal.pose.position.x,
+                    m_goal.pose.position.y,
+                    m_goal.pose.position.z);
+
+                tf::Quaternion target_quaternion(
+                    m_goal.pose.orientation.x,
+                    m_goal.pose.orientation.y,
+                    m_goal.pose.orientation.z,
+                    m_goal.pose.orientation.w);
+
+                tfScalar target_euler_roll, target_euler_pitch, target_euler_yaw;
+                tf::Matrix3x3(target_quaternion).getRPY(
+                    target_euler_roll,
+                    target_euler_pitch,
+                    target_euler_yaw);
+
+                tfScalar current_euler_roll, current_euler_pitch, current_euler_yaw;
+                tf::Matrix3x3(transform.getRotation()).getRPY(
+                    current_euler_roll,
+                    current_euler_pitch,
+                    current_euler_yaw);
+
+                tf::Vector3 current_r_error = target_position - position;
+                tf::Vector3 current_r_error_unit = current_r_error.normalized();
+
+                m_current_r_error_integration += current_r_error * dt;
+                if (m_current_r_error_integration.length() >= 6) {
+                    m_current_r_error_integration = 6.0 * m_current_r_error_integration.normalized();
+                }
+
+                double r_error_norm = current_r_error.length();
+                tf::Vector3 target_velocity = 1.3 * (r_error_norm/5.0)*current_r_error_unit;
+                if (r_error_norm >= 5.0) {
+                    target_velocity = 1.3 * current_r_error_unit; // The velocity in the target position direction is 1 m/s
+                }
+
+                // compute z-axis-desired
+                tf::Vector3 z_axis_desired = m_massThrust * tf::Vector3(0,0,1) + m_kp*current_r_error + m_kd*(target_velocity - current_velocity) + m_ki*m_current_r_error_integration;
+                double angle = acos(z_axis_desired.normalized().dot(tf::Vector3(0,0,1)));
+                double kp = m_kp;
+                double kd = m_kd;
+                double ki = m_ki;
+
+                while (angle >= m_maxAngle) {
+                    kp *= 0.9;
+                    kd *= 0.9;
+                    ki *= 0.9;
+                    z_axis_desired = m_massThrust * tf::Vector3(0,0,1) + kp*current_r_error + kd*(target_velocity - current_velocity) + ki*m_current_r_error_integration;
+                    angle = acos(z_axis_desired.normalized().dot(tf::Vector3(0,0,1)));
+                }
+                tf::Vector3 z_axis_desired_unit = z_axis_desired.normalized();
+
+                // control
+                double thrust = z_axis_desired.dot(current_z_axis);
+                if (thrust < 0) {
+                    thrust = 0;
+                }
+                if (thrust > 65536) {
+                    thrust = 65536;
+                }
+
+                tf::Vector3 x_axis_desired = z_axis_desired_unit.cross(tf::Vector3(sin(target_euler_yaw), cos(target_euler_yaw), 0));
+                x_axis_desired.normalize();
+                tf::Vector3 y_axis_desired = z_axis_desired_unit.cross(x_axis_desired);
+
+                double pitch_angle = asin(-1.0*x_axis_desired.getZ()) * 180.0 / M_PI;
+                double yaw_angle = atan2(x_axis_desired.getY(), x_axis_desired.getX());
+                double roll_angle = atan2(y_axis_desired.getZ(), z_axis_desired_unit.getZ()) * 180.0 / M_PI;
 
                 geometry_msgs::Twist msg;
-                msg.linear.x = m_pidX.update(0, targetDrone.pose.position.x);
-                msg.linear.y = m_pidY.update(0.0, targetDrone.pose.position.y);
-                msg.linear.z = m_pidZ.update(0.0, targetDrone.pose.position.z);
-                msg.angular.z = m_pidYaw.update(0.0, yaw);
+                msg.linear.x = pitch_angle;
+                msg.linear.y = roll_angle;
+                msg.linear.z = thrust;
+                msg.angular.z = m_pidYaw.update(current_euler_yaw, yaw_angle);
                 m_pubNav.publish(msg);
-
 
             }
             break;
@@ -221,9 +255,6 @@ private:
     std::string m_frame;
     ros::Publisher m_pubNav;
     tf::TransformListener m_listener;
-    PID m_pidX;
-    PID m_pidY;
-    PID m_pidZ;
     PID m_pidYaw;
     State m_state;
     geometry_msgs::PoseStamped m_goal;
@@ -231,6 +262,14 @@ private:
     ros::ServiceServer m_serviceTakeoff;
     ros::ServiceServer m_serviceLand;
     float m_thrust;
+
+    double m_kp;
+    double m_kd;
+    double m_ki;
+    tf::Vector3 m_oldPosition;
+    tf::Vector3 m_current_r_error_integration;
+    double m_massThrust;
+    double m_maxAngle;
 };
 
 int main(int argc, char **argv)

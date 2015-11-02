@@ -13,7 +13,8 @@ public:
         float maxOutput,
         float integratorMin,
         float integratorMax,
-        const std::string& name)
+        const std::string& name,
+        bool isAngle = false)
         : m_kp(kp)
         , m_kd(kd)
         , m_ki(ki)
@@ -24,6 +25,7 @@ public:
         , m_integral(0)
         , m_previousError(0)
         , m_previousTime(ros::Time::now())
+        , m_isAngle(isAngle)
     {
     }
 
@@ -49,6 +51,9 @@ public:
         ros::Time time = ros::Time::now();
         float dt = time.toSec() - m_previousTime.toSec();
         float error = targetValue - value;
+        if (m_isAngle) {
+            error = fmod(error + M_PI, 2 * M_PI) - M_PI;
+        }
         m_integral += error * dt;
         m_integral = std::max(std::min(m_integral, m_integratorMax), m_integratorMin);
         float p = m_kp * error;
@@ -80,4 +85,5 @@ private:
     float m_integral;
     float m_previousError;
     ros::Time m_previousTime;
+    bool m_isAngle;
 };
