@@ -16,10 +16,12 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <!-- Dependencies needed after this package is compiled. -->
+  <run_depend>crazyflie_cpp</run_depend>
   <run_depend>crazyflie_driver</run_depend>
   <run_depend>crazyflie_description</run_depend>
   <run_depend>crazyflie_controller</run_depend>
   <run_depend>crazyflie_demo</run_depend>
+  <run_depend>crazyflie_tools</run_depend>
 
   <export>
     <metapackage/>

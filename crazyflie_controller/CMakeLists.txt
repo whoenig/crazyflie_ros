@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(crazyflie_controller)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS message_generation std_msgs tf)
+find_package(catkin REQUIRED COMPONENTS
+  message_generation
+  std_msgs
+  tf
+)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -97,7 +98,7 @@ catkin_package(
 
 # Declare a cpp executable
 add_executable(crazyflie_controller
-	src/controller.cpp)
+  src/controller.cpp)
 
 # Add cmake target dependencies of the executable/library
 # as an example, message headers may need to be generated before nodes
