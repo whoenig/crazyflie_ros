@@ -12,7 +12,7 @@
 #include <thread>
 #include <mutex>
 
-#include "Crazyflie.h"
+#include <crazyflie_cpp/Crazyflie.h>
 
 constexpr double pi() { return std::atan(1)*4; }
 

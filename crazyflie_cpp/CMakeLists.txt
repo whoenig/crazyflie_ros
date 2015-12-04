@@ -1,15 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(crazyflie_driver)
+project(crazyflie_cpp)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  message_generation
-  std_msgs
-  tf
-  crazyflie_cpp
-)
+find_package(catkin)
+find_library(USB_LIB usb-1.0)
 
 # clang + libc++ cause linker errors; however we can use gcc-4.9 (or above instead)
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -std=c++11")
@@ -58,11 +54,11 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 # )
 
 ## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  AddCrazyflie.srv
-  UpdateParams.srv
-)
+#add_service_files(
+#  FILES
+#  AddCrazyflie.srv
+#  UpdateParams.srv
+#)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -72,10 +68,10 @@ add_service_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-   std_msgs
-)
+#generate_messages(
+#  DEPENDENCIES
+#   std_msgs
+#)
 
 ###################################
 ## catkin specific configuration ##
@@ -87,14 +83,11 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES crazyflie
+  INCLUDE_DIRS include
+  LIBRARIES crazyflie_cpp
   CATKIN_DEPENDS
-    message_runtime
-    std_msgs
-    tf
-    crazyflie_cpp
-#  DEPENDS system_lib
+#    ${USB_LIB}
+  DEPENDS ${USB_LIB}
 )
 
 ###########
@@ -103,44 +96,19 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+include_directories(
+  include/crazyflie_cpp
+)
 
 ## Declare a cpp library
-# add_library(crazyflie
-#   src/${PROJECT_NAME}/crazyflie.cpp
-# )
-
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-)
-
-## Declare a cpp executable
-add_executable(crazyflie_server
-  src/crazyflie_server.cpp
-)
-
-## Add cmake target dependencies of the executable/library
-## as an example, message headers may need to be generated before nodes
-add_dependencies(crazyflie_server
-  crazyflie_driver_generate_messages_cpp
+add_library(crazyflie_cpp
+  src/Crazyradio.cpp
+  src/Crazyflie.cpp
 )
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(crazyflie_server
-  ${catkin_LIBRARIES}
-)
-
-## Declare a cpp executable
-add_executable(crazyflie_add
-  src/crazyflie_add.cpp
-)
-
-add_dependencies(crazyflie_add
-  crazyflie_driver_generate_messages_cpp
-)
-
-target_link_libraries(crazyflie_add
-  ${catkin_LIBRARIES}
+target_link_libraries(crazyflie_cpp
+  ${USB_LIB}
 )
 
 #############
