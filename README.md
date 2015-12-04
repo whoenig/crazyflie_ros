@@ -21,12 +21,25 @@ If you want to use joystick teleoperation, you should setup the hector_quadrotor
 
 ## Usage
 
-There are four packages included: crazyflie, crazyflie_description, crazyflie_controller, and crazyflie_demo.
+There are six packages included: crazyflie_cpp, crazyflie_driver, crazyflie_tools, crazyflie_description, crazyflie_controller, and crazyflie_demo.
+
+### Crazyflie_Cpp
+
+This package contains a cpp library for the Crazyradio and Crazyflie. It can be used independently of ROS.
 
 ### Crazyflie_driver
 
 This package contains the driver. In order to support multiple Crazyflies with a single Crazyradio, there is crazyflie_server (communicating with all Crazyflies) and crazyflie_add to dynamically add Crazyflies.
 The server does not communicate to any Crazyflie initially, hence crazyflie_add needs to be used.
+
+### Crazyflie_tools
+
+This package contains tools which are helpful, but not required for normal operation. So far, it just support one tool for scanning for a Crazyflie.
+
+You can find connected Crazyflies using:
+```
+rosrun crazyflie_tools scan
+```
 
 ### Crazyflie_description
 
@@ -45,7 +58,7 @@ For teleoperation using a joystick, use:
 ```
 roslaunch crazyflie_demo teleop_xbox360.launch uri:=radio://0/100/2M
 ```
-where the uri specifies the uri of your Crazyflie.
+where the uri specifies the uri of your Crazyflie. You can find valid uris using the scan command in the crazyflie_tools package.
 
 For hovering at (0,0,1) using VICON, use:
 ```
