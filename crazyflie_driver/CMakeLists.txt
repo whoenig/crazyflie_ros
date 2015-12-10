@@ -35,6 +35,12 @@ add_service_files(
   UpdateParams.srv
 )
 
+add_message_files(
+  FILES
+  LogBlock.msg
+  GenericLogData.msg
+)
+
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES

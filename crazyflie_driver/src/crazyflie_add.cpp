@@ -1,5 +1,6 @@
 #include "ros/ros.h"
 #include "crazyflie_driver/AddCrazyflie.h"
+#include "crazyflie_driver/LogBlock.h"
 
 int main(int argc, char **argv)
 {
@@ -29,6 +30,31 @@ int main(int argc, char **argv)
   addCrazyflie.request.roll_trim = roll_trim;
   addCrazyflie.request.pitch_trim = pitch_trim;
   addCrazyflie.request.enable_logging = enable_logging;
+
+  std::vector<std::string> genericLogTopics;
+  n.param("genericLogTopics", genericLogTopics, std::vector<std::string>());
+  std::vector<int> genericLogTopicFrequencies;
+  n.param("genericLogTopicFrequencies", genericLogTopicFrequencies, std::vector<int>());
+
+  if (genericLogTopics.size() == genericLogTopicFrequencies.size())
+  {
+    size_t i = 0;
+    for (auto& topic : genericLogTopics)
+    {
+      crazyflie_driver::LogBlock logBlock;
+      logBlock.topic_name = topic;
+      logBlock.frequency = genericLogTopicFrequencies[i];
+      n.getParam("genericLogTopic_" + topic + "_Variables", logBlock.variables);
+      addCrazyflie.request.log_blocks.push_back(logBlock);
+      ++i;
+    }
+  }
+  else
+  {
+    ROS_ERROR("Cardinality of genericLogTopics and genericLogTopicFrequencies does not match!");
+  }
+
+
   addCrazyflieService.call(addCrazyflie);
 
   return 0;

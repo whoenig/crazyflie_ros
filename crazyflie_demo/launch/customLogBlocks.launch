@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="uri" default="radio://0/80/2M" />
+
+  <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
+  </include>
+
+  <group ns="crazyflie">
+
+    <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
+      <param name="uri" value="$(arg uri)" />
+      <param name="tf_prefix" value="crazyflie" />
+      <rosparam>
+        genericLogTopics: ["log1", "log2"]
+        genericLogTopicFrequencies: [10, 100]
+        genericLogTopic_log1_Variables: ["pm.vbat"]
+        genericLogTopic_log2_Variables: ["acc.x", "acc.y", "acc.z"]
+      </rosparam>
+    </node>
+
+
+  </group>
+</launch>
