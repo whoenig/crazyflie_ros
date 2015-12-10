@@ -35,6 +35,7 @@ public:
     float roll_trim,
     float pitch_trim,
     bool enable_logging,
+    bool enable_parameters,
     std::vector<crazyflie_driver::LogBlock>& log_blocks)
     : m_cf(link_uri)
     , m_tf_prefix(tf_prefix)
@@ -42,6 +43,7 @@ public:
     , m_roll_trim(roll_trim)
     , m_pitch_trim(pitch_trim)
     , m_enableLogging(enable_logging)
+    , m_enableParameters(enable_parameters)
     , m_logBlocks(log_blocks)
     , m_serviceEmergency()
     , m_serviceUpdateParams()
@@ -175,33 +177,36 @@ private:
 
     auto start = std::chrono::system_clock::now();
 
-    ROS_INFO("Requesting parameters...");
-    m_cf.requestParamToc();
-    for (auto iter = m_cf.paramsBegin(); iter != m_cf.paramsEnd(); ++iter) {
-      auto entry = *iter;
-      std::string paramName = "/" + m_tf_prefix + "/" + entry.group + "/" + entry.name;
-      switch (entry.type) {
-        case Crazyflie::ParamTypeUint8:
-          ros::param::set(paramName, m_cf.getParam<uint8_t>(entry.id));
-          break;
-        case Crazyflie::ParamTypeInt8:
-          ros::param::set(paramName, m_cf.getParam<int8_t>(entry.id));
-          break;
-        case Crazyflie::ParamTypeUint16:
-          ros::param::set(paramName, m_cf.getParam<uint16_t>(entry.id));
-          break;
-        case Crazyflie::ParamTypeInt16:
-          ros::param::set(paramName, m_cf.getParam<int16_t>(entry.id));
-          break;
-        case Crazyflie::ParamTypeUint32:
-          ros::param::set(paramName, (int)m_cf.getParam<uint32_t>(entry.id));
-          break;
-        case Crazyflie::ParamTypeInt32:
-          ros::param::set(paramName, m_cf.getParam<int32_t>(entry.id));
-          break;
-        case Crazyflie::ParamTypeFloat:
-          ros::param::set(paramName, m_cf.getParam<float>(entry.id));
-          break;
+    if (m_enableParameters)
+    {
+      ROS_INFO("Requesting parameters...");
+      m_cf.requestParamToc();
+      for (auto iter = m_cf.paramsBegin(); iter != m_cf.paramsEnd(); ++iter) {
+        auto entry = *iter;
+        std::string paramName = "/" + m_tf_prefix + "/" + entry.group + "/" + entry.name;
+        switch (entry.type) {
+          case Crazyflie::ParamTypeUint8:
+            ros::param::set(paramName, m_cf.getParam<uint8_t>(entry.id));
+            break;
+          case Crazyflie::ParamTypeInt8:
+            ros::param::set(paramName, m_cf.getParam<int8_t>(entry.id));
+            break;
+          case Crazyflie::ParamTypeUint16:
+            ros::param::set(paramName, m_cf.getParam<uint16_t>(entry.id));
+            break;
+          case Crazyflie::ParamTypeInt16:
+            ros::param::set(paramName, m_cf.getParam<int16_t>(entry.id));
+            break;
+          case Crazyflie::ParamTypeUint32:
+            ros::param::set(paramName, (int)m_cf.getParam<uint32_t>(entry.id));
+            break;
+          case Crazyflie::ParamTypeInt32:
+            ros::param::set(paramName, m_cf.getParam<int32_t>(entry.id));
+            break;
+          case Crazyflie::ParamTypeFloat:
+            ros::param::set(paramName, m_cf.getParam<float>(entry.id));
+            break;
+        }
       }
     }
 
@@ -361,6 +366,7 @@ private:
   float m_roll_trim;
   float m_pitch_trim;
   bool m_enableLogging;
+  bool m_enableParameters;
   std::vector<crazyflie_driver::LogBlock> m_logBlocks;
 
   ros::ServiceServer m_serviceEmergency;
@@ -380,11 +386,12 @@ bool add_crazyflie(
   crazyflie_driver::AddCrazyflie::Request  &req,
   crazyflie_driver::AddCrazyflie::Response &res)
 {
-  ROS_INFO("Adding %s as %s with trim(%f, %f). Logging: %d",
+  ROS_INFO("Adding %s as %s with trim(%f, %f). Logging: %d, Parameters: %d",
     req.uri.c_str(),
     req.tf_prefix.c_str(),
     req.roll_trim,
     req.pitch_trim,
+    req.enable_parameters,
     req.enable_logging);
 
   // Leak intentionally
@@ -394,6 +401,7 @@ bool add_crazyflie(
     req.roll_trim,
     req.pitch_trim,
     req.enable_logging,
+    req.enable_parameters,
     req.log_blocks);
 
   return true;

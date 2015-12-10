@@ -3,5 +3,6 @@ string tf_prefix
 float32 roll_trim
 float32 pitch_trim
 bool enable_logging
+bool enable_parameters
 LogBlock[] log_blocks
 ---
