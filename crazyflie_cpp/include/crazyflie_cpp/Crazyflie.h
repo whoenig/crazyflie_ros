@@ -176,6 +176,7 @@ private:
 
   logInfo m_logInfo;
   std::vector<LogTocEntry> m_logTocEntries;
+  std::set<size_t> m_logTocEntriesRequested;
 
   std::map<uint8_t, std::function<void(crtpLogDataResponse*, uint8_t)> > m_logBlockCb;
 
@@ -186,7 +187,9 @@ private:
 
   paramInfo m_paramInfo;
   std::vector<ParamTocEntry> m_paramTocEntries;
+  std::set<size_t> m_paramTocEntriesRequested;
   std::map<uint8_t, ParamValue> m_paramValues;
+  std::set<size_t> m_paramValuesRequested;
 
   template<typename T>
   friend class LogBlock;

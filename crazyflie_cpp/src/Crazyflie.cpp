@@ -24,6 +24,7 @@ Crazyflie::Crazyflie(
   , m_datarate(Crazyradio::Datarate_250KPS)
   , m_logInfo()
   , m_logTocEntries()
+  , m_logTocEntriesRequested()
   , m_logBlockCb()
   , m_blockReset(false)
   , m_blockCreated()
@@ -31,7 +32,9 @@ Crazyflie::Crazyflie(
   , m_blockStopped()
   , m_paramInfo()
   , m_paramTocEntries()
+  , m_paramTocEntriesRequested()
   , m_paramValues()
+  , m_paramValuesRequested()
 {
   int datarate;
   int channel;
@@ -111,8 +114,9 @@ void Crazyflie::reboot()
 
 void Crazyflie::requestLogToc()
 {
+
+  // Find the number of log variables in TOC
   m_logInfo.len = 0;
-  m_logTocEntries.clear();
   do
   {
     crtpLogGetInfoRequest request;
@@ -120,26 +124,34 @@ void Crazyflie::requestLogToc()
   } while(m_logInfo.len == 0);
   std::cout << "Log: " << (int)m_logInfo.len << std::endl;
 
+  // Prepare data structures to request detailed information
+  m_logTocEntriesRequested.clear();
+  m_logTocEntries.resize(m_logInfo.len);
   for (size_t i = 0; i < m_logInfo.len; ++i)
   {
-    // std::cout << i << std::endl;
-    do
-    {
-      crtpLogGetItemRequest request(i);
-      sendPacket((const uint8_t*)&request, sizeof(request));
-    } while(m_logTocEntries.size() < i + 1);
+    m_logTocEntriesRequested.insert(i);
   }
 
-  // for (auto&& entry : m_logTocEntries) {
-  //   std::cout << entry.group << "." << entry.name << " type: " << (int)entry.type << std::endl;
-  // }
+  // Request detailed information, until done
+  while (m_logTocEntriesRequested.size() > 0)
+  {
+    for (size_t p = 0; p < m_logTocEntriesRequested.size(); ++p)
+    {
+      auto iter = m_logTocEntriesRequested.begin();
+      for (size_t j = 0; j < p; ++j) {
+        ++iter;
+      }
+      size_t i = *iter;
+      crtpLogGetItemRequest request(i);
+      sendPacket((const uint8_t*)&request, sizeof(request));
+    }
+  }
 }
 
 void Crazyflie::requestParamToc()
 {
+  // Find the number of log variables in TOC
   m_paramInfo.len = 0;
-  m_paramTocEntries.clear();
-  m_paramValues.clear();
   do
   {
     crtpParamTocGetInfoRequest request;
@@ -147,20 +159,44 @@ void Crazyflie::requestParamToc()
   } while(m_paramInfo.len == 0);
   std::cout << "Params: " << (int)m_paramInfo.len << std::endl;
 
+  // Prepare data structures to request detailed information
+  m_paramTocEntriesRequested.clear();
+  m_paramValues.clear();
+  m_paramTocEntries.resize(m_paramInfo.len);
   for (size_t i = 0; i < m_paramInfo.len; ++i)
   {
-    // std::cout << i << std::endl;
-    do
+    m_paramTocEntriesRequested.insert(i);
+    m_paramValuesRequested.insert(i);
+  }
+
+  // Request detailed information, until done
+  while (m_paramTocEntriesRequested.size() > 0)
+  {
+    for (size_t p = 0; p < m_paramTocEntriesRequested.size(); ++p)
     {
+      auto iter = m_paramTocEntriesRequested.begin();
+      for (size_t j = 0; j < p; ++j) {
+        ++iter;
+      }
+      size_t i = *iter;
       crtpParamTocGetItemRequest request(i);
       sendPacket((const uint8_t*)&request, sizeof(request));
-    } while(m_paramTocEntries.size() < i + 1);
+    }
+  }
 
-    do
+  // Request current values
+  while (m_paramValuesRequested.size() > 0)
+  {
+    for (size_t p = 0; p < m_paramValuesRequested.size(); ++p)
     {
+      auto iter = m_paramValuesRequested.begin();
+      for (size_t j = 0; j < p; ++j) {
+        ++iter;
+      }
+      size_t i = *iter;
       crtpParamReadRequest request(i);
       sendPacket((const uint8_t*)&request, sizeof(request));
-    } while(m_paramValues.find(i) == m_paramValues.end());
+    }
   }
 }
 
@@ -263,12 +299,15 @@ void Crazyflie::handleAck(
   }
   else if (crtpLogGetItemResponse::match(result)) {
     crtpLogGetItemResponse* r = (crtpLogGetItemResponse*)result.data;
-    m_logTocEntries.resize(r->request.id + 1);
-    LogTocEntry& entry = m_logTocEntries[r->request.id];
-    entry.id = r->request.id;
-    entry.type = (LogType)r->type;
-    entry.group = std::string(&r->text[0]);
-    entry.name = std::string(&r->text[entry.group.size() + 1]);
+    if (r->request.id < m_logTocEntries.size())
+    {
+      m_logTocEntriesRequested.erase(r->request.id);
+      LogTocEntry& entry = m_logTocEntries[r->request.id];
+      entry.id = r->request.id;
+      entry.type = (LogType)r->type;
+      entry.group = std::string(&r->text[0]);
+      entry.name = std::string(&r->text[entry.group.size() + 1]);
+    }
     // std::cout << "Got: " << (int)r->id << std::endl;
   }
   else if (crtpLogControlResponse::match(result)) {
@@ -303,13 +342,16 @@ void Crazyflie::handleAck(
   }
   else if (crtpParamTocGetItemResponse::match(result)) {
     crtpParamTocGetItemResponse* r = (crtpParamTocGetItemResponse*)result.data;
-    m_paramTocEntries.resize(r->request.id + 1);
-    ParamTocEntry& entry = m_paramTocEntries[r->request.id];
-    entry.id = r->request.id;
-    entry.type = (ParamType)(r->length | r-> type << 2 | r->sign << 3);
-    entry.readonly = r->readonly;
-    entry.group = std::string(&r->text[0]);
-    entry.name = std::string(&r->text[entry.group.size() + 1]);
+    if (r->request.id < m_paramTocEntries.size())
+    {
+      m_paramTocEntriesRequested.erase(r->request.id);
+      ParamTocEntry& entry = m_paramTocEntries[r->request.id];
+      entry.id = r->request.id;
+      entry.type = (ParamType)(r->length | r-> type << 2 | r->sign << 3);
+      entry.readonly = r->readonly;
+      entry.group = std::string(&r->text[0]);
+      entry.name = std::string(&r->text[entry.group.size() + 1]);
+    }
   }
   else if (crtpParamValueResponse::match(result)) {
     crtpParamValueResponse* r = (crtpParamValueResponse*)result.data;
@@ -317,6 +359,7 @@ void Crazyflie::handleAck(
     std::memcpy(&v, &r->valueFloat, 4);
     // *v = r->valueFloat;
     m_paramValues[r->id] = v;//(ParamValue)(r->valueFloat);
+    m_paramValuesRequested.erase(r->id);
   }
   else {
     crtp* header = (crtp*)result.data;
