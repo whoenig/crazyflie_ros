@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include <boost/program_options.hpp>
 #include <crazyflie_cpp/Crazyradio.h>
 
