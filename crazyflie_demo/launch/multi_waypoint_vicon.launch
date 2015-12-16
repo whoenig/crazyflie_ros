@@ -28,7 +28,7 @@
     </node>
 
     <include file="$(find crazyflie_controller)/launch/crazyflie2.launch">
-      <arg name="frame" value="$(arg frame)" />
+      <arg name="frame" value="$(arg frame1)" />
     </include>
 
     <node name="pose" pkg="crazyflie_demo" type="demo1.py" output="screen">
@@ -49,7 +49,7 @@
     </node>
 
     <include file="$(find crazyflie_controller)/launch/crazyflie2.launch">
-      <arg name="frame" value="$(arg frame)" />
+      <arg name="frame" value="$(arg frame2)" />
     </include>
 
     <node name="pose" pkg="crazyflie_demo" type="demo2.py" output="screen">
