@@ -53,6 +53,7 @@ public:
     , m_pubMag()
     , m_pubPressure()
     , m_pubBattery()
+    , m_pubRssi()
     , m_sentSetpoint(false)
   {
     ros::NodeHandle n;
@@ -65,6 +66,7 @@ public:
     m_pubMag = n.advertise<sensor_msgs::MagneticField>(tf_prefix + "/magnetic_field", 10);
     m_pubPressure = n.advertise<std_msgs::Float32>(tf_prefix + "/pressure", 10);
     m_pubBattery = n.advertise<std_msgs::Float32>(tf_prefix + "/battery", 10);
+    m_pubRssi = n.advertise<std_msgs::Float32>(tf_prefix + "/rssi", 10);
 
     for (auto& logBlock : m_logBlocks)
     {
@@ -214,6 +216,10 @@ private:
     std::unique_ptr<LogBlock<log2> > logBlock2;
     std::vector<std::unique_ptr<LogBlockGeneric> > logBlocksGeneric(m_logBlocks.size());
     if (m_enableLogging) {
+
+      std::function<void(const crtpPlatformRSSIAck*)> cb_ack = std::bind(&CrazyflieROS::onEmptyAck, this, std::placeholders::_1);
+      m_cf.setEmptyAckCallback(cb_ack);
+
       ROS_INFO("Requesting Logging variables...");
       m_cf.requestLogToc();
 
@@ -359,6 +365,13 @@ private:
     pub->publish(msg);
   }
 
+  void onEmptyAck(const crtpPlatformRSSIAck* data) {
+      std_msgs::Float32 msg;
+      // dB
+      msg.data = data->rssi;
+      m_pubRssi.publish(msg);
+  }
+
 private:
   Crazyflie m_cf;
   std::string m_tf_prefix;
@@ -377,6 +390,7 @@ private:
   ros::Publisher m_pubMag;
   ros::Publisher m_pubPressure;
   ros::Publisher m_pubBattery;
+  ros::Publisher m_pubRssi;
   std::vector<ros::Publisher> m_pubLogDataGeneric;
 
   bool m_sentSetpoint;

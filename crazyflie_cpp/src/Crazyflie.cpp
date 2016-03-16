@@ -35,6 +35,7 @@ Crazyflie::Crazyflie(
   , m_paramTocEntriesRequested()
   , m_paramValues()
   , m_paramValuesRequested()
+  , m_emptyAckCallback(nullptr)
 {
   int datarate;
   int channel;
@@ -360,6 +361,12 @@ void Crazyflie::handleAck(
     // *v = r->valueFloat;
     m_paramValues[r->id] = v;//(ParamValue)(r->valueFloat);
     m_paramValuesRequested.erase(r->id);
+  }
+  else if (crtpPlatformRSSIAck::match(result)) {
+    crtpPlatformRSSIAck* r = (crtpPlatformRSSIAck*)result.data;
+    if (m_emptyAckCallback) {
+      m_emptyAckCallback(r);
+    }
   }
   else {
     crtp* header = (crtp*)result.data;

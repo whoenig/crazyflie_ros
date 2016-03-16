@@ -88,6 +88,11 @@ public:
     const std::string& group,
     const std::string& name) const;
 
+  void setEmptyAckCallback(
+    std::function<void(const crtpPlatformRSSIAck*)> cb) {
+    m_emptyAckCallback = cb;
+  }
+
 protected:
   void sendPacket(
     const uint8_t* data,
@@ -192,6 +197,8 @@ private:
   std::set<size_t> m_paramTocEntriesRequested;
   std::map<uint8_t, ParamValue> m_paramValues;
   std::set<size_t> m_paramValuesRequested;
+
+  std::function<void(const crtpPlatformRSSIAck*)> m_emptyAckCallback;
 
   template<typename T>
   friend class LogBlock;
