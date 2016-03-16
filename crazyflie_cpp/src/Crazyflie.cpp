@@ -10,7 +10,7 @@
 #include <cstring>
 #include <stdexcept>
 
-#define MAX_RADIOS 4
+#define MAX_RADIOS 16
 
 Crazyradio* g_crazyradios[MAX_RADIOS];
 std::mutex g_mutex[MAX_RADIOS];
@@ -63,6 +63,10 @@ Crazyflie::Crazyflie(
     }
     else if (datarate == 2 && datarateType == 'M') {
       m_datarate = Crazyradio::Datarate_2MPS;
+    }
+
+    if (m_devId >= MAX_RADIOS) {
+      throw std::runtime_error("This version does not support that many radios. Adjust MAX_RADIOS and recompile!");
     }
 
     if (!g_crazyradios[m_devId]) {
