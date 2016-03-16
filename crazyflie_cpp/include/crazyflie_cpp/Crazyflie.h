@@ -50,6 +50,8 @@ public:
   Crazyflie(
     const std::string& link_uri);
 
+  void logReset();
+
   void sendSetpoint(
     float roll,
     float pitch,

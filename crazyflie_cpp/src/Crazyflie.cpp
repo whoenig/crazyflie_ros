@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cstring>
 #include <stdexcept>
+#include <thread>
 
 #define MAX_RADIOS 16
 
@@ -81,11 +82,15 @@ Crazyflie::Crazyflie(
   else {
     throw std::runtime_error("Uri is not valid!");
   }
+}
 
+void Crazyflie::logReset()
+{
   m_blockReset = false;
   do {
     crtpLogResetRequest request;
     sendPacket((const uint8_t*)&request, sizeof(request));
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
   } while (!m_blockReset);
 }
 

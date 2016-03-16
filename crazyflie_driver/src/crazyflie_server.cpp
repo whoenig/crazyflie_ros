@@ -177,6 +177,8 @@ private:
   {
     // m_cf.reboot();
 
+    m_cf.logReset();
+
     auto start = std::chrono::system_clock::now();
 
     if (m_enableParameters)
