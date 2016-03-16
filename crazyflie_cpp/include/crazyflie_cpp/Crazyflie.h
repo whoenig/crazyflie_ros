@@ -95,6 +95,11 @@ public:
     m_emptyAckCallback = cb;
   }
 
+  void setLinkQualityCallback(
+    std::function<void(float)> cb) {
+    m_linkQualityCallback = cb;
+  }
+
 protected:
   void sendPacket(
     const uint8_t* data,
@@ -201,6 +206,7 @@ private:
   std::set<size_t> m_paramValuesRequested;
 
   std::function<void(const crtpPlatformRSSIAck*)> m_emptyAckCallback;
+  std::function<void(float)> m_linkQualityCallback;
 
   template<typename T>
   friend class LogBlock;

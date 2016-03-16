@@ -179,6 +179,9 @@ private:
 
     m_cf.logReset();
 
+    std::function<void(float)> cb_lq = std::bind(&CrazyflieROS::onLinkQuality, this, std::placeholders::_1);
+    m_cf.setLinkQualityCallback(cb_lq);
+
     auto start = std::chrono::system_clock::now();
 
     if (m_enableParameters)
@@ -372,6 +375,12 @@ private:
       // dB
       msg.data = data->rssi;
       m_pubRssi.publish(msg);
+  }
+
+  void onLinkQuality(float linkQuality) {
+      if (linkQuality < 0.7) {
+        ROS_WARN("Link Quality low (%f)", linkQuality);
+      }
   }
 
 private:

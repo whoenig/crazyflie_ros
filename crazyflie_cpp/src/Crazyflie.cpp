@@ -37,6 +37,7 @@ Crazyflie::Crazyflie(
   , m_paramValues()
   , m_paramValuesRequested()
   , m_emptyAckCallback(nullptr)
+  , m_linkQualityCallback(nullptr)
 {
   int datarate;
   int channel;
@@ -273,6 +274,11 @@ void Crazyflie::sendPacket(
   const uint8_t* data,
   uint32_t length)
 {
+  static uint32_t numPackets = 0;
+  static uint32_t numAcks = 0;
+
+  numPackets++;
+
   Crazyradio::Ack ack;
   {
     std::unique_lock<std::mutex> mlock(g_mutex[m_devId]);
@@ -290,7 +296,19 @@ void Crazyflie::sendPacket(
   ack.data[ack.size] = 0;
   if (ack.ack) {
     handleAck(ack);
+    numAcks++;
   }
+  if (numPackets == 100) {
+    if (m_linkQualityCallback) {
+      // We just take the ratio of sent vs. acked packets here
+      // for a sliding window of 100 packets
+      float linkQuality = numAcks / (float)numPackets;
+      m_linkQualityCallback(linkQuality);
+    }
+    numPackets = 0;
+    numAcks = 0;
+  }
+
 }
 
 void Crazyflie::handleAck(
