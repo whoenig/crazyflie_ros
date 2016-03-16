@@ -19,9 +19,11 @@ class Controller
 public:
 
     Controller(
+        const std::string& worldFrame,
         const std::string& frame,
         const ros::NodeHandle& n)
-        : m_frame(frame)
+        : m_worldFrame(worldFrame)
+        , m_frame(frame)
         , m_pubNav()
         , m_listener()
         , m_pidX(
@@ -133,7 +135,7 @@ private:
         case TakingOff:
             {
                 tf::StampedTransform transform;
-                m_listener.lookupTransform("/world", m_frame, ros::Time(0), transform);
+                m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
                 if (transform.getOrigin().z() > 0.05 || m_thrust > 50000)
                 {
                     pidReset();
@@ -155,7 +157,7 @@ private:
             {
                 m_goal.pose.position.z = 0.05;
                 tf::StampedTransform transform;
-                m_listener.lookupTransform("/world", m_frame, ros::Time(0), transform);
+                m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
                 if (transform.getOrigin().z() <= 0.05) {
                     m_state = Idle;
                     geometry_msgs::Twist msg;
@@ -166,16 +168,13 @@ private:
         case Automatic:
             {
                 tf::StampedTransform transform;
-                m_listener.lookupTransform("/world", m_frame, ros::Time(0), transform);
+                m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
 
-                //tf::Stamped< tf::Pose > targetWorld(m_goal, transform.stamp_, "world");
                 geometry_msgs::PoseStamped targetWorld;
-                //(m_goal, transform.stamp_, "world");
                 targetWorld.header.stamp = transform.stamp_;
-                targetWorld.header.frame_id = "world";
+                targetWorld.header.frame_id = m_worldFrame;
                 targetWorld.pose = m_goal.pose;
 
-                //tf::Stamped< tf::Pose > targetDrone;
                 geometry_msgs::PoseStamped targetDrone;
                 m_listener.transformPose(m_frame, targetWorld, targetDrone);
 
@@ -218,6 +217,7 @@ private:
     };
 
 private:
+    std::string m_worldFrame;
     std::string m_frame;
     ros::Publisher m_pubNav;
     tf::TransformListener m_listener;
@@ -237,21 +237,17 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "controller");
 
+  // Read parameters
   ros::NodeHandle n("~");
+  std::string worldFrame;
+  n.param<std::string>("worldFrame", worldFrame, "/world");
   std::string frame;
   n.getParam("frame", frame);
-  std::cout << frame << std::endl;
-
-  Controller controller(frame, n);
-
   double frequency;
   n.param("frequency", frequency, 50.0);
+
+  Controller controller(worldFrame, frame, n);
   controller.run(frequency);
-
-  // std::thread t(&Controlle::run, &controller);
-  // t.detach();
-
-  // ros::spin();
 
   return 0;
 }

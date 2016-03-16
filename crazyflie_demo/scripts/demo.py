@@ -11,6 +11,7 @@ from geometry_msgs.msg import PoseStamped
 class Demo():
     def __init__(self, goals):
         rospy.init_node('demo', anonymous=True)
+        self.worldFrame = rospy.get_param("~worldFrame", "/world")
         self.frame = rospy.get_param("~frame")
         self.pubGoal = rospy.Publisher('goal', PoseStamped, queue_size=1)
         self.listener = TransformListener()
@@ -18,10 +19,10 @@ class Demo():
         self.goalIndex = 0
 
     def run(self):
-        self.listener.waitForTransform("/world", self.frame, rospy.Time(), rospy.Duration(5.0))
+        self.listener.waitForTransform(self.worldFrame, self.frame, rospy.Time(), rospy.Duration(5.0))
         goal = PoseStamped()
         goal.header.seq = 0
-        goal.header.frame_id = "world"
+        goal.header.frame_id = self.worldFrame
         while not rospy.is_shutdown():
             goal.header.seq += 1
             goal.header.stamp = rospy.Time.now()
@@ -36,9 +37,9 @@ class Demo():
 
             self.pubGoal.publish(goal)
 
-            t = self.listener.getLatestCommonTime("/world", self.frame)
-            if self.listener.canTransform("/world", self.frame, t):
-                position, quaternion = self.listener.lookupTransform("/world", self.frame, t)
+            t = self.listener.getLatestCommonTime(self.worldFrame, self.frame)
+            if self.listener.canTransform(self.worldFrame, self.frame, t):
+                position, quaternion = self.listener.lookupTransform(self.worldFrame, self.frame, t)
                 rpy = tf.transformations.euler_from_quaternion(quaternion)
                 if     math.fabs(position[0] - self.goals[self.goalIndex][0]) < 0.3 \
                    and math.fabs(position[1] - self.goals[self.goalIndex][1]) < 0.3 \
