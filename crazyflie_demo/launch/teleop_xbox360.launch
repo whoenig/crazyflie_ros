@@ -28,7 +28,9 @@
 
   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find crazyflie_demo)/launch/crazyflie.rviz" />
 
-  <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot" args="/crazyflie/temperature/temperature"/>
+  <!-- <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot" args="/crazyflie/temperature/temperature"/> -->
 
   <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot2" args="/crazyflie/battery"/>
+
+  <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot3" args="/crazyflie/rssi"/>
 </launch>

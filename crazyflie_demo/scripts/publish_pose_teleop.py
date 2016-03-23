@@ -15,6 +15,7 @@ def joyChanged(data):
 
 if __name__ == '__main__':
     rospy.init_node('publish_pose', anonymous=True)
+    worldFrame = rospy.get_param("~worldFrame", "/world")
     name = rospy.get_param("~name")
     r = rospy.get_param("~rate")
     joy_topic = rospy.get_param("~joy_topic", "joy")
@@ -27,7 +28,7 @@ if __name__ == '__main__':
     msg = PoseStamped()
     msg.header.seq = 0
     msg.header.stamp = rospy.Time.now()
-    msg.header.frame_id = "world"
+    msg.header.frame_id = worldFrame
     msg.pose.position.x = x
     msg.pose.position.y = y
     msg.pose.position.z = z

@@ -9,8 +9,9 @@
 #include <iostream>
 #include <cstring>
 #include <stdexcept>
+#include <thread>
 
-#define MAX_RADIOS 4
+#define MAX_RADIOS 16
 
 Crazyradio* g_crazyradios[MAX_RADIOS];
 std::mutex g_mutex[MAX_RADIOS];
@@ -24,6 +25,7 @@ Crazyflie::Crazyflie(
   , m_datarate(Crazyradio::Datarate_250KPS)
   , m_logInfo()
   , m_logTocEntries()
+  , m_logTocEntriesRequested()
   , m_logBlockCb()
   , m_blockReset(false)
   , m_blockCreated()
@@ -31,7 +33,11 @@ Crazyflie::Crazyflie(
   , m_blockStopped()
   , m_paramInfo()
   , m_paramTocEntries()
+  , m_paramTocEntriesRequested()
   , m_paramValues()
+  , m_paramValuesRequested()
+  , m_emptyAckCallback(nullptr)
+  , m_linkQualityCallback(nullptr)
 {
   int datarate;
   int channel;
@@ -61,6 +67,10 @@ Crazyflie::Crazyflie(
       m_datarate = Crazyradio::Datarate_2MPS;
     }
 
+    if (m_devId >= MAX_RADIOS) {
+      throw std::runtime_error("This version does not support that many radios. Adjust MAX_RADIOS and recompile!");
+    }
+
     if (!g_crazyradios[m_devId]) {
       g_crazyradios[m_devId] = new Crazyradio(m_devId);
       // g_crazyradios[m_devId]->setAckEnable(false);
@@ -73,11 +83,15 @@ Crazyflie::Crazyflie(
   else {
     throw std::runtime_error("Uri is not valid!");
   }
+}
 
+void Crazyflie::logReset()
+{
   m_blockReset = false;
   do {
     crtpLogResetRequest request;
     sendPacket((const uint8_t*)&request, sizeof(request));
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
   } while (!m_blockReset);
 }
 
@@ -111,8 +125,9 @@ void Crazyflie::reboot()
 
 void Crazyflie::requestLogToc()
 {
+
+  // Find the number of log variables in TOC
   m_logInfo.len = 0;
-  m_logTocEntries.clear();
   do
   {
     crtpLogGetInfoRequest request;
@@ -120,26 +135,34 @@ void Crazyflie::requestLogToc()
   } while(m_logInfo.len == 0);
   std::cout << "Log: " << (int)m_logInfo.len << std::endl;
 
+  // Prepare data structures to request detailed information
+  m_logTocEntriesRequested.clear();
+  m_logTocEntries.resize(m_logInfo.len);
   for (size_t i = 0; i < m_logInfo.len; ++i)
   {
-    // std::cout << i << std::endl;
-    do
-    {
-      crtpLogGetItemRequest request(i);
-      sendPacket((const uint8_t*)&request, sizeof(request));
-    } while(m_logTocEntries.size() < i + 1);
+    m_logTocEntriesRequested.insert(i);
   }
 
-  // for (auto&& entry : m_logTocEntries) {
-  //   std::cout << entry.group << "." << entry.name << " type: " << (int)entry.type << std::endl;
-  // }
+  // Request detailed information, until done
+  while (m_logTocEntriesRequested.size() > 0)
+  {
+    for (size_t p = 0; p < m_logTocEntriesRequested.size(); ++p)
+    {
+      auto iter = m_logTocEntriesRequested.begin();
+      for (size_t j = 0; j < p; ++j) {
+        ++iter;
+      }
+      size_t i = *iter;
+      crtpLogGetItemRequest request(i);
+      sendPacket((const uint8_t*)&request, sizeof(request));
+    }
+  }
 }
 
 void Crazyflie::requestParamToc()
 {
+  // Find the number of log variables in TOC
   m_paramInfo.len = 0;
-  m_paramTocEntries.clear();
-  m_paramValues.clear();
   do
   {
     crtpParamTocGetInfoRequest request;
@@ -147,20 +170,44 @@ void Crazyflie::requestParamToc()
   } while(m_paramInfo.len == 0);
   std::cout << "Params: " << (int)m_paramInfo.len << std::endl;
 
+  // Prepare data structures to request detailed information
+  m_paramTocEntriesRequested.clear();
+  m_paramValues.clear();
+  m_paramTocEntries.resize(m_paramInfo.len);
   for (size_t i = 0; i < m_paramInfo.len; ++i)
   {
-    // std::cout << i << std::endl;
-    do
+    m_paramTocEntriesRequested.insert(i);
+    m_paramValuesRequested.insert(i);
+  }
+
+  // Request detailed information, until done
+  while (m_paramTocEntriesRequested.size() > 0)
+  {
+    for (size_t p = 0; p < m_paramTocEntriesRequested.size(); ++p)
     {
+      auto iter = m_paramTocEntriesRequested.begin();
+      for (size_t j = 0; j < p; ++j) {
+        ++iter;
+      }
+      size_t i = *iter;
       crtpParamTocGetItemRequest request(i);
       sendPacket((const uint8_t*)&request, sizeof(request));
-    } while(m_paramTocEntries.size() < i + 1);
+    }
+  }
 
-    do
+  // Request current values
+  while (m_paramValuesRequested.size() > 0)
+  {
+    for (size_t p = 0; p < m_paramValuesRequested.size(); ++p)
     {
+      auto iter = m_paramValuesRequested.begin();
+      for (size_t j = 0; j < p; ++j) {
+        ++iter;
+      }
+      size_t i = *iter;
       crtpParamReadRequest request(i);
       sendPacket((const uint8_t*)&request, sizeof(request));
-    } while(m_paramValues.find(i) == m_paramValues.end());
+    }
   }
 }
 
@@ -227,6 +274,11 @@ void Crazyflie::sendPacket(
   const uint8_t* data,
   uint32_t length)
 {
+  static uint32_t numPackets = 0;
+  static uint32_t numAcks = 0;
+
+  numPackets++;
+
   Crazyradio::Ack ack;
   {
     std::unique_lock<std::mutex> mlock(g_mutex[m_devId]);
@@ -244,7 +296,19 @@ void Crazyflie::sendPacket(
   ack.data[ack.size] = 0;
   if (ack.ack) {
     handleAck(ack);
+    numAcks++;
   }
+  if (numPackets == 100) {
+    if (m_linkQualityCallback) {
+      // We just take the ratio of sent vs. acked packets here
+      // for a sliding window of 100 packets
+      float linkQuality = numAcks / (float)numPackets;
+      m_linkQualityCallback(linkQuality);
+    }
+    numPackets = 0;
+    numAcks = 0;
+  }
+
 }
 
 void Crazyflie::handleAck(
@@ -263,12 +327,15 @@ void Crazyflie::handleAck(
   }
   else if (crtpLogGetItemResponse::match(result)) {
     crtpLogGetItemResponse* r = (crtpLogGetItemResponse*)result.data;
-    m_logTocEntries.resize(r->request.id + 1);
-    LogTocEntry& entry = m_logTocEntries[r->request.id];
-    entry.id = r->request.id;
-    entry.type = (LogType)r->type;
-    entry.group = std::string(&r->text[0]);
-    entry.name = std::string(&r->text[entry.group.size() + 1]);
+    if (r->request.id < m_logTocEntries.size())
+    {
+      m_logTocEntriesRequested.erase(r->request.id);
+      LogTocEntry& entry = m_logTocEntries[r->request.id];
+      entry.id = r->request.id;
+      entry.type = (LogType)r->type;
+      entry.group = std::string(&r->text[0]);
+      entry.name = std::string(&r->text[entry.group.size() + 1]);
+    }
     // std::cout << "Got: " << (int)r->id << std::endl;
   }
   else if (crtpLogControlResponse::match(result)) {
@@ -303,13 +370,16 @@ void Crazyflie::handleAck(
   }
   else if (crtpParamTocGetItemResponse::match(result)) {
     crtpParamTocGetItemResponse* r = (crtpParamTocGetItemResponse*)result.data;
-    m_paramTocEntries.resize(r->request.id + 1);
-    ParamTocEntry& entry = m_paramTocEntries[r->request.id];
-    entry.id = r->request.id;
-    entry.type = (ParamType)(r->length | r-> type << 2 | r->sign << 3);
-    entry.readonly = r->readonly;
-    entry.group = std::string(&r->text[0]);
-    entry.name = std::string(&r->text[entry.group.size() + 1]);
+    if (r->request.id < m_paramTocEntries.size())
+    {
+      m_paramTocEntriesRequested.erase(r->request.id);
+      ParamTocEntry& entry = m_paramTocEntries[r->request.id];
+      entry.id = r->request.id;
+      entry.type = (ParamType)(r->length | r-> type << 2 | r->sign << 3);
+      entry.readonly = r->readonly;
+      entry.group = std::string(&r->text[0]);
+      entry.name = std::string(&r->text[entry.group.size() + 1]);
+    }
   }
   else if (crtpParamValueResponse::match(result)) {
     crtpParamValueResponse* r = (crtpParamValueResponse*)result.data;
@@ -317,6 +387,13 @@ void Crazyflie::handleAck(
     std::memcpy(&v, &r->valueFloat, 4);
     // *v = r->valueFloat;
     m_paramValues[r->id] = v;//(ParamValue)(r->valueFloat);
+    m_paramValuesRequested.erase(r->id);
+  }
+  else if (crtpPlatformRSSIAck::match(result)) {
+    crtpPlatformRSSIAck* r = (crtpPlatformRSSIAck*)result.data;
+    if (m_emptyAckCallback) {
+      m_emptyAckCallback(r);
+    }
   }
   else {
     crtp* header = (crtp*)result.data;

@@ -364,3 +364,15 @@ struct crtpLogDataResponse
 
 
 // Port 13 (Platform)
+
+// The crazyflie-nrf firmware sends empty packets with the signal strength, if nothing else is in the queue
+struct crtpPlatformRSSIAck
+{
+    static bool match(const Crazyradio::Ack& response) {
+      return crtp(response.data[0]) == crtp(15, 3);
+    }
+
+    crtp header;
+    uint8_t reserved;
+    uint8_t rssi;
+};

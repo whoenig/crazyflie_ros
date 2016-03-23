@@ -1,5 +1,7 @@
 #include "ros/ros.h"
 #include "crazyflie_driver/AddCrazyflie.h"
+#include "crazyflie_driver/LogBlock.h"
+#include "crazyflie_driver/GenericLogData.h"
 #include "crazyflie_driver/UpdateParams.h"
 #include "std_srvs/Empty.h"
 #include "geometry_msgs/Twist.h"
@@ -12,7 +14,7 @@
 #include <thread>
 #include <mutex>
 
-#include "Crazyflie.h"
+#include <crazyflie_cpp/Crazyflie.h>
 
 constexpr double pi() { return std::atan(1)*4; }
 
@@ -32,13 +34,17 @@ public:
     const std::string& tf_prefix,
     float roll_trim,
     float pitch_trim,
-    bool enable_logging)
+    bool enable_logging,
+    bool enable_parameters,
+    std::vector<crazyflie_driver::LogBlock>& log_blocks)
     : m_cf(link_uri)
     , m_tf_prefix(tf_prefix)
     , m_isEmergency(false)
     , m_roll_trim(roll_trim)
     , m_pitch_trim(pitch_trim)
     , m_enableLogging(enable_logging)
+    , m_enableParameters(enable_parameters)
+    , m_logBlocks(log_blocks)
     , m_serviceEmergency()
     , m_serviceUpdateParams()
     , m_subscribeCmdVel()
@@ -47,6 +53,7 @@ public:
     , m_pubMag()
     , m_pubPressure()
     , m_pubBattery()
+    , m_pubRssi()
     , m_sentSetpoint(false)
   {
     ros::NodeHandle n;
@@ -59,6 +66,12 @@ public:
     m_pubMag = n.advertise<sensor_msgs::MagneticField>(tf_prefix + "/magnetic_field", 10);
     m_pubPressure = n.advertise<std_msgs::Float32>(tf_prefix + "/pressure", 10);
     m_pubBattery = n.advertise<std_msgs::Float32>(tf_prefix + "/battery", 10);
+    m_pubRssi = n.advertise<std_msgs::Float32>(tf_prefix + "/rssi", 10);
+
+    for (auto& logBlock : m_logBlocks)
+    {
+      m_pubLogDataGeneric.push_back(n.advertise<crazyflie_driver::GenericLogData>(tf_prefix + "/" + logBlock.topic_name, 10));
+    }
 
     std::thread t(&CrazyflieROS::run, this);
     t.detach();
@@ -164,39 +177,54 @@ private:
   {
     // m_cf.reboot();
 
-    ROS_INFO("Requesting parameters...");
-    m_cf.requestParamToc();
-    for (auto iter = m_cf.paramsBegin(); iter != m_cf.paramsEnd(); ++iter) {
-      auto entry = *iter;
-      std::string paramName = "/" + m_tf_prefix + "/" + entry.group + "/" + entry.name;
-      switch (entry.type) {
-        case Crazyflie::ParamTypeUint8:
-          ros::param::set(paramName, m_cf.getParam<uint8_t>(entry.id));
-          break;
-        case Crazyflie::ParamTypeInt8:
-          ros::param::set(paramName, m_cf.getParam<int8_t>(entry.id));
-          break;
-        case Crazyflie::ParamTypeUint16:
-          ros::param::set(paramName, m_cf.getParam<uint16_t>(entry.id));
-          break;
-        case Crazyflie::ParamTypeInt16:
-          ros::param::set(paramName, m_cf.getParam<int16_t>(entry.id));
-          break;
-        case Crazyflie::ParamTypeUint32:
-          ros::param::set(paramName, (int)m_cf.getParam<uint32_t>(entry.id));
-          break;
-        case Crazyflie::ParamTypeInt32:
-          ros::param::set(paramName, m_cf.getParam<int32_t>(entry.id));
-          break;
-        case Crazyflie::ParamTypeFloat:
-          ros::param::set(paramName, m_cf.getParam<float>(entry.id));
-          break;
+    m_cf.logReset();
+
+    std::function<void(float)> cb_lq = std::bind(&CrazyflieROS::onLinkQuality, this, std::placeholders::_1);
+    m_cf.setLinkQualityCallback(cb_lq);
+
+    auto start = std::chrono::system_clock::now();
+
+    if (m_enableParameters)
+    {
+      ROS_INFO("Requesting parameters...");
+      m_cf.requestParamToc();
+      for (auto iter = m_cf.paramsBegin(); iter != m_cf.paramsEnd(); ++iter) {
+        auto entry = *iter;
+        std::string paramName = "/" + m_tf_prefix + "/" + entry.group + "/" + entry.name;
+        switch (entry.type) {
+          case Crazyflie::ParamTypeUint8:
+            ros::param::set(paramName, m_cf.getParam<uint8_t>(entry.id));
+            break;
+          case Crazyflie::ParamTypeInt8:
+            ros::param::set(paramName, m_cf.getParam<int8_t>(entry.id));
+            break;
+          case Crazyflie::ParamTypeUint16:
+            ros::param::set(paramName, m_cf.getParam<uint16_t>(entry.id));
+            break;
+          case Crazyflie::ParamTypeInt16:
+            ros::param::set(paramName, m_cf.getParam<int16_t>(entry.id));
+            break;
+          case Crazyflie::ParamTypeUint32:
+            ros::param::set(paramName, (int)m_cf.getParam<uint32_t>(entry.id));
+            break;
+          case Crazyflie::ParamTypeInt32:
+            ros::param::set(paramName, m_cf.getParam<int32_t>(entry.id));
+            break;
+          case Crazyflie::ParamTypeFloat:
+            ros::param::set(paramName, m_cf.getParam<float>(entry.id));
+            break;
+        }
       }
     }
 
     std::unique_ptr<LogBlock<logImu> > logBlockImu;
     std::unique_ptr<LogBlock<log2> > logBlock2;
+    std::vector<std::unique_ptr<LogBlockGeneric> > logBlocksGeneric(m_logBlocks.size());
     if (m_enableLogging) {
+
+      std::function<void(const crtpPlatformRSSIAck*)> cb_ack = std::bind(&CrazyflieROS::onEmptyAck, this, std::placeholders::_1);
+      m_cf.setEmptyAckCallback(cb_ack);
+
       ROS_INFO("Requesting Logging variables...");
       m_cf.requestLogToc();
 
@@ -226,9 +254,33 @@ private:
         }, cb2));
       logBlock2->start(10); // 100ms
 
+      // custom log blocks
+      size_t i = 0;
+      for (auto& logBlock : m_logBlocks)
+      {
+        std::function<void(std::vector<double>*, void* userData)> cb =
+          std::bind(
+            &CrazyflieROS::onLogCustom,
+            this,
+            std::placeholders::_1,
+            std::placeholders::_2);
+
+        logBlocksGeneric[i].reset(new LogBlockGeneric(
+          &m_cf,
+          logBlock.variables,
+          (void*)&m_pubLogDataGeneric[i],
+          cb));
+        logBlocksGeneric[i]->start(logBlock.frequency / 10);
+        ++i;
+      }
+
+
     }
 
     ROS_INFO("Ready...");
+    auto end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsedSeconds = end-start;
+    ROS_INFO("Elapsed: %f s", elapsedSeconds.count());
 
     // Send 0 thrust initially for thrust-lock
     for (int i = 0; i < 100; ++i) {
@@ -308,6 +360,29 @@ private:
     }
   }
 
+  void onLogCustom(std::vector<double>* values, void* userData) {
+
+    ros::Publisher* pub = reinterpret_cast<ros::Publisher*>(userData);
+
+    crazyflie_driver::GenericLogData msg;
+    msg.values = *values;
+
+    pub->publish(msg);
+  }
+
+  void onEmptyAck(const crtpPlatformRSSIAck* data) {
+      std_msgs::Float32 msg;
+      // dB
+      msg.data = data->rssi;
+      m_pubRssi.publish(msg);
+  }
+
+  void onLinkQuality(float linkQuality) {
+      if (linkQuality < 0.7) {
+        ROS_WARN("Link Quality low (%f)", linkQuality);
+      }
+  }
+
 private:
   Crazyflie m_cf;
   std::string m_tf_prefix;
@@ -315,6 +390,8 @@ private:
   float m_roll_trim;
   float m_pitch_trim;
   bool m_enableLogging;
+  bool m_enableParameters;
+  std::vector<crazyflie_driver::LogBlock> m_logBlocks;
 
   ros::ServiceServer m_serviceEmergency;
   ros::ServiceServer m_serviceUpdateParams;
@@ -324,6 +401,8 @@ private:
   ros::Publisher m_pubMag;
   ros::Publisher m_pubPressure;
   ros::Publisher m_pubBattery;
+  ros::Publisher m_pubRssi;
+  std::vector<ros::Publisher> m_pubLogDataGeneric;
 
   bool m_sentSetpoint;
 };
@@ -332,11 +411,12 @@ bool add_crazyflie(
   crazyflie_driver::AddCrazyflie::Request  &req,
   crazyflie_driver::AddCrazyflie::Response &res)
 {
-  ROS_INFO("Adding %s as %s with trim(%f, %f). Logging: %d",
+  ROS_INFO("Adding %s as %s with trim(%f, %f). Logging: %d, Parameters: %d",
     req.uri.c_str(),
     req.tf_prefix.c_str(),
     req.roll_trim,
     req.pitch_trim,
+    req.enable_parameters,
     req.enable_logging);
 
   // Leak intentionally
@@ -345,7 +425,9 @@ bool add_crazyflie(
     req.tf_prefix,
     req.roll_trim,
     req.pitch_trim,
-    req.enable_logging);
+    req.enable_logging,
+    req.enable_parameters,
+    req.log_blocks);
 
   return true;
 }
