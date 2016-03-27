@@ -68,6 +68,7 @@ public:
         , m_serviceTakeoff()
         , m_serviceLand()
         , m_thrust(0)
+        , m_startZ(0)
     {
         ros::NodeHandle nh;
         m_pubNav = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
@@ -96,6 +97,10 @@ private:
     {
         ROS_INFO("Takeoff requested!");
         m_state = TakingOff;
+
+        tf::StampedTransform transform;
+        m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
+        m_startZ = transform.getOrigin().z();
 
         return true;
     }
@@ -136,7 +141,7 @@ private:
             {
                 tf::StampedTransform transform;
                 m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
-                if (transform.getOrigin().z() > 0.05 || m_thrust > 50000)
+                if (transform.getOrigin().z() > m_startZ + 0.05 || m_thrust > 50000)
                 {
                     pidReset();
                     m_pidZ.setIntegral(m_thrust / m_pidZ.ki());
@@ -155,10 +160,10 @@ private:
             break;
         case Landing:
             {
-                m_goal.pose.position.z = 0.05;
+                m_goal.pose.position.z = m_startZ + 0.05;
                 tf::StampedTransform transform;
                 m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
-                if (transform.getOrigin().z() <= 0.05) {
+                if (transform.getOrigin().z() <= m_startZ + 0.05) {
                     m_state = Idle;
                     geometry_msgs::Twist msg;
                     m_pubNav.publish(msg);
@@ -231,6 +236,7 @@ private:
     ros::ServiceServer m_serviceTakeoff;
     ros::ServiceServer m_serviceLand;
     float m_thrust;
+    float m_startZ;
 };
 
 int main(int argc, char **argv)
