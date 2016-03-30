@@ -126,10 +126,10 @@ Similar to the hector_quadrotor, package the fields are used as following:
 * Volts
 * update: 100ms (time between crazyflie and ROS not synchronized!)
 
-## Using This Work
+## Citing This Work
 
 This project is published under the very permissive MIT License. However,
-if you use this work we appreciate if credit this work accordingly.
+if you use the package we appreciate if you credit this project accordingly.
 
 For academic publications, you can cite the paper which introduced the package using the following bibtex entry:
 ```
