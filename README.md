@@ -126,6 +126,25 @@ Similar to the hector_quadrotor, package the fields are used as following:
 * Volts
 * update: 100ms (time between crazyflie and ROS not synchronized!)
 
+## Using This Work
+
+This project is published under the very permissive MIT License. However,
+if you use this work we appreciate if credit this work accordingly.
+
+For academic publications, you can cite the paper which introduced the package using the following bibtex entry:
+```
+@conference{HoenigMixedReality2015,
+  Address = {Hamburg, Germany},
+  Author = {Wolfgang Hoenig and Christina Milanes and Lisa Scaria and Thai Phan and Mark Bolas and Nora Ayanian},
+  Booktitle = {IEEE/RSJ Intl Conf. Intelligent Robots and Systems},
+  Month = {Sept},
+  Pages = {5382 - 5387},
+  Title = {Mixed Reality for Robotics},
+  Year = {2015}}
+```
+
+For any other mentioning please include my affiliation (ACTLab at University of Southern California or USC in short; The link to our webpage is http://act.usc.edu/) as this work was partially done as part of my research at USC.
+
 ## Similar Projects
 
 * https://github.com/gtagency/crazyflie-ros
