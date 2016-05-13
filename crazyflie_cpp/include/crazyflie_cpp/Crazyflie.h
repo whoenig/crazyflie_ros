@@ -45,6 +45,23 @@ public:
     float valueFloat;
   };
 
+  enum LogType {
+    LogTypeUint8  = 1,
+    LogTypeUint16 = 2,
+    LogTypeUint32 = 3,
+    LogTypeInt8   = 4,
+    LogTypeInt16  = 5,
+    LogTypeInt32  = 6,
+    LogTypeFloat  = 7,
+    LogTypeFP16   = 8,
+  };
+
+  struct LogTocEntry {
+    uint8_t id;
+    LogType type;
+    std::string group;
+    std::string name;
+  };
 
 public:
   Crazyflie(
@@ -71,6 +88,13 @@ public:
   }
   std::vector<ParamTocEntry>::const_iterator paramsEnd() const {
     return m_paramTocEntries.end();
+  }
+
+  std::vector<LogTocEntry>::const_iterator logVariablesBegin() const {
+    return m_logTocEntries.begin();
+  }
+  std::vector<LogTocEntry>::const_iterator logVariablesEnd() const {
+    return m_logTocEntries.end();
   }
 
   template<class T>
@@ -114,24 +138,6 @@ private:
     uint32_t log_crc;
     uint8_t log_max_packet;
     uint8_t log_max_ops;
-  };
-
-  enum LogType {
-    LogTypeUint8  = 1,
-    LogTypeUint16 = 2,
-    LogTypeUint32 = 3,
-    LogTypeInt8   = 4,
-    LogTypeInt16  = 5,
-    LogTypeInt32  = 6,
-    LogTypeFloat  = 7,
-    LogTypeFP16   = 8,
-  };
-
-  struct LogTocEntry {
-    uint8_t id;
-    LogType type;
-    std::string group;
-    std::string name;
   };
 
   /////////

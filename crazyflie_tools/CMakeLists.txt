@@ -59,6 +59,15 @@ target_link_libraries(listParams
   ${Boost_LIBRARIES}
 )
 
+### listLogVariables
+add_executable(listLogVariables
+  src/listLogVariables.cpp
+)
+target_link_libraries(listLogVariables
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
 
 #############
 ## Install ##
