@@ -50,6 +50,15 @@ target_link_libraries(scan
   ${Boost_LIBRARIES}
 )
 
+### listParams
+add_executable(listParams
+  src/listParams.cpp
+)
+target_link_libraries(listParams
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
 
 #############
 ## Install ##
