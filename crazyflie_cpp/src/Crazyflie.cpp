@@ -71,11 +71,14 @@ Crazyflie::Crazyflie(
       throw std::runtime_error("This version does not support that many radios. Adjust MAX_RADIOS and recompile!");
     }
 
-    if (!g_crazyradios[m_devId]) {
-      g_crazyradios[m_devId] = new Crazyradio(m_devId);
-      // g_crazyradios[m_devId]->setAckEnable(false);
-      g_crazyradios[m_devId]->setAckEnable(true);
-      g_crazyradios[m_devId]->setArc(0);
+    {
+      std::unique_lock<std::mutex> mlock(g_mutex[m_devId]);
+      if (!g_crazyradios[m_devId]) {
+        g_crazyradios[m_devId] = new Crazyradio(m_devId);
+        // g_crazyradios[m_devId]->setAckEnable(false);
+        g_crazyradios[m_devId]->setAckEnable(true);
+        g_crazyradios[m_devId]->setArc(0);
+      }
     }
 
     m_radio = g_crazyradios[m_devId];
