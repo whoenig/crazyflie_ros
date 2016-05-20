@@ -68,6 +68,14 @@ target_link_libraries(listLogVariables
   ${Boost_LIBRARIES}
 )
 
+### reboot
+add_executable(reboot
+  src/reboot.cpp
+)
+target_link_libraries(reboot
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
 
 #############
 ## Install ##

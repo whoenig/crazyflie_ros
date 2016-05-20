@@ -114,16 +114,23 @@ void Crazyflie::sendPing()
   sendPacket(&ping, sizeof(ping));
 }
 
+// https://forum.bitcraze.io/viewtopic.php?f=9&t=1488
 void Crazyflie::reboot()
 {
   const uint8_t reboot_init[] = {0xFF, 0xFE, 0xFF};
-  sendPacket(reboot_init, sizeof(reboot_init));
-
-  // const uint8_t reboot_to_bootloader[] = {0xFF, 0xFE, 0xF0, 0x00};
-  //
+  while(!sendPacket(reboot_init, sizeof(reboot_init))) {}
 
   const uint8_t reboot_to_firmware[] = {0xFF, 0xFE, 0xF0, 0x01};
-  sendPacket(reboot_to_firmware, sizeof(reboot_to_firmware));
+  while(!sendPacket(reboot_to_firmware, sizeof(reboot_to_firmware))) {}
+}
+
+void Crazyflie::rebootToBootloader()
+{
+  const uint8_t reboot_init[] = {0xFF, 0xFE, 0xFF};
+  while(!sendPacket(reboot_init, sizeof(reboot_init))) {}
+
+  const uint8_t reboot_to_bootloader[] = {0xFF, 0xFE, 0xF0, 0x00};
+  while(!sendPacket(reboot_to_bootloader, sizeof(reboot_to_bootloader))) {}
 }
 
 void Crazyflie::requestLogToc()
@@ -273,7 +280,7 @@ void Crazyflie::setParam(uint8_t id, const ParamValue& value) {
 
 }
 
-void Crazyflie::sendPacket(
+bool Crazyflie::sendPacket(
   const uint8_t* data,
   uint32_t length)
 {
@@ -311,7 +318,7 @@ void Crazyflie::sendPacket(
     numPackets = 0;
     numAcks = 0;
   }
-
+  return ack.ack;
 }
 
 void Crazyflie::handleAck(

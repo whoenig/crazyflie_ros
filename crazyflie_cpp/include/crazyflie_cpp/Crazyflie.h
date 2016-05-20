@@ -78,6 +78,7 @@ public:
   void sendPing();
 
   void reboot();
+  void rebootToBootloader();
 
   void requestLogToc();
 
@@ -125,7 +126,7 @@ public:
   }
 
 protected:
-  void sendPacket(
+  bool sendPacket(
     const uint8_t* data,
     uint32_t length);
 
