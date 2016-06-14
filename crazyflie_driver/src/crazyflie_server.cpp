@@ -37,7 +37,12 @@ public:
     bool enable_logging,
     bool enable_parameters,
     std::vector<crazyflie_driver::LogBlock>& log_blocks,
-    bool use_ros_time)
+    bool use_ros_time,
+    bool enable_logging_imu,
+    bool enable_logging_temperature,
+    bool enable_logging_magnetic_field,
+    bool enable_logging_pressure,
+    bool enable_logging_battery)
     : m_cf(link_uri)
     , m_tf_prefix(tf_prefix)
     , m_isEmergency(false)
@@ -47,6 +52,11 @@ public:
     , m_enableParameters(enable_parameters)
     , m_logBlocks(log_blocks)
     , m_use_ros_time(use_ros_time)
+    , m_enable_logging_imu(enable_logging_imu)
+    , m_enable_logging_temperature(enable_logging_temperature)
+    , m_enable_logging_magnetic_field(enable_logging_magnetic_field)
+    , m_enable_logging_pressure(enable_logging_pressure)
+    , m_enable_logging_battery(enable_logging_battery)
     , m_serviceEmergency()
     , m_serviceUpdateParams()
     , m_subscribeCmdVel()
@@ -63,11 +73,21 @@ public:
     m_serviceEmergency = n.advertiseService(tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
     m_serviceUpdateParams = n.advertiseService(tf_prefix + "/update_params", &CrazyflieROS::updateParams, this);
 
-    m_pubImu = n.advertise<sensor_msgs::Imu>(tf_prefix + "/imu", 10);
-    m_pubTemp = n.advertise<sensor_msgs::Temperature>(tf_prefix + "/temperature", 10);
-    m_pubMag = n.advertise<sensor_msgs::MagneticField>(tf_prefix + "/magnetic_field", 10);
-    m_pubPressure = n.advertise<std_msgs::Float32>(tf_prefix + "/pressure", 10);
-    m_pubBattery = n.advertise<std_msgs::Float32>(tf_prefix + "/battery", 10);
+    if (m_enable_logging_imu) {
+      m_pubImu = n.advertise<sensor_msgs::Imu>(tf_prefix + "/imu", 10);
+    }
+    if (m_enable_logging_temperature) {
+      m_pubTemp = n.advertise<sensor_msgs::Temperature>(tf_prefix + "/temperature", 10);
+    }
+    if (m_enable_logging_magnetic_field) {
+      m_pubMag = n.advertise<sensor_msgs::MagneticField>(tf_prefix + "/magnetic_field", 10);
+    }
+    if (m_enable_logging_pressure) {
+      m_pubPressure = n.advertise<std_msgs::Float32>(tf_prefix + "/pressure", 10);
+    }
+    if (m_enable_logging_battery) {
+      m_pubBattery = n.advertise<std_msgs::Float32>(tf_prefix + "/battery", 10);
+    }
     m_pubRssi = n.advertise<std_msgs::Float32>(tf_prefix + "/rssi", 10);
 
     for (auto& logBlock : m_logBlocks)
@@ -230,31 +250,39 @@ private:
       ROS_INFO("Requesting Logging variables...");
       m_cf.requestLogToc();
 
-      std::function<void(uint32_t, logImu*)> cb = std::bind(&CrazyflieROS::onImuData, this, std::placeholders::_1, std::placeholders::_2);
+      if (m_enable_logging_imu) {
+        std::function<void(uint32_t, logImu*)> cb = std::bind(&CrazyflieROS::onImuData, this, std::placeholders::_1, std::placeholders::_2);
 
-      logBlockImu.reset(new LogBlock<logImu>(
-        &m_cf,{
-          {"acc", "x"},
-          {"acc", "y"},
-          {"acc", "z"},
-          {"gyro", "x"},
-          {"gyro", "y"},
-          {"gyro", "z"},
-        }, cb));
-      logBlockImu->start(1); // 10ms
+        logBlockImu.reset(new LogBlock<logImu>(
+          &m_cf,{
+            {"acc", "x"},
+            {"acc", "y"},
+            {"acc", "z"},
+            {"gyro", "x"},
+            {"gyro", "y"},
+            {"gyro", "z"},
+          }, cb));
+        logBlockImu->start(1); // 10ms
+      }
 
-      std::function<void(uint32_t, log2*)> cb2 = std::bind(&CrazyflieROS::onLog2Data, this, std::placeholders::_1, std::placeholders::_2);
+      if (   m_enable_logging_temperature
+          || m_enable_logging_magnetic_field
+          || m_enable_logging_pressure
+          || m_enable_logging_battery)
+      {
+        std::function<void(uint32_t, log2*)> cb2 = std::bind(&CrazyflieROS::onLog2Data, this, std::placeholders::_1, std::placeholders::_2);
 
-      logBlock2.reset(new LogBlock<log2>(
-        &m_cf,{
-          {"mag", "x"},
-          {"mag", "y"},
-          {"mag", "z"},
-          {"baro", "temp"},
-          {"baro", "pressure"},
-          {"pm", "vbat"},
-        }, cb2));
-      logBlock2->start(10); // 100ms
+        logBlock2.reset(new LogBlock<log2>(
+          &m_cf,{
+            {"mag", "x"},
+            {"mag", "y"},
+            {"mag", "z"},
+            {"baro", "temp"},
+            {"baro", "pressure"},
+            {"pm", "vbat"},
+          }, cb2));
+        logBlock2->start(10); // 100ms
+      }
 
       // custom log blocks
       size_t i = 0;
@@ -307,31 +335,33 @@ private:
   }
 
   void onImuData(uint32_t time_in_ms, logImu* data) {
-    sensor_msgs::Imu msg;
-    if (m_use_ros_time) {
-      msg.header.stamp = ros::Time::now();
-    } else {
-      msg.header.stamp = ros::Time(time_in_ms / 1000.0);
+    if (m_enable_logging_imu) {
+      sensor_msgs::Imu msg;
+      if (m_use_ros_time) {
+        msg.header.stamp = ros::Time::now();
+      } else {
+        msg.header.stamp = ros::Time(time_in_ms / 1000.0);
+      }
+      msg.header.frame_id = m_tf_prefix + "/base_link";
+      msg.orientation_covariance[0] = -1;
+
+      // measured in deg/s; need to convert to rad/s
+      msg.angular_velocity.x = degToRad(data->gyro_x);
+      msg.angular_velocity.y = degToRad(data->gyro_y);
+      msg.angular_velocity.z = degToRad(data->gyro_z);
+
+      // measured in mG; need to convert to m/s^2
+      msg.linear_acceleration.x = data->acc_x * 9.81;
+      msg.linear_acceleration.y = data->acc_y * 9.81;
+      msg.linear_acceleration.z = data->acc_z * 9.81;
+
+      m_pubImu.publish(msg);
     }
-    msg.header.frame_id = m_tf_prefix + "/base_link";
-    msg.orientation_covariance[0] = -1;
-
-    // measured in deg/s; need to convert to rad/s
-    msg.angular_velocity.x = degToRad(data->gyro_x);
-    msg.angular_velocity.y = degToRad(data->gyro_y);
-    msg.angular_velocity.z = degToRad(data->gyro_z);
-
-    // measured in mG; need to convert to m/s^2
-    msg.linear_acceleration.x = data->acc_x * 9.81;
-    msg.linear_acceleration.y = data->acc_y * 9.81;
-    msg.linear_acceleration.z = data->acc_z * 9.81;
-
-    m_pubImu.publish(msg);
   }
 
   void onLog2Data(uint32_t time_in_ms, log2* data) {
 
-    {
+    if (m_enable_logging_temperature) {
       sensor_msgs::Temperature msg;
       if (m_use_ros_time) {
         msg.header.stamp = ros::Time::now();
@@ -344,7 +374,7 @@ private:
       m_pubTemp.publish(msg);
     }
 
-    {
+    if (m_enable_logging_magnetic_field) {
       sensor_msgs::MagneticField msg;
       if (m_use_ros_time) {
         msg.header.stamp = ros::Time::now();
@@ -360,14 +390,14 @@ private:
       m_pubMag.publish(msg);
     }
 
-    {
+    if (m_enable_logging_pressure) {
       std_msgs::Float32 msg;
       // hPa (=mbar)
       msg.data = data->baro_pressure;
       m_pubPressure.publish(msg);
     }
 
-    {
+    if (m_enable_logging_battery) {
       std_msgs::Float32 msg;
       // V
       msg.data = data->pm_vbat;
@@ -414,6 +444,11 @@ private:
   bool m_enableParameters;
   std::vector<crazyflie_driver::LogBlock> m_logBlocks;
   bool m_use_ros_time;
+  bool m_enable_logging_imu;
+  bool m_enable_logging_temperature;
+  bool m_enable_logging_magnetic_field;
+  bool m_enable_logging_pressure;
+  bool m_enable_logging_battery;
 
   ros::ServiceServer m_serviceEmergency;
   ros::ServiceServer m_serviceUpdateParams;
@@ -451,7 +486,12 @@ bool add_crazyflie(
     req.enable_logging,
     req.enable_parameters,
     req.log_blocks,
-    req.use_ros_time);
+    req.use_ros_time,
+    req.enable_logging_imu,
+    req.enable_logging_temperature,
+    req.enable_logging_magnetic_field,
+    req.enable_logging_pressure,
+    req.enable_logging_battery);
 
   return true;
 }

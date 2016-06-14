@@ -7,6 +7,11 @@
   <arg name="pitch_trim" default="0" />
   <arg name="enable_logging" default="True" />
   <arg name="use_ros_time" default="True" />
+  <arg name="enable_logging_imu" default="True" />
+  <arg name="enable_logging_temperature" default="True" />
+  <arg name="enable_logging_magnetic_field" default="True" />
+  <arg name="enable_logging_pressure" default="True" />
+  <arg name="enable_logging_battery" default="True" />
 
   <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
     <param name="uri" value="$(arg uri)" />
@@ -15,5 +20,10 @@
     <param name="pitch_trim" value="$(arg pitch_trim)" />
     <param name="enable_logging" value="$(arg enable_logging)" />
     <param name="use_ros_time" value="$(arg use_ros_time)" />
+    <param name="enable_logging_imu" value="$(arg enable_logging_imu)" />
+    <param name="enable_logging_temperature" value="$(arg enable_logging_temperature)" />
+    <param name="enable_logging_magnetic_field" value="$(arg enable_logging_magnetic_field)" />
+    <param name="enable_logging_pressure" value="$(arg enable_logging_pressure)" />
+    <param name="enable_logging_battery" value="$(arg enable_logging_battery)" />
   </node>
 </launch>
