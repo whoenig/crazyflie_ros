@@ -36,7 +36,8 @@ public:
     float pitch_trim,
     bool enable_logging,
     bool enable_parameters,
-    std::vector<crazyflie_driver::LogBlock>& log_blocks)
+    std::vector<crazyflie_driver::LogBlock>& log_blocks,
+    bool use_ros_time)
     : m_cf(link_uri)
     , m_tf_prefix(tf_prefix)
     , m_isEmergency(false)
@@ -45,6 +46,7 @@ public:
     , m_enableLogging(enable_logging)
     , m_enableParameters(enable_parameters)
     , m_logBlocks(log_blocks)
+    , m_use_ros_time(use_ros_time)
     , m_serviceEmergency()
     , m_serviceUpdateParams()
     , m_subscribeCmdVel()
@@ -228,7 +230,7 @@ private:
       ROS_INFO("Requesting Logging variables...");
       m_cf.requestLogToc();
 
-      std::function<void(logImu*)> cb = std::bind(&CrazyflieROS::onImuData, this, std::placeholders::_1);
+      std::function<void(uint32_t, logImu*)> cb = std::bind(&CrazyflieROS::onImuData, this, std::placeholders::_1, std::placeholders::_2);
 
       logBlockImu.reset(new LogBlock<logImu>(
         &m_cf,{
@@ -241,7 +243,7 @@ private:
         }, cb));
       logBlockImu->start(1); // 10ms
 
-      std::function<void(log2*)> cb2 = std::bind(&CrazyflieROS::onLog2Data, this, std::placeholders::_1);
+      std::function<void(uint32_t, log2*)> cb2 = std::bind(&CrazyflieROS::onLog2Data, this, std::placeholders::_1, std::placeholders::_2);
 
       logBlock2.reset(new LogBlock<log2>(
         &m_cf,{
@@ -258,12 +260,13 @@ private:
       size_t i = 0;
       for (auto& logBlock : m_logBlocks)
       {
-        std::function<void(std::vector<double>*, void* userData)> cb =
+        std::function<void(uint32_t, std::vector<double>*, void* userData)> cb =
           std::bind(
             &CrazyflieROS::onLogCustom,
             this,
             std::placeholders::_1,
-            std::placeholders::_2);
+            std::placeholders::_2,
+            std::placeholders::_3);
 
         logBlocksGeneric[i].reset(new LogBlockGeneric(
           &m_cf,
@@ -303,9 +306,13 @@ private:
 
   }
 
-  void onImuData(logImu* data) {
+  void onImuData(uint32_t time_in_ms, logImu* data) {
     sensor_msgs::Imu msg;
-    msg.header.stamp = ros::Time::now();
+    if (m_use_ros_time) {
+      msg.header.stamp = ros::Time::now();
+    } else {
+      msg.header.stamp = ros::Time(time_in_ms / 1000.0);
+    }
     msg.header.frame_id = m_tf_prefix + "/base_link";
     msg.orientation_covariance[0] = -1;
 
@@ -322,11 +329,15 @@ private:
     m_pubImu.publish(msg);
   }
 
-  void onLog2Data(log2* data) {
+  void onLog2Data(uint32_t time_in_ms, log2* data) {
 
     {
       sensor_msgs::Temperature msg;
-      msg.header.stamp = ros::Time::now();
+      if (m_use_ros_time) {
+        msg.header.stamp = ros::Time::now();
+      } else {
+        msg.header.stamp = ros::Time(time_in_ms / 1000.0);
+      }
       msg.header.frame_id = m_tf_prefix + "/base_link";
       // measured in degC
       msg.temperature = data->baro_temp;
@@ -335,7 +346,11 @@ private:
 
     {
       sensor_msgs::MagneticField msg;
-      msg.header.stamp = ros::Time::now();
+      if (m_use_ros_time) {
+        msg.header.stamp = ros::Time::now();
+      } else {
+        msg.header.stamp = ros::Time(time_in_ms / 1000.0);
+      }
       msg.header.frame_id = m_tf_prefix + "/base_link";
 
       // measured in Tesla
@@ -360,11 +375,17 @@ private:
     }
   }
 
-  void onLogCustom(std::vector<double>* values, void* userData) {
+  void onLogCustom(uint32_t time_in_ms, std::vector<double>* values, void* userData) {
 
     ros::Publisher* pub = reinterpret_cast<ros::Publisher*>(userData);
 
     crazyflie_driver::GenericLogData msg;
+    if (m_use_ros_time) {
+      msg.header.stamp = ros::Time::now();
+    } else {
+      msg.header.stamp = ros::Time(time_in_ms / 1000.0);
+    }
+    msg.header.frame_id = m_tf_prefix + "/base_link";
     msg.values = *values;
 
     pub->publish(msg);
@@ -392,6 +413,7 @@ private:
   bool m_enableLogging;
   bool m_enableParameters;
   std::vector<crazyflie_driver::LogBlock> m_logBlocks;
+  bool m_use_ros_time;
 
   ros::ServiceServer m_serviceEmergency;
   ros::ServiceServer m_serviceUpdateParams;
@@ -411,13 +433,14 @@ bool add_crazyflie(
   crazyflie_driver::AddCrazyflie::Request  &req,
   crazyflie_driver::AddCrazyflie::Response &res)
 {
-  ROS_INFO("Adding %s as %s with trim(%f, %f). Logging: %d, Parameters: %d",
+  ROS_INFO("Adding %s as %s with trim(%f, %f). Logging: %d, Parameters: %d, Use ROS time: %d",
     req.uri.c_str(),
     req.tf_prefix.c_str(),
     req.roll_trim,
     req.pitch_trim,
     req.enable_parameters,
-    req.enable_logging);
+    req.enable_logging,
+    req.use_ros_time);
 
   // Leak intentionally
   CrazyflieROS* cf = new CrazyflieROS(
@@ -427,7 +450,8 @@ bool add_crazyflie(
     req.pitch_trim,
     req.enable_logging,
     req.enable_parameters,
-    req.log_blocks);
+    req.log_blocks,
+    req.use_ros_time);
 
   return true;
 }

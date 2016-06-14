@@ -6,6 +6,7 @@
   <arg name="roll_trim" default="0" />
   <arg name="pitch_trim" default="0" />
   <arg name="enable_logging" default="True" />
+  <arg name="use_ros_time" default="True" />
 
   <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
     <param name="uri" value="$(arg uri)" />
@@ -13,5 +14,6 @@
     <param name="roll_trim" value="$(arg roll_trim)" />
     <param name="pitch_trim" value="$(arg pitch_trim)" />
     <param name="enable_logging" value="$(arg enable_logging)" />
+    <param name="use_ros_time" value="$(arg use_ros_time)" />
   </node>
 </launch>

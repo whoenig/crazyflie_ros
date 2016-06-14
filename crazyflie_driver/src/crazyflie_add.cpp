@@ -14,6 +14,7 @@ int main(int argc, char **argv)
   double pitch_trim;
   bool enable_logging;
   bool enable_parameters;
+  bool use_ros_time;
 
   n.getParam("uri", uri);
   n.getParam("tf_prefix", tf_prefix);
@@ -21,6 +22,7 @@ int main(int argc, char **argv)
   n.param("pitch_trim", pitch_trim, 0.0);
   n.param("enable_logging", enable_logging, true);
   n.param("enable_parameters", enable_parameters, true);
+  n.param("use_ros_time", use_ros_time, true);
 
   ROS_INFO("wait_for_service /add_crazyflie");
   ros::ServiceClient addCrazyflieService = n.serviceClient<crazyflie_driver::AddCrazyflie>("/add_crazyflie");
@@ -33,6 +35,7 @@ int main(int argc, char **argv)
   addCrazyflie.request.pitch_trim = pitch_trim;
   addCrazyflie.request.enable_logging = enable_logging;
   addCrazyflie.request.enable_parameters = enable_parameters;
+  addCrazyflie.request.use_ros_time = use_ros_time;
 
   std::vector<std::string> genericLogTopics;
   n.param("genericLogTopics", genericLogTopics, std::vector<std::string>());

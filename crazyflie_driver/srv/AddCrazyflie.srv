@@ -5,4 +5,5 @@ float32 pitch_trim
 bool enable_logging
 bool enable_parameters
 LogBlock[] log_blocks
+bool use_ros_time
 ---
