@@ -358,7 +358,7 @@ struct crtpLogDataResponse
     uint8_t blockId;
     uint8_t timestampLo;
     uint16_t timestampHi;
-    uint8_t data[28];
+    uint8_t data[26];
 } __attribute__((packed));
 
 

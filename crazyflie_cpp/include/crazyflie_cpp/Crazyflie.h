@@ -125,6 +125,25 @@ public:
     m_linkQualityCallback = cb;
   }
 
+  static size_t size(LogType t) {
+    switch(t) {
+      case LogTypeUint8:
+      case LogTypeInt8:
+        return 1;
+        break;
+      case LogTypeUint16:
+      case LogTypeInt16:
+      case LogTypeFP16:
+        return 2;
+        break;
+      case LogTypeUint32:
+      case LogTypeInt32:
+      case LogTypeFloat:
+      return 4;
+      break;
+    }
+  }
+
 protected:
   bool sendPacket(
     const uint8_t* data,
@@ -316,16 +335,23 @@ public:
     crtpLogCreateBlockRequest request;
     request.id = m_id;
     int i = 0;
+    size_t s = 0;
     for (auto&& var : variables) {
       auto pos = var.find(".");
       std::string first = var.substr(0, pos);
       std::string second = var.substr(pos+1);
       const Crazyflie::LogTocEntry* entry = m_cf->getLogTocEntry(first, second);
       if (entry) {
-        request.items[i].logType = entry->type;
-        request.items[i].id = entry->id;
-        ++i;
-        m_types.push_back(entry->type);
+        s += Crazyflie::size(entry->type);
+        if (s > 26) {
+          std::cerr << "Can't configure that many variables in a single log block!"
+                    << " Ignoring " << first << "." << second << std::endl;
+        } else {
+          request.items[i].logType = entry->type;
+          request.items[i].id = entry->id;
+          ++i;
+          m_types.push_back(entry->type);
+        }
       }
       else {
         std::cerr << "Could not find " << first << "." << second << " in log toc!" << std::endl;

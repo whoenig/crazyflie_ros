@@ -350,7 +350,8 @@ void Crazyflie::handleAck(
   }
   else if (crtpLogControlResponse::match(result)) {
     crtpLogControlResponse* r = (crtpLogControlResponse*)result.data;
-    if (r->command == 0 && r->result == 0) {
+    if (r->command == 0 &&
+        (r->result == crtpLogControlResultOk || r->result == crtpLogControlResultBlockExists)) {
       m_blockCreated.insert(r->requestByte1);
     }
     if (r->command == 3 && r->result == 0) {
@@ -370,7 +371,7 @@ void Crazyflie::handleAck(
     if (iter != m_logBlockCb.end()) {
       iter->second(r, result.size - 5);
     }
-    else {
+    else if (m_blockReset) {
       std::cout << "Received unrequested data for block: " << (int)r->blockId << std::endl;
     }
   }
