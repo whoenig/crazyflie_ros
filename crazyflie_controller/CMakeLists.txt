@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 2.8.3)
 project(crazyflie_controller)
 
 find_package(catkin REQUIRED COMPONENTS
-  message_generation
   std_msgs
   tf
 )
@@ -89,7 +88,9 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+)
 
 ## Declare a cpp library
 # add_library(crazyflie_controller
@@ -102,7 +103,7 @@ add_executable(crazyflie_controller
 
 # Add cmake target dependencies of the executable/library
 # as an example, message headers may need to be generated before nodes
-add_dependencies(crazyflie_controller crazyflie_controller_generate_messages_cpp)
+# add_dependencies(crazyflie_controller crazyflie_controller_generate_messages_cpp)
 
 # Specify libraries to link a library or executable target against
 target_link_libraries(crazyflie_controller
