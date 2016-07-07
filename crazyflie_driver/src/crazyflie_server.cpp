@@ -199,12 +199,14 @@ private:
   {
     // m_cf.reboot();
 
+    auto start = std::chrono::system_clock::now();
+
     m_cf.logReset();
 
     std::function<void(float)> cb_lq = std::bind(&CrazyflieROS::onLinkQuality, this, std::placeholders::_1);
     m_cf.setLinkQualityCallback(cb_lq);
 
-    auto start = std::chrono::system_clock::now();
+
 
     if (m_enableParameters)
     {

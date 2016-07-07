@@ -43,6 +43,36 @@ target_link_libraries(crazyflie_cpp
   ${USB_LIB}
 )
 
+## Test/Sample applications
+
+include_directories(
+  include
+)
+
+### sendPacket
+add_executable(sendPacket
+  test/sendPacket.cpp
+)
+target_link_libraries(sendPacket
+  crazyflie_cpp
+)
+
+### sendSetpoint
+add_executable(sendSetpoint
+  test/sendSetpoint.cpp
+)
+target_link_libraries(sendSetpoint
+  crazyflie_cpp
+)
+
+### sendSetpointMulti
+add_executable(sendSetpointMulti
+  test/sendSetpointMulti.cpp
+)
+target_link_libraries(sendSetpointMulti
+  crazyflie_cpp
+)
+
 #############
 ## Install ##
 #############

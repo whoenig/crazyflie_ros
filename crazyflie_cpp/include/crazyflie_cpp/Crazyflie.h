@@ -8,6 +8,7 @@
 #include <set>
 #include <map>
 #include <iostream>
+#include <chrono>
 
 class Crazyflie
 {
@@ -76,6 +77,9 @@ public:
     uint16_t thrust);
 
   void sendPing();
+  void sendPingsUntilBufferEmpty(
+    const std::chrono::time_point<std::chrono::system_clock>& start,
+    float timeout);
 
   void reboot();
   void rebootToBootloader();
@@ -144,13 +148,23 @@ public:
     }
   }
 
-protected:
+public:
+  void sendPacket(
+    const uint8_t* data,
+    uint32_t length,
+    Crazyradio::Ack& result);
+
   bool sendPacket(
     const uint8_t* data,
     uint32_t length);
 
   void handleAck(
     const Crazyradio::Ack& result);
+
+  template <class T>
+  const typename T::Response* sendAndWaitForResult(
+    const T& request,
+    float timeout);
 
 private:
   struct logInfo {
@@ -230,6 +244,9 @@ private:
   std::set<size_t> m_paramTocEntriesRequested;
   std::map<uint8_t, ParamValue> m_paramValues;
   std::set<size_t> m_paramValuesRequested;
+
+  bool m_emptyResponse;
+  Crazyradio::Ack m_lastAck;
 
   std::function<void(const crtpPlatformRSSIAck*)> m_emptyAckCallback;
   std::function<void(float)> m_linkQualityCallback;
