@@ -222,6 +222,7 @@ private:
 
 private:
   Crazyradio* m_radio;
+  ITransport* m_transport;
   int m_devId;
 
   uint8_t m_channel;
