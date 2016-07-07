@@ -34,7 +34,9 @@ include_directories(
 
 ## Declare a cpp library
 add_library(crazyflie_cpp
+  src/USBDevice.cpp
   src/Crazyradio.cpp
+  src/CrazyflieUSB.cpp
   src/Crazyflie.cpp
 )
 

@@ -5,6 +5,7 @@
 #include "crtp.h"
 
 #include "Crazyradio.h"
+#include "CrazyflieUSB.h"
 
 #include <iostream>
 #include <cstring>
@@ -12,13 +13,18 @@
 #include <thread>
 
 #define MAX_RADIOS 16
+#define MAX_USB     4
 
 Crazyradio* g_crazyradios[MAX_RADIOS];
-std::mutex g_mutex[MAX_RADIOS];
+std::mutex g_radioMutex[MAX_RADIOS];
+
+CrazyflieUSB* g_crazyflieUSB[MAX_USB];
+std::mutex g_crazyflieusbMutex[MAX_USB];
 
 Crazyflie::Crazyflie(
   const std::string& link_uri)
-  : m_radio(NULL)
+  : m_radio(nullptr)
+  , m_transport(nullptr)
   , m_devId(0)
   , m_channel(0)
   , m_address(0)
@@ -72,7 +78,7 @@ Crazyflie::Crazyflie(
     }
 
     {
-      std::unique_lock<std::mutex> mlock(g_mutex[m_devId]);
+      std::unique_lock<std::mutex> mlock(g_radioMutex[m_devId]);
       if (!g_crazyradios[m_devId]) {
         g_crazyradios[m_devId] = new Crazyradio(m_devId);
         // g_crazyradios[m_devId]->setAckEnable(false);
@@ -84,6 +90,24 @@ Crazyflie::Crazyflie(
     m_radio = g_crazyradios[m_devId];
   }
   else {
+    success = std::sscanf(link_uri.c_str(), "usb://%d",
+       &m_devId) == 1;
+
+    if (m_devId >= MAX_USB) {
+      throw std::runtime_error("This version does not support that many CFs over USB. Adjust MAX_USB and recompile!");
+    }
+
+    {
+      std::unique_lock<std::mutex> mlock(g_crazyflieusbMutex[m_devId]);
+      if (!g_crazyflieUSB[m_devId]) {
+        g_crazyflieUSB[m_devId] = new CrazyflieUSB(m_devId);
+      }
+    }
+
+    m_transport = g_crazyflieUSB[m_devId];
+  }
+
+  if (!success) {
     throw std::runtime_error("Uri is not valid!");
   }
 }
@@ -290,8 +314,8 @@ bool Crazyflie::sendPacket(
   numPackets++;
 
   Crazyradio::Ack ack;
-  {
-    std::unique_lock<std::mutex> mlock(g_mutex[m_devId]);
+  if (m_radio) {
+    std::unique_lock<std::mutex> mlock(g_radioMutex[m_devId]);
     if (m_radio->getAddress() != m_address) {
       m_radio->setAddress(m_address);
     }
@@ -302,6 +326,9 @@ bool Crazyflie::sendPacket(
       m_radio->setDatarate(m_datarate);
     }
     m_radio->sendPacket(data, length, ack);
+  } else {
+    std::unique_lock<std::mutex> mlock(g_crazyflieusbMutex[m_devId]);
+    m_transport->sendPacket(data, length, ack);
   }
   ack.data[ack.size] = 0;
   if (ack.ack) {

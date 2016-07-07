@@ -1,6 +1,5 @@
 #include "Crazyradio.h"
 
-#include <iostream>
 #include <sstream>
 #include <stdexcept>
 
@@ -20,127 +19,31 @@ enum
     LAUNCH_BOOTLOADER   = 0xFF,
 };
 
-Crazyradio::Crazyradio(uint32_t devid)
-    : m_ctx(NULL)
-    , m_handle(NULL)
-    , m_version(0.0)
+Crazyradio::Crazyradio(
+    uint32_t devid)
+    : ITransport()
+    , USBDevice(0x1915, 0x7777)
     , m_channel(0)
     , m_address(0)
     , m_datarate(Datarate_250KPS)
 {
-    int result = libusb_init(&m_ctx);
-    if (result != LIBUSB_SUCCESS) {
-        throw std::runtime_error(libusb_error_name(result));
-    }
-    if (!open(devid)) {
-        libusb_exit(m_ctx);
-        throw std::runtime_error("Could not find Crazyradio with given devId!");
-    }
+    open(devid);
+    setDatarate(Datarate_2MPS);
+    setChannel(2);
+    setContCarrier(false);
+    setAddress(0xE7E7E7E7E7);
+    setPower(Power_0DBM);
+    setArc(3);
+    setArdBytes(32);
 }
 
 Crazyradio::~Crazyradio()
 {
-    int result;
-
-
-
-    // result = libusb_reset_device(m_handle);
-    // if (result != LIBUSB_SUCCESS) {
-    //     std::cerr << libusb_error_name(result) << std::endl;
-    // }
-
-    result = libusb_release_interface(m_handle, 0);
-    if (result != LIBUSB_SUCCESS) {
-        std::cerr << libusb_error_name(result) << std::endl;
-    }
-
-    // function returns void => no error checking
-    libusb_close(m_handle);
-
-    // function returns void => no error checking
-    libusb_exit(m_ctx);
 }
 
-bool Crazyradio::open(uint32_t devid)
+uint32_t Crazyradio::numDevices()
 {
-    // discover devices
-    libusb_device **list;
-    libusb_device *found = NULL;
-    ssize_t cnt = libusb_get_device_list(NULL, &list);
-    ssize_t i = 0;
-    uint32_t foundid = 0;
-    int err = 0;
-    if (cnt < 0) {
-        std::cerr << "Error during get_device_list" << std::endl;
-        return false;
-    }
-    for (i = 0; i < cnt; i++) {
-        libusb_device *device = list[i];
-        libusb_device_descriptor deviceDescriptor;
-        err = libusb_get_device_descriptor(device, &deviceDescriptor);
-        if (err != LIBUSB_SUCCESS) {
-            std::cerr << libusb_error_name(err) << std::endl;
-            libusb_free_device_list(list, 1);
-            return false;
-        }
-        else if (deviceDescriptor.idVendor == 0x1915 &&
-                 deviceDescriptor.idProduct == 0x7777) {
-            if (foundid == devid) {
-                found = device;
-                break;
-            }
-            ++foundid;
-        }
-    }
-    if (found) {
-        err = libusb_open(found, &m_handle);
-        if (err != LIBUSB_SUCCESS) {
-            std::cerr << libusb_error_name(err) << std::endl;
-            libusb_free_device_list(list, 1);
-            return false;
-        }
-        libusb_device_descriptor deviceDescriptor;
-        err = libusb_get_device_descriptor(found, &deviceDescriptor);
-        if (err != LIBUSB_SUCCESS) {
-            std::cerr << libusb_error_name(err) << std::endl;
-            return false;
-        }
-        std::stringstream sstr;
-        sstr << std::hex << (deviceDescriptor.bcdDevice >> 8) << "." << (deviceDescriptor.bcdDevice & 0xFF);
-        sstr >> m_version;
-    }
-    libusb_free_device_list(list, 1);
-
-    // configure
-    if (m_handle)
-    {
-        err = libusb_set_configuration(m_handle, 1);
-        if (err != LIBUSB_SUCCESS) {
-            std::cerr << libusb_error_name(err) << std::endl;
-            return false;
-        }
-
-        err = libusb_claim_interface(m_handle, 0);
-        if (err != LIBUSB_SUCCESS) {
-            std::cerr << libusb_error_name(err) << std::endl;
-            return false;
-        }
-
-        setDatarate(Datarate_2MPS);
-        setChannel(2);
-        setContCarrier(false);
-        setAddress(0xE7E7E7E7E7);
-        setPower(Power_0DBM);
-        setArc(3);
-        setArdBytes(32);
-
-        std::cout << "Configured Dongle with version " << m_version << std::endl;
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return USBDevice::numDevices(0x1915, 0x7777);
 }
 
 void Crazyradio::setChannel(uint8_t channel)
@@ -236,8 +139,7 @@ void Crazyradio::sendPacket(
     int transferred;
 
     if (!m_handle) {
-        std::cerr << "No valid Crazyradio handle!" << std::endl;
-        return;
+        throw std::runtime_error("No valid device handle!");
     }
 
     // Send data
@@ -249,10 +151,12 @@ void Crazyradio::sendPacket(
         &transferred,
         /*timeout*/ 1000);
     if (status != LIBUSB_SUCCESS) {
-        std::cerr << "Send " << libusb_error_name(status) << std::endl;
+        throw std::runtime_error(libusb_error_name(status));
     }
     if (length != transferred) {
-        std::cerr << "Did transfer " << transferred << " but " << length << " was requested!" << std::endl;
+        std::stringstream sstr;
+        sstr << "Did transfer " << transferred << " but " << length << " was requested!";
+        throw std::runtime_error(sstr.str());
     }
 
     // Read result
@@ -266,7 +170,7 @@ void Crazyradio::sendPacket(
         &transferred,
         /*timeout*/ 1000);
     if (status != LIBUSB_SUCCESS) {
-        std::cerr << "Receive " << libusb_error_name(status) << std::endl;
+        throw std::runtime_error(libusb_error_name(status));
     }
 
     result.size = transferred - 1;
@@ -280,8 +184,7 @@ void Crazyradio::sendPacketNoAck(
     int transferred;
 
     if (!m_handle) {
-        std::cerr << "No valid Crazyradio handle!" << std::endl;
-        return;
+        throw std::runtime_error("No valid device handle!");
     }
 
     // Send data
@@ -293,35 +196,11 @@ void Crazyradio::sendPacketNoAck(
         &transferred,
         /*timeout*/ 1000);
     if (status != LIBUSB_SUCCESS) {
-        std::cerr << "Send " << libusb_error_name(status) << std::endl;
+        throw std::runtime_error(libusb_error_name(status));
     }
     if (length != transferred) {
-        std::cerr << "Did transfer " << transferred << " but " << length << " was requested!" << std::endl;
-    }
-}
-
-void Crazyradio::sendVendorSetup(
-    uint8_t request,
-    uint16_t value,
-    uint16_t index,
-    const unsigned char* data,
-    uint16_t length)
-{
-    if (!m_handle) {
-        std::cerr << "No valid Crazyradio handle!" << std::endl;
-        return;
-    }
-
-    int status = libusb_control_transfer(
-        m_handle,
-        LIBUSB_REQUEST_TYPE_VENDOR,
-        request,
-        value,
-        index,
-        (unsigned char*)data,
-        length,
-        /*timeout*/ 1000);
-    if (status != LIBUSB_SUCCESS) {
-        std::cerr << "sendVendorSetup: " << libusb_error_name(status) << std::endl;
+        std::stringstream sstr;
+        sstr << "Did transfer " << transferred << " but " << length << " was requested!";
+        throw std::runtime_error(sstr.str());
     }
 }

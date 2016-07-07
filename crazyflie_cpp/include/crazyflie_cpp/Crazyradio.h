@@ -3,11 +3,12 @@
 #include <stdint.h>
 #include <vector>
 
-// forward declarations
-struct libusb_context;
-struct libusb_device_handle;
+#include "ITransport.h"
+#include "USBDevice.h"
 
 class Crazyradio
+  : public ITransport
+  , public USBDevice
 {
 public:
     enum Datarate
@@ -25,68 +26,67 @@ public:
         Power_0DBM   = 3,
     };
 
-    struct Ack
-    {
-        Ack()
-          : ack(0)
-          , size(0)
-        {}
-
-        uint8_t ack:1;
-        uint8_t powerDet:1;
-        uint8_t retry:4;
-        uint8_t data[32];
-
-        uint8_t size;
-    }__attribute__((packed));
-
 public:
-    Crazyradio(uint32_t devid);
+    Crazyradio(
+        uint32_t devid);
 
-    ~Crazyradio();
+    virtual ~Crazyradio();
 
-    void setChannel(uint8_t channel);
+    static uint32_t numDevices();
+
+    float version() const {
+        return m_version;
+    }
+
+    void setChannel(
+        uint8_t channel);
+
     uint8_t getChannel() const {
         return m_channel;
     }
-    void setAddress(uint64_t address);
+
+    void setAddress(
+        uint64_t address);
+
     uint64_t getAddress() const {
         return m_address;
     }
-    void setDatarate(Datarate datarate);
+
+    void setDatarate(
+        Datarate datarate);
+
     Datarate getDatarate() const {
         return m_datarate;
     }
-    void setPower(Power power);
-    void setArc(uint8_t arc);
-    void setArdTime(uint8_t us);
-    void setArdBytes(uint8_t nbytes);
-    void setAckEnable(bool enable);
-    void setContCarrier(bool active);
 
-    void sendPacket(
+    void setPower(
+        Power power);
+
+    void setArc(
+        uint8_t arc);
+
+    void setArdTime(
+        uint8_t us);
+
+    void setArdBytes(
+        uint8_t nbytes);
+
+    void setAckEnable(
+        bool enable);
+
+    void setContCarrier(
+        bool active);
+
+    virtual void sendPacket(
         const uint8_t* data,
         uint32_t length,
-        Ack& result);
+        ITransport::Ack& result);
 
-    void sendPacketNoAck(
+    virtual void sendPacketNoAck(
         const uint8_t* data,
         uint32_t length);
 
 private:
-    bool open(uint32_t devid);
-    void sendVendorSetup(
-        uint8_t request,
-        uint16_t value,
-        uint16_t index,
-        const unsigned char* data,
-        uint16_t length);
-
-private:
-    libusb_context* m_ctx;
-    libusb_device_handle *m_handle;
-
-    float m_version;
     uint8_t m_channel;
     uint64_t m_address;
     Datarate m_datarate;
