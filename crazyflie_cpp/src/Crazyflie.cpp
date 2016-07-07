@@ -109,7 +109,7 @@ void Crazyflie::logReset()
   crtpLogResetRequest request;
   startBatchRequest();
   addRequest(request, 1);
-  handleRequests(1.0);
+  handleRequests();
 }
 
 void Crazyflie::sendSetpoint(
@@ -153,7 +153,7 @@ void Crazyflie::requestLogToc()
   crtpLogGetInfoRequest infoRequest;
   startBatchRequest();
   addRequest(infoRequest, 1);
-  handleRequests(5.0);
+  handleRequests();
   size_t len = getRequestResult<crtpLogGetInfoResponse>(0)->log_len;
   std::cout << "Log: " << len << std::endl;
 
@@ -163,7 +163,7 @@ void Crazyflie::requestLogToc()
     crtpLogGetItemRequest itemRequest(i);
     addRequest(itemRequest, 2);
   }
-  handleRequests(5.0);
+  handleRequests();
 
   // Update internal structure with obtained data
   m_logTocEntries.resize(len);
@@ -183,7 +183,7 @@ void Crazyflie::requestParamToc()
   crtpParamTocGetInfoRequest infoRequest;
   startBatchRequest();
   addRequest(infoRequest, 1);
-  handleRequests(5.0);
+  handleRequests();
   size_t len = getRequestResult<crtpParamTocGetInfoResponse>(0)->numParam;
 
   std::cout << "Params: " << len << std::endl;
@@ -196,7 +196,7 @@ void Crazyflie::requestParamToc()
     crtpParamReadRequest readRequest(i);
     addRequest(readRequest, 1);
   }
-  handleRequests(5.0);
+  handleRequests();
 
   // Update internal structure with obtained data
   m_paramTocEntries.resize(len);
@@ -442,12 +442,15 @@ void Crazyflie::addRequest(
 }
 
 void Crazyflie::handleRequests(
-  float timeout)
+  float baseTime,
+  float timePerRequest)
 {
   auto start = std::chrono::system_clock::now();
   Crazyradio::Ack ack;
   m_numRequestsFinished = 0;
   bool sendPing = false;
+
+  float timeout = baseTime + timePerRequest * m_batchRequests.size();
 
   while (true) {
     if (!sendPing) {

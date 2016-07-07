@@ -176,7 +176,8 @@ private:
   }
 
   void handleRequests(
-    float timeout);
+    float baseTime = 0.5,
+    float timePerRequest = 0.05);
 
   void handleBatchAck(
     const Crazyradio::Ack& result);
@@ -306,7 +307,7 @@ public:
 
     m_cf->startBatchRequest();
     m_cf->addRequest(reinterpret_cast<const uint8_t*>(&request), 3 + 2*i, 2);
-    m_cf->handleRequests(1.0);
+    m_cf->handleRequests();
     auto r = m_cf->getRequestResult<crtpLogControlResponse>(0);
     if (r->result != crtpLogControlResultOk
         && r->result != crtpLogControlResultBlockExists) {
@@ -328,7 +329,7 @@ public:
     crtpLogStartRequest request(m_id, period);
     m_cf->startBatchRequest();
     m_cf->addRequest(request, 2);
-    m_cf->handleRequests(1.0);
+    m_cf->handleRequests();
   }
 
   void stop()
@@ -336,7 +337,7 @@ public:
     crtpLogStopRequest request(m_id);
     m_cf->startBatchRequest();
     m_cf->addRequest(request, 2);
-    m_cf->handleRequests(1.0);
+    m_cf->handleRequests();
   }
 
 private:
@@ -404,7 +405,7 @@ public:
     }
     m_cf->startBatchRequest();
     m_cf->addRequest(reinterpret_cast<const uint8_t*>(&request), 3 + 2*i, 2);
-    m_cf->handleRequests(1.0);
+    m_cf->handleRequests();
     auto r = m_cf->getRequestResult<crtpLogControlResponse>(0);
     if (r->result != crtpLogControlResultOk
         && r->result != crtpLogControlResultBlockExists) {
@@ -424,7 +425,7 @@ public:
     crtpLogStartRequest request(m_id, period);
     m_cf->startBatchRequest();
     m_cf->addRequest(request, 2);
-    m_cf->handleRequests(1.0);
+    m_cf->handleRequests();
   }
 
   void stop()
@@ -432,7 +433,7 @@ public:
     crtpLogStopRequest request(m_id);
     m_cf->startBatchRequest();
     m_cf->addRequest(request, 2);
-    m_cf->handleRequests(1.0);
+    m_cf->handleRequests();
   }
 
 private:
