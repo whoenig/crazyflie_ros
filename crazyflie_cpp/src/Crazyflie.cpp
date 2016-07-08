@@ -219,61 +219,65 @@ void Crazyflie::requestParamToc()
 
 void Crazyflie::setParam(uint8_t id, const ParamValue& value) {
 
-  m_paramValues.erase(id);
+  startBatchRequest();
+  bool found = false;
   for (auto&& entry : m_paramTocEntries) {
     if (entry.id == id) {
-      do
-      {
-        switch (entry.type) {
-          case ParamTypeUint8:
-            {
-              crtpParamWriteRequest<uint8_t> request(id, value.valueUint8);
-              sendPacket((const uint8_t*)&request, sizeof(request));
-              break;
-            }
-          case ParamTypeInt8:
-            {
-              crtpParamWriteRequest<int8_t> request(id, value.valueInt8);
-              sendPacket((const uint8_t*)&request, sizeof(request));
-              break;
-            }
-          case ParamTypeUint16:
-            {
-              crtpParamWriteRequest<uint16_t> request(id, value.valueUint16);
-              sendPacket((const uint8_t*)&request, sizeof(request));
-              break;
-            }
-          case ParamTypeInt16:
-            {
-              crtpParamWriteRequest<int16_t> request(id, value.valueInt16);
-              sendPacket((const uint8_t*)&request, sizeof(request));
-              break;
-            }
-          case ParamTypeUint32:
-            {
-              crtpParamWriteRequest<uint32_t> request(id, value.valueUint32);
-              sendPacket((const uint8_t*)&request, sizeof(request));
-              break;
-            }
-          case ParamTypeInt32:
-            {
-              crtpParamWriteRequest<int32_t> request(id, value.valueInt32);
-              sendPacket((const uint8_t*)&request, sizeof(request));
-              break;
-            }
-          case ParamTypeFloat:
-            {
-              crtpParamWriteRequest<float> request(id, value.valueFloat);
-              sendPacket((const uint8_t*)&request, sizeof(request));
-              break;
-            }
-        }
-      } while(m_paramValues.find(id) == m_paramValues.end());
-      break;
+      found = true;
+      switch (entry.type) {
+        case ParamTypeUint8:
+          {
+            crtpParamWriteRequest<uint8_t> request(id, value.valueUint8);
+            addRequest(request, 1);
+            break;
+          }
+        case ParamTypeInt8:
+          {
+            crtpParamWriteRequest<int8_t> request(id, value.valueInt8);
+            addRequest(request, 1);
+            break;
+          }
+        case ParamTypeUint16:
+          {
+            crtpParamWriteRequest<uint16_t> request(id, value.valueUint16);
+            addRequest(request, 1);
+            break;
+          }
+        case ParamTypeInt16:
+          {
+            crtpParamWriteRequest<int16_t> request(id, value.valueInt16);
+            addRequest(request, 1);
+            break;
+          }
+        case ParamTypeUint32:
+          {
+            crtpParamWriteRequest<uint32_t> request(id, value.valueUint32);
+            addRequest(request, 1);
+            break;
+          }
+        case ParamTypeInt32:
+          {
+            crtpParamWriteRequest<int32_t> request(id, value.valueInt32);
+            addRequest(request, 1);
+            break;
+          }
+        case ParamTypeFloat:
+          {
+            crtpParamWriteRequest<float> request(id, value.valueFloat);
+            addRequest(request, 1);
+            break;
+          }
+      }
     }
   }
 
+  if (!found) {
+    std::stringstream sstr;
+    sstr << "Could not find parameter with id " << id;
+    throw std::runtime_error(sstr.str());
+  }
 
+  m_paramValues[id] = value;
 }
 
 bool Crazyflie::sendPacket(
