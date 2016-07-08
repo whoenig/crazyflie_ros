@@ -276,6 +276,7 @@ void Crazyflie::setParam(uint8_t id, const ParamValue& value) {
     sstr << "Could not find parameter with id " << id;
     throw std::runtime_error(sstr.str());
   }
+  handleRequests();
 
   m_paramValues[id] = value;
 }
