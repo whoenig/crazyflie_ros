@@ -71,6 +71,7 @@ public:
         , m_startZ(0)
     {
         ros::NodeHandle nh;
+        m_listener.waitForTransform(m_worldFrame, m_frame, ros::Time(0), ros::Duration(10.0)); 
         m_pubNav = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
         m_subscribeGoal = nh.subscribe("goal", 1, &Controller::goalChanged, this);
         m_serviceTakeoff = nh.advertiseService("takeoff", &Controller::takeoff, this);
@@ -99,7 +100,6 @@ private:
         m_state = TakingOff;
 
         tf::StampedTransform transform;
-        m_listener.waitForTransform(m_worldFrame, m_frame, ros::Time(0), ros::Duration(1.0));
         m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
         m_startZ = transform.getOrigin().z();
 
@@ -121,7 +121,6 @@ private:
         const std::string& targetFrame,
         tf::StampedTransform& result)
     {
-        m_listener.waitForTransform(sourceFrame, targetFrame, ros::Time(0), ros::Duration(1.0));
         m_listener.lookupTransform(sourceFrame, targetFrame, ros::Time(0), result);
     }
 
@@ -142,7 +141,6 @@ private:
         case TakingOff:
             {
                 tf::StampedTransform transform;
-                m_listener.waitForTransform(m_worldFrame, m_frame, ros::Time(0), ros::Duration(1.0));
                 m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
                 if (transform.getOrigin().z() > m_startZ + 0.05 || m_thrust > 50000)
                 {
@@ -165,7 +163,6 @@ private:
             {
                 m_goal.pose.position.z = m_startZ + 0.05;
                 tf::StampedTransform transform;
-                m_listener.waitForTransform(m_worldFrame, m_frame, ros::Time(0), ros::Duration(1.0));
                 m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
                 if (transform.getOrigin().z() <= m_startZ + 0.05) {
                     m_state = Idle;
@@ -177,7 +174,6 @@ private:
         case Automatic:
             {
                 tf::StampedTransform transform;
-                m_listener.waitForTransform(m_worldFrame, m_frame, ros::Time(0), ros::Duration(1.0));
                 m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
 
                 geometry_msgs::PoseStamped targetWorld;
