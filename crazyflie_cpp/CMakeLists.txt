@@ -73,6 +73,7 @@ add_executable(sendSetpointMulti
 )
 target_link_libraries(sendSetpointMulti
   crazyflie_cpp
+  pthread
 )
 
 #############
