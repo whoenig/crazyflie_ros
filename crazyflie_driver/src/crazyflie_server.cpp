@@ -1,5 +1,6 @@
 #include "ros/ros.h"
 #include "crazyflie_driver/AddCrazyflie.h"
+#include "crazyflie_driver/RemoveCrazyflie.h"
 #include "crazyflie_driver/LogBlock.h"
 #include "crazyflie_driver/GenericLogData.h"
 #include "crazyflie_driver/UpdateParams.h"
@@ -13,6 +14,9 @@
 //#include <regex>
 #include <thread>
 #include <mutex>
+
+#include <string>
+#include <map>
 
 #include <crazyflie_cpp/Crazyflie.h>
 
@@ -95,8 +99,14 @@ public:
       m_pubLogDataGeneric.push_back(n.advertise<crazyflie_driver::GenericLogData>(tf_prefix + "/" + logBlock.topic_name, 10));
     }
 
-    std::thread t(&CrazyflieROS::run, this);
-    t.detach();
+    m_thread = std::thread(&CrazyflieROS::run, this);
+  }
+
+  void stop()
+  {
+    ROS_INFO("Disconnecting ...");
+    m_isEmergency = true;
+    m_thread.join();
   }
 
 private:
@@ -462,7 +472,11 @@ private:
   std::vector<ros::Publisher> m_pubLogDataGeneric;
 
   bool m_sentSetpoint;
+
+  std::thread m_thread;
 };
+
+static std::map<std::string, CrazyflieROS*> crazyflies;
 
 bool add_crazyflie(
   crazyflie_driver::AddCrazyflie::Request  &req,
@@ -477,7 +491,12 @@ bool add_crazyflie(
     req.enable_logging,
     req.use_ros_time);
 
-  // Leak intentionally
+  // Ignore if the uri is already in use
+  if (crazyflies.find(req.uri) != crazyflies.end()) {
+    ROS_ERROR("Cannot add %s, already added.", req.uri.c_str());
+    return false;
+  }
+
   CrazyflieROS* cf = new CrazyflieROS(
     req.uri,
     req.tf_prefix,
@@ -493,6 +512,29 @@ bool add_crazyflie(
     req.enable_logging_pressure,
     req.enable_logging_battery);
 
+  crazyflies[req.uri] = cf;
+
+  return true;
+}
+
+bool remove_crazyflie(
+  crazyflie_driver::RemoveCrazyflie::Request  &req,
+  crazyflie_driver::RemoveCrazyflie::Response &res)
+{
+
+  if (crazyflies.find(req.uri) == crazyflies.end()) {
+    ROS_ERROR("Cannot remove %s, not connected.", req.uri.c_str());
+    return false;
+  }
+
+  ROS_INFO("Removing crazyflie at uri %s.", req.uri.c_str());
+
+  crazyflies[req.uri]->stop();
+  delete crazyflies[req.uri];
+  crazyflies.erase(req.uri);
+
+  ROS_INFO("Crazyflie %s removed.", req.uri.c_str());
+
   return true;
 }
 
@@ -501,7 +543,8 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "crazyflie_server");
   ros::NodeHandle n;
 
-  ros::ServiceServer service = n.advertiseService("add_crazyflie", add_crazyflie);
+  ros::ServiceServer serviceAdd = n.advertiseService("add_crazyflie", add_crazyflie);
+  ros::ServiceServer serviceRemove = n.advertiseService("remove_crazyflie", remove_crazyflie);
   ros::spin();
 
   return 0;
