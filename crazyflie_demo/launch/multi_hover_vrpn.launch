@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="crazyflieSDK" default="~/crazyflie/crazyflie-clients-python/lib" />
   <arg name="joy_dev" default="/dev/input/js0" />
   <arg name="ip" default="vicon" />
   <arg name="port" default="3883" />
@@ -18,7 +17,6 @@
   <arg name="z2" default="0.5" />
 
   <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
-    <arg name="crazyflieSDK" value="$(arg crazyflieSDK)" />
   </include>
 
   <node name="joy" pkg="joy" type="joy_node" output="screen">
