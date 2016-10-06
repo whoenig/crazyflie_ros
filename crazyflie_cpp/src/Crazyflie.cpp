@@ -108,6 +108,15 @@ void Crazyflie::sendSetpoint(
   sendPacket((const uint8_t*)&request, sizeof(request));
 }
 
+void Crazyflie::sendExternalPositionUpdate(
+  float x,
+  float y,
+  float z)
+{
+  crtpExternalPositionUpdate position(x, y, z);
+  sendPacket((const uint8_t*)&position, sizeof(position));
+}
+
 void Crazyflie::sendPing()
 {
   uint8_t ping = 0xFF;

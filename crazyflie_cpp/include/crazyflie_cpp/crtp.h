@@ -362,6 +362,27 @@ struct crtpLogDataResponse
 } __attribute__((packed));
 
 
+// Port 0x06 (External Position Update)
+
+struct crtpExternalPositionUpdate
+{
+  crtpExternalPositionUpdate(
+    float x,
+    float y,
+    float z)
+    : header(0x06, 0)
+    , x(x)
+    , y(y)
+    , z(z)
+  {
+  }
+  const crtp header;
+  float x;
+  float y;
+  float z;
+}  __attribute__((packed));
+
+
 
 // Port 13 (Platform)
 
