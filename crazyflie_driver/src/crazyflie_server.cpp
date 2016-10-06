@@ -20,7 +20,7 @@
 
 #include <crazyflie_cpp/Crazyflie.h>
 
-constexpr double pi() { return std::atan(1)*4; }
+constexpr double pi() { return 3.141592653589793238462643383279502884; }
 
 double degToRad(double deg) {
     return deg / 180.0 * pi();
