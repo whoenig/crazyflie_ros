@@ -2,16 +2,20 @@
 
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="crazyflie2">
 
+  <xacro:property name="rotor_drag_coefficient" value="1.8580e-05"/> <!-- [N.m.s^2] -->
+  <xacro:property name="moment_constant" value="0.005"/> <!-- [N.s^2] -->
+  
   <link name="base_link">
     <inertial>
-      <mass value="0.019" />
+      <mass value="0.027" />
       <origin xyz="0 0 0" />
-      <!-- ToDo: This is not correct! -->
-      <inertia ixx="0.01152" ixy="0.0" ixz="0.0" iyy="0.01152" iyz="0.0" izz="0.0218" />
+      <!-- Refer to page 39 in http://groups.csail.mit.edu/robotics-center/public_papers/Landry15.pdf -->
+      <inertia ixx="2.3951e-5" ixy="0.0" ixz="0.0" iyy="2.3951e-5" iyz="0.0" izz="3.2347e-5" />
+      <!-- In Kg m^2 -->
     </inertial>
 
     <visual>
-      <origin xyz="0 0 0" rpy="1.57 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
         <mesh filename="package://crazyflie_description/meshes/crazyflie2.dae"/>
       </geometry>
