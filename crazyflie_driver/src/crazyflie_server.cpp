@@ -11,6 +11,7 @@
 #include "sensor_msgs/Temperature.h"
 #include "sensor_msgs/MagneticField.h"
 #include "std_msgs/Float32.h"
+#include "std_msgs/Float32MultiArray.h"
 
 //#include <regex>
 #include <thread>
@@ -99,7 +100,7 @@ public:
 
     for (auto& logBlock : m_logBlocks)
     {
-      m_pubLogDataGeneric.push_back(n.advertise<crazyflie_driver::GenericLogData>(tf_prefix + "/" + logBlock.topic_name, 10));
+      m_pubLogDataGeneric.push_back(n.advertise<std_msgs::Float32MultiArray>(tf_prefix + "/" + logBlock.topic_name, 10));
     }
 
     m_thread = std::thread(&CrazyflieROS::run, this);
@@ -198,10 +199,10 @@ private:
     const geometry_msgs::Twist::ConstPtr& msg)
   {
     if (!m_isEmergency) {
-      float roll = msg->linear.y + m_roll_trim;
-      float pitch = - (msg->linear.x + m_pitch_trim);
+      float roll    = msg->linear.y + m_roll_trim;
+      float pitch   = - (msg->linear.x + m_pitch_trim);
       float yawrate = msg->angular.z;
-      uint16_t thrust = std::min<uint16_t>(std::max<float>(msg->linear.z, 0.0), 60000);
+      float thrust  = msg->linear.z;
 
       m_cf.sendSetpoint(roll, pitch, yawrate, thrust);
       m_sentSetpoint = true;
@@ -432,14 +433,15 @@ private:
 
     ros::Publisher* pub = reinterpret_cast<ros::Publisher*>(userData);
 
-    crazyflie_driver::GenericLogData msg;
-    if (m_use_ros_time) {
-      msg.header.stamp = ros::Time::now();
-    } else {
-      msg.header.stamp = ros::Time(time_in_ms / 1000.0);
+    std_msgs::Float32MultiArray msg;
+    msg.layout.dim.resize(1);
+    msg.layout.dim[0].label  = "float";
+    msg.layout.dim[0].size   = values->size();
+    msg.layout.dim[0].stride = msg.layout.dim[0].size*sizeof(float);
+    msg.data.resize(values->size());
+    for (unsigned i = 0; i < values->size(); i++) {
+      msg.data[i] = (*values)[i];
     }
-    msg.header.frame_id = m_tf_prefix + "/base_link";
-    msg.values = *values;
 
     pub->publish(msg);
   }
