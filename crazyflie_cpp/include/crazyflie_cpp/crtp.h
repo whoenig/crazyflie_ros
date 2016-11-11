@@ -156,7 +156,7 @@ struct crtpSetpointRequest
     float roll,
     float pitch,
     float yawrate,
-    uint16_t thrust)
+    float thrust)
     : header(0x03, 0)
     , roll(roll)
     , pitch(pitch)
@@ -168,7 +168,7 @@ struct crtpSetpointRequest
   float roll;
   float pitch;
   float yawrate;
-  uint16_t thrust;
+  float thrust;
 }  __attribute__((packed));
 
 // Port 4 (Memory access)

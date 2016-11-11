@@ -102,7 +102,7 @@ void Crazyflie::sendSetpoint(
   float roll,
   float pitch,
   float yawrate,
-  uint16_t thrust)
+  float thrust)
 {
   crtpSetpointRequest request(roll, pitch, yawrate, thrust);
   sendPacket((const uint8_t*)&request, sizeof(request));
