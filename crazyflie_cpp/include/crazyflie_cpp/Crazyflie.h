@@ -149,6 +149,18 @@ public:
     }
   }
 
+  /**
+   * Returns a copy of the en-queued CRTP packets which were not handled by
+   * handleAck.
+   * @return  A vector of Ack data structures, where each Ack contains the data
+   * from a single packet.
+   */
+  std::vector<Crazyradio::Ack> retrieveGenericPackets() {
+    std::vector<Crazyradio::Ack> packets = m_generic_packets;
+    m_generic_packets.clear();
+    return packets;
+  }
+
 protected:
   bool sendPacket(
     const uint8_t* data,
@@ -156,6 +168,16 @@ protected:
 
   void handleAck(
     const Crazyradio::Ack& result);
+
+    std::vector<Crazyradio::Ack> m_generic_packets;
+
+    /**
+     * En-queues an unhandled Ack into a vector so that it can be retrieved later.
+     * @param result The unhandled Ack to be en-queued.
+     */
+    void queueGenericPacket(const Crazyradio::Ack& result) {
+      m_generic_packets.push_back(result);
+    }
 
 private:
   struct logInfo {
@@ -242,6 +264,7 @@ private:
   template<typename T>
   friend class LogBlock;
   friend class LogBlockGeneric;
+  friend class CrazyflieROS;
 };
 
 template<class T>

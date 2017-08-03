@@ -34,12 +34,14 @@ add_service_files(
   AddCrazyflie.srv
   RemoveCrazyflie.srv
   UpdateParams.srv
+  sendPacket.srv
 )
 
 add_message_files(
   FILES
   LogBlock.msg
   GenericLogData.msg
+  crtpPacket.msg
 )
 
 ## Generate added messages and services with any dependencies listed here
