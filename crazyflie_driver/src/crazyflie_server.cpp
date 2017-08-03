@@ -401,7 +401,9 @@ private:
       // make sure we ping often enough to stream data out
       if (m_enableLogging && !m_sentSetpoint && !m_sentExternalPosition) {
         m_cf.sendPing();
-        this->publishPackets();
+        if(m_enable_logging_packets) {
+          this->publishPackets();
+        }
       }
       m_sentSetpoint = false;
       m_sentExternalPosition = false;
