@@ -10,7 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   crazyflie_cpp
 )
-
 # Enable C++11
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 #SET(CMAKE_CXX_COMPILER             "gcc-4.9")
@@ -41,13 +40,13 @@ add_message_files(
   FILES
   LogBlock.msg
   GenericLogData.msg
-  crtpPacket.msg
 )
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
    std_msgs
+   crazyflie_cpp
 )
 
 ###################################

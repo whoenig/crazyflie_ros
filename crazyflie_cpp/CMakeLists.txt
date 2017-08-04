@@ -1,11 +1,24 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(crazyflie_cpp)
 
-find_package(catkin)
+find_package(catkin REQUIRED COMPONENTS
+  message_generation
+)
 find_library(USB_LIB usb-1.0)
-
 # Enable C++11
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+################################################
+## Declare ROS messages, services and actions ##
+################################################
+
+add_message_files(
+DIRECTORY msg
+FILES
+crtpPacket.msg
+)
+
+generate_messages()
 
 ###################################
 ## catkin specific configuration ##
@@ -36,6 +49,10 @@ include_directories(
 add_library(crazyflie_cpp
   src/Crazyradio.cpp
   src/Crazyflie.cpp
+)
+
+add_dependencies(crazyflie_cpp
+  crazyflie_cpp_generate_messages_cpp
 )
 
 ## Specify libraries to link a library or executable target against
