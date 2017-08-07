@@ -5,7 +5,7 @@
 #include "crazyflie_driver/GenericLogData.h"
 #include "crazyflie_driver/UpdateParams.h"
 #include "crazyflie_driver/sendPacket.h"
-#include "crazyflie_cpp/crtpPacket.h"
+#include "crazyflie_driver/crtpPacket.h"
 #include "crazyflie_cpp/Crazyradio.h"
 #include "crazyflie_cpp/crtp.h"
 #include "std_srvs/Empty.h"
@@ -102,7 +102,7 @@ public:
       m_pubBattery = n.advertise<std_msgs::Float32>(tf_prefix + "/battery", 10);
     }
     if (m_enable_logging_packets) {
-      m_pubPackets = n.advertise<crazyflie_cpp::crtpPacket>(tf_prefix + "/packets", 10);
+      m_pubPackets = n.advertise<crazyflie_driver::crtpPacket>(tf_prefix + "/packets", 10);
     }
     m_pubRssi = n.advertise<std_msgs::Float32>(tf_prefix + "/rssi", 10);
 
@@ -127,14 +127,20 @@ public:
    * Service callback which transmits a packet to the crazyflie
    * @param  req The service request, which contains a crtpPacket to transmit.
    * @param  res The service response, which is not used.
-   * @return     returns the result of the sendPacket call to the crazyflie
+   * @return     returns true always
    */
   bool sendPacket (
     crazyflie_driver::sendPacket::Request &req,
     crazyflie_driver::sendPacket::Response &res)
   {
-    crazyflie_cpp::crtpPacket packet = req.packet;
-    m_cf.queueOutgoingPacket(req.packet);
+    /** Convert the message struct to the packet struct */
+    crtpPacket_t packet;
+    packet.size = req.packet.size;
+    packet.header = req.packet.header;
+    for (int i = 0; i < CRTP_MAX_DATA_SIZE; i++) {
+      packet.data[i] = req.packet.data[i];
+    }
+    m_cf.queueOutgoingPacket(packet);
     return true;
   }
 
@@ -152,7 +158,7 @@ private:
       std::vector<Crazyradio::Ack>::iterator it;
       for (it = packets.begin(); it != packets.end(); it++)
       {
-        crazyflie_cpp::crtpPacket packet;
+        crazyflie_driver::crtpPacket packet;
         packet.size = it->size;
         packet.header = it->data[0];
         for(int i = 0; i < packet.size; i++)

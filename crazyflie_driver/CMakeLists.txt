@@ -40,13 +40,13 @@ add_message_files(
   FILES
   LogBlock.msg
   GenericLogData.msg
+  crtpPacket.msg
 )
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
    std_msgs
-   crazyflie_cpp
 )
 
 ###################################

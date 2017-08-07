@@ -2,7 +2,6 @@
 
 #include <cstring>
 
-#include "crazyflie_cpp/crtpPacket.h"
 #include "Crazyradio.h"
 #include "crtp.h"
 #include <list>
@@ -166,12 +165,12 @@ public:
   * En-queues a generic crtpPacket into a vector so that it can be transmitted later.
   * @param packet the crtpPacket to be en-queued.
   */
-  void queueOutgoingPacket(const crazyflie_cpp::crtpPacket& packet) {
+  void queueOutgoingPacket(const crtpPacket_t& packet) {
     m_outgoing_packets.push_back(packet);
   }
 
   void transmitPackets();
-  
+
 protected:
   bool sendPacket(
     const uint8_t* data,
@@ -181,7 +180,7 @@ protected:
     const Crazyradio::Ack& result);
 
     std::vector<Crazyradio::Ack> m_generic_packets;
-    std::vector<crazyflie_cpp::crtpPacket> m_outgoing_packets;
+    std::vector<crtpPacket_t> m_outgoing_packets;
     /**
      * En-queues an unhandled Ack into a vector so that it can be retrieved later.
      * @param result The unhandled Ack to be en-queued.

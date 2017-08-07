@@ -130,16 +130,10 @@ void Crazyflie::transmitPackets()
 {
   if (!m_outgoing_packets.empty())
   {
-    std::vector<crazyflie_cpp::crtpPacket>::iterator it;
+    std::vector<crtpPacket_t>::iterator it;
     for (it = m_outgoing_packets.begin(); it != m_outgoing_packets.end(); it++)
     {
-      uint8_t data[31];
-      data[0] = it->header;
-      for (int i = 0; i < it->size; i++)
-      {
-        data[i+1] = it->data[i];
-      }
-      sendPacket(data, it->size);
+      sendPacket(it->raw, it->size);
     }
     m_outgoing_packets.clear();
   }
