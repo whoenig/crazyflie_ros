@@ -38,7 +38,7 @@ typedef struct {
     };
     uint8_t raw[CRTP_MAX_DATA_SIZE+1];
   };
-} crtpPacket_t __attribute__((packed));
+} crtpPacket_t;
 
 // Port 0 (Console)
 struct crtpConsoleResponse
