@@ -10,7 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   crazyflie_cpp
 )
-
 # Enable C++11
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 #SET(CMAKE_CXX_COMPILER             "gcc-4.9")
@@ -34,12 +33,14 @@ add_service_files(
   AddCrazyflie.srv
   RemoveCrazyflie.srv
   UpdateParams.srv
+  sendPacket.srv
 )
 
 add_message_files(
   FILES
   LogBlock.msg
   GenericLogData.msg
+  crtpPacket.msg
 )
 
 ## Generate added messages and services with any dependencies listed here

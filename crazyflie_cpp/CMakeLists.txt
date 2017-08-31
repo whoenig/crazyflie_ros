@@ -1,9 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(crazyflie_cpp)
-
 find_package(catkin)
-find_library(USB_LIB usb-1.0)
 
+find_library(USB_LIB usb-1.0)
 # Enable C++11
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 

@@ -123,6 +123,22 @@ void Crazyflie::sendPing()
   sendPacket(&ping, sizeof(ping));
 }
 
+/**
+ * Transmits any outgoing packets to the crazyflie.
+ */
+void Crazyflie::transmitPackets()
+{
+  if (!m_outgoing_packets.empty())
+  {
+    std::vector<crtpPacket_t>::iterator it;
+    for (it = m_outgoing_packets.begin(); it != m_outgoing_packets.end(); it++)
+    {
+      sendPacket(it->raw, it->size);
+    }
+    m_outgoing_packets.clear();
+  }
+}
+
 // https://forum.bitcraze.io/viewtopic.php?f=9&t=1488
 void Crazyflie::reboot()
 {
@@ -421,6 +437,7 @@ void Crazyflie::handleAck(
     // for (size_t i = 1; i < result.size; ++i) {
     //   std::cout << "    " << (int)result.data[i] << std::endl;
     // }
+    queueGenericPacket(result);
   }
 
 }
@@ -465,4 +482,3 @@ bool Crazyflie::unregisterLogBlock(
 {
   m_logBlockCb.erase(m_logBlockCb.find(id));
 }
-
