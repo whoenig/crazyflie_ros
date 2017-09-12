@@ -122,10 +122,35 @@ void Crazyflie::sendSetpoint(
   sendPacket((const uint8_t*)&request, sizeof(request));
 }
 
+void Crazyflie::sendExternalPositionUpdate(
+  float x,
+  float y,
+  float z)
+{
+  crtpExternalPositionUpdate position(x, y, z);
+  sendPacket((const uint8_t*)&position, sizeof(position));
+}
+
 void Crazyflie::sendPing()
 {
   uint8_t ping = 0xFF;
   sendPacket(&ping, sizeof(ping));
+}
+
+/**
+ * Transmits any outgoing packets to the crazyflie.
+ */
+void Crazyflie::transmitPackets()
+{
+  if (!m_outgoing_packets.empty())
+  {
+    std::vector<crtpPacket_t>::iterator it;
+    for (it = m_outgoing_packets.begin(); it != m_outgoing_packets.end(); it++)
+    {
+      sendPacket(it->raw, it->size);
+    }
+    m_outgoing_packets.clear();
+  }
 }
 
 // https://forum.bitcraze.io/viewtopic.php?f=9&t=1488
@@ -383,6 +408,7 @@ void Crazyflie::handleAck(
     // for (size_t i = 1; i < result.size; ++i) {
     //   std::cout << "    " << (int)result.data[i] << std::endl;
     // }
+    queueGenericPacket(result);
   }
 }
 

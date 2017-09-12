@@ -1,10 +1,16 @@
 #include "ros/ros.h"
 #include "crazyflie_driver/AddCrazyflie.h"
+#include "crazyflie_driver/RemoveCrazyflie.h"
 #include "crazyflie_driver/LogBlock.h"
 #include "crazyflie_driver/GenericLogData.h"
 #include "crazyflie_driver/UpdateParams.h"
+#include "crazyflie_driver/sendPacket.h"
+#include "crazyflie_driver/crtpPacket.h"
+#include "crazyflie_cpp/Crazyradio.h"
+#include "crazyflie_cpp/crtp.h"
 #include "std_srvs/Empty.h"
 #include "geometry_msgs/Twist.h"
+#include "geometry_msgs/PointStamped.h"
 #include "sensor_msgs/Imu.h"
 #include "sensor_msgs/Temperature.h"
 #include "sensor_msgs/MagneticField.h"
@@ -14,9 +20,12 @@
 #include <thread>
 #include <mutex>
 
+#include <string>
+#include <map>
+
 #include <crazyflie_cpp/Crazyflie.h>
 
-constexpr double pi() { return std::atan(1)*4; }
+constexpr double pi() { return 3.141592653589793238462643383279502884; }
 
 double degToRad(double deg) {
     return deg / 180.0 * pi();
@@ -42,7 +51,8 @@ public:
     bool enable_logging_temperature,
     bool enable_logging_magnetic_field,
     bool enable_logging_pressure,
-    bool enable_logging_battery)
+    bool enable_logging_battery,
+    bool enable_logging_packets)
     : m_cf(link_uri)
     , m_tf_prefix(tf_prefix)
     , m_isEmergency(false)
@@ -57,9 +67,11 @@ public:
     , m_enable_logging_magnetic_field(enable_logging_magnetic_field)
     , m_enable_logging_pressure(enable_logging_pressure)
     , m_enable_logging_battery(enable_logging_battery)
+    , m_enable_logging_packets(enable_logging_packets)
     , m_serviceEmergency()
     , m_serviceUpdateParams()
     , m_subscribeCmdVel()
+    , m_subscribeExternalPosition()
     , m_pubImu()
     , m_pubTemp()
     , m_pubMag()
@@ -67,11 +79,12 @@ public:
     , m_pubBattery()
     , m_pubRssi()
     , m_sentSetpoint(false)
+    , m_sentExternalPosition(false)
   {
     ros::NodeHandle n;
     m_subscribeCmdVel = n.subscribe(tf_prefix + "/cmd_vel", 1, &CrazyflieROS::cmdVelChanged, this);
+    m_subscribeExternalPosition = n.subscribe(tf_prefix + "/external_position", 1, &CrazyflieROS::positionMeasurementChanged, this);
     m_serviceEmergency = n.advertiseService(tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
-    m_serviceUpdateParams = n.advertiseService(tf_prefix + "/update_params", &CrazyflieROS::updateParams, this);
 
     if (m_enable_logging_imu) {
       m_pubImu = n.advertise<sensor_msgs::Imu>(tf_prefix + "/imu", 10);
@@ -88,6 +101,9 @@ public:
     if (m_enable_logging_battery) {
       m_pubBattery = n.advertise<std_msgs::Float32>(tf_prefix + "/battery", 10);
     }
+    if (m_enable_logging_packets) {
+      m_pubPackets = n.advertise<crazyflie_driver::crtpPacket>(tf_prefix + "/packets", 10);
+    }
     m_pubRssi = n.advertise<std_msgs::Float32>(tf_prefix + "/rssi", 10);
 
     for (auto& logBlock : m_logBlocks)
@@ -95,8 +111,63 @@ public:
       m_pubLogDataGeneric.push_back(n.advertise<crazyflie_driver::GenericLogData>(tf_prefix + "/" + logBlock.topic_name, 10));
     }
 
-    std::thread t(&CrazyflieROS::run, this);
-    t.detach();
+    m_sendPacketServer = n.advertiseService(tf_prefix + "/send_packet"  , &CrazyflieROS::sendPacket, this);
+
+    m_thread = std::thread(&CrazyflieROS::run, this);
+  }
+
+  void stop()
+  {
+    ROS_INFO("Disconnecting ...");
+    m_isEmergency = true;
+    m_thread.join();
+  }
+
+  /**
+   * Service callback which transmits a packet to the crazyflie
+   * @param  req The service request, which contains a crtpPacket to transmit.
+   * @param  res The service response, which is not used.
+   * @return     returns true always
+   */
+  bool sendPacket (
+    crazyflie_driver::sendPacket::Request &req,
+    crazyflie_driver::sendPacket::Response &res)
+  {
+    /** Convert the message struct to the packet struct */
+    crtpPacket_t packet;
+    packet.size = req.packet.size;
+    packet.header = req.packet.header;
+    for (int i = 0; i < CRTP_MAX_DATA_SIZE; i++) {
+      packet.data[i] = req.packet.data[i];
+    }
+    m_cf.queueOutgoingPacket(packet);
+    return true;
+  }
+
+private:
+  ros::ServiceServer m_sendPacketServer;
+
+  /**
+   * Publishes any generic packets en-queued by the crazyflie to a crtpPacket
+   * topic.
+   */
+  void publishPackets() {
+    std::vector<Crazyradio::Ack> packets = m_cf.retrieveGenericPackets();
+    if (!packets.empty())
+    {
+      std::vector<Crazyradio::Ack>::iterator it;
+      for (it = packets.begin(); it != packets.end(); it++)
+      {
+        crazyflie_driver::crtpPacket packet;
+        packet.size = it->size;
+        packet.header = it->data[0];
+        for(int i = 0; i < packet.size; i++)
+        {
+          packet.data[i] = it->data[i+1];
+        }
+        m_pubPackets.publish(packet);
+      }
+    }
   }
 
 private:
@@ -195,6 +266,13 @@ private:
     }
   }
 
+  void positionMeasurementChanged(
+    const geometry_msgs::PointStamped::ConstPtr& msg)
+  {
+    m_cf.sendExternalPositionUpdate(msg->point.x, msg->point.y, msg->point.z);
+    m_sentExternalPosition = true;
+  }
+
   void run()
   {
     // m_cf.reboot();
@@ -239,6 +317,8 @@ private:
             break;
         }
       }
+      ros::NodeHandle n;
+      m_serviceUpdateParams = n.advertiseService(m_tf_prefix + "/update_params", &CrazyflieROS::updateParams, this);
     }
 
     std::unique_ptr<LogBlock<logImu> > logBlockImu;
@@ -322,10 +402,15 @@ private:
 
     while(!m_isEmergency) {
       // make sure we ping often enough to stream data out
-      if (m_enableLogging && !m_sentSetpoint) {
+      if (m_enableLogging && !m_sentSetpoint && !m_sentExternalPosition) {
+        m_cf.transmitPackets();
         m_cf.sendPing();
+        if(m_enable_logging_packets) {
+          this->publishPackets();
+        }
       }
       m_sentSetpoint = false;
+      m_sentExternalPosition = false;
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
@@ -451,20 +536,27 @@ private:
   bool m_enable_logging_magnetic_field;
   bool m_enable_logging_pressure;
   bool m_enable_logging_battery;
+  bool m_enable_logging_packets;
 
   ros::ServiceServer m_serviceEmergency;
   ros::ServiceServer m_serviceUpdateParams;
   ros::Subscriber m_subscribeCmdVel;
+  ros::Subscriber m_subscribeExternalPosition;
   ros::Publisher m_pubImu;
   ros::Publisher m_pubTemp;
   ros::Publisher m_pubMag;
   ros::Publisher m_pubPressure;
   ros::Publisher m_pubBattery;
+  ros::Publisher m_pubPackets;
   ros::Publisher m_pubRssi;
   std::vector<ros::Publisher> m_pubLogDataGeneric;
 
-  bool m_sentSetpoint;
+  bool m_sentSetpoint, m_sentExternalPosition;
+
+  std::thread m_thread;
 };
+
+static std::map<std::string, CrazyflieROS*> crazyflies;
 
 bool add_crazyflie(
   crazyflie_driver::AddCrazyflie::Request  &req,
@@ -479,7 +571,12 @@ bool add_crazyflie(
     req.enable_logging,
     req.use_ros_time);
 
-  // Leak intentionally
+  // Ignore if the uri is already in use
+  if (crazyflies.find(req.uri) != crazyflies.end()) {
+    ROS_ERROR("Cannot add %s, already added.", req.uri.c_str());
+    return false;
+  }
+
   CrazyflieROS* cf = new CrazyflieROS(
     req.uri,
     req.tf_prefix,
@@ -493,7 +590,31 @@ bool add_crazyflie(
     req.enable_logging_temperature,
     req.enable_logging_magnetic_field,
     req.enable_logging_pressure,
-    req.enable_logging_battery);
+    req.enable_logging_battery,
+    req.enable_logging_packets);
+
+  crazyflies[req.uri] = cf;
+
+  return true;
+}
+
+bool remove_crazyflie(
+  crazyflie_driver::RemoveCrazyflie::Request  &req,
+  crazyflie_driver::RemoveCrazyflie::Response &res)
+{
+
+  if (crazyflies.find(req.uri) == crazyflies.end()) {
+    ROS_ERROR("Cannot remove %s, not connected.", req.uri.c_str());
+    return false;
+  }
+
+  ROS_INFO("Removing crazyflie at uri %s.", req.uri.c_str());
+
+  crazyflies[req.uri]->stop();
+  delete crazyflies[req.uri];
+  crazyflies.erase(req.uri);
+
+  ROS_INFO("Crazyflie %s removed.", req.uri.c_str());
 
   return true;
 }
@@ -503,7 +624,8 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "crazyflie_server");
   ros::NodeHandle n;
 
-  ros::ServiceServer service = n.advertiseService("add_crazyflie", add_crazyflie);
+  ros::ServiceServer serviceAdd = n.advertiseService("add_crazyflie", add_crazyflie);
+  ros::ServiceServer serviceRemove = n.advertiseService("remove_crazyflie", remove_crazyflie);
   ros::spin();
 
   return 0;

@@ -11,4 +11,5 @@ bool enable_logging_temperature
 bool enable_logging_magnetic_field
 bool enable_logging_pressure
 bool enable_logging_battery
+bool enable_logging_packets
 ---

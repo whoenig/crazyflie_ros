@@ -1,5 +1,7 @@
 #pragma once
 
+#define CRTP_MAX_DATA_SIZE 30
+
 // Header
 struct crtp
 {
@@ -25,6 +27,18 @@ struct crtp
   uint8_t link:2;
   uint8_t port:4;
 } __attribute__((packed));
+
+// Packet structure definition
+typedef struct {
+  uint8_t size;
+  union {
+    struct {
+      uint8_t header;
+      uint8_t data[CRTP_MAX_DATA_SIZE];
+    };
+    uint8_t raw[CRTP_MAX_DATA_SIZE+1];
+  };
+} crtpPacket_t;
 
 // Port 0 (Console)
 struct crtpConsoleResponse
@@ -394,6 +408,27 @@ struct crtpLogDataResponse
     uint16_t timestampHi;
     uint8_t data[26];
 } __attribute__((packed));
+
+
+// Port 0x06 (External Position Update)
+
+struct crtpExternalPositionUpdate
+{
+  crtpExternalPositionUpdate(
+    float x,
+    float y,
+    float z)
+    : header(0x06, 0)
+    , x(x)
+    , y(y)
+    , z(z)
+  {
+  }
+  const crtp header;
+  float x;
+  float y;
+  float z;
+}  __attribute__((packed));
 
 
 

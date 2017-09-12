@@ -12,6 +12,7 @@
   <arg name="enable_logging_magnetic_field" default="True" />
   <arg name="enable_logging_pressure" default="True" />
   <arg name="enable_logging_battery" default="True" />
+  <arg name="enable_logging_packets" default="True" />
 
   <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
     <param name="uri" value="$(arg uri)" />
@@ -25,5 +26,6 @@
     <param name="enable_logging_magnetic_field" value="$(arg enable_logging_magnetic_field)" />
     <param name="enable_logging_pressure" value="$(arg enable_logging_pressure)" />
     <param name="enable_logging_battery" value="$(arg enable_logging_battery)" />
+    <param name="enable_logging_packets" value="$(arg enable_logging_packets)"/>
   </node>
 </launch>
