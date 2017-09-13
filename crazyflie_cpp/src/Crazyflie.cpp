@@ -133,7 +133,7 @@ void Crazyflie::transmitPackets()
     std::vector<crtpPacket_t>::iterator it;
     for (it = m_outgoing_packets.begin(); it != m_outgoing_packets.end(); it++)
     {
-      sendPacket(it->raw, it->size);
+      sendPacket(it->raw, it->size+1);
     }
     m_outgoing_packets.clear();
   }
