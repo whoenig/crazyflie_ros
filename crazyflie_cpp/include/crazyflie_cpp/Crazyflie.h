@@ -137,6 +137,11 @@ public:
     m_linkQualityCallback = cb;
   }
 
+  void setConsoleCallback(
+    std::function<void(const char*)> cb) {
+    m_consoleCallback = cb;
+  }
+
   static size_t size(LogType t) {
     switch(t) {
       case LogTypeUint8:
@@ -306,6 +311,7 @@ private:
 
   std::function<void(const crtpPlatformRSSIAck*)> m_emptyAckCallback;
   std::function<void(float)> m_linkQualityCallback;
+  std::function<void(const char*)> m_consoleCallback;
 
   template<typename T>
   friend class LogBlock;

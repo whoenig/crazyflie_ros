@@ -97,6 +97,16 @@ target_link_libraries(version
   ${Boost_LIBRARIES}
 )
 
+### console
+
+add_executable(console
+  src/console.cpp
+)
+target_link_libraries(console
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############
