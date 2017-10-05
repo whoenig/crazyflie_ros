@@ -87,6 +87,16 @@ target_link_libraries(battery
   ${Boost_LIBRARIES}
 )
 
+### version
+
+add_executable(version
+  src/version.cpp
+)
+target_link_libraries(version
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############
