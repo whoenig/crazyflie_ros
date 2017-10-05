@@ -3,6 +3,7 @@
 
 #include "Crazyflie.h"
 #include "crtp.h"
+#include "bootloader.h"
 
 #include "Crazyradio.h"
 #include "CrazyflieUSB.h"
@@ -11,6 +12,7 @@
 #include <cstring>
 #include <stdexcept>
 #include <thread>
+#include <cmath>
 
 #define MAX_RADIOS 16
 #define MAX_USB     4
@@ -158,19 +160,36 @@ void Crazyflie::transmitPackets()
 void Crazyflie::reboot()
 {
   const uint8_t reboot_init[] = {0xFF, 0xFE, 0xFF};
-  while(!sendPacket(reboot_init, sizeof(reboot_init))) {}
+  sendPacketOrTimeout(reboot_init, sizeof(reboot_init));
 
   const uint8_t reboot_to_firmware[] = {0xFF, 0xFE, 0xF0, 0x01};
-  while(!sendPacket(reboot_to_firmware, sizeof(reboot_to_firmware))) {}
+  sendPacketOrTimeout(reboot_to_firmware, sizeof(reboot_to_firmware));
 }
 
-void Crazyflie::rebootToBootloader()
+uint64_t Crazyflie::rebootToBootloader()
 {
-  const uint8_t reboot_init[] = {0xFF, 0xFE, 0xFF};
-  while(!sendPacket(reboot_init, sizeof(reboot_init))) {}
+  bootloaderResetInitRequest req(TargetNRF51);
+  startBatchRequest();
+  addRequest(req, 3);
+  handleRequests(/*crtpMode=*/false);
+  const bootloaderResetInitResponse* response = getRequestResult<bootloaderResetInitResponse>(0);
+
+  uint64_t result =
+      ((uint64_t)response->addr[0] << 0)
+    | ((uint64_t)response->addr[1] << 8)
+    | ((uint64_t)response->addr[2] << 16)
+    | ((uint64_t)response->addr[3] << 24)
+    | ((uint64_t)0xb1 << 32);
 
   const uint8_t reboot_to_bootloader[] = {0xFF, 0xFE, 0xF0, 0x00};
-  while(!sendPacket(reboot_to_bootloader, sizeof(reboot_to_bootloader))) {}
+  // for (size_t i = 0; i < 10; ++i) {
+  //   if (sendPacket(reboot_to_bootloader, sizeof(reboot_to_bootloader))) {
+  //     break;
+  //   }
+  // }
+  sendPacketOrTimeout(reboot_to_bootloader, sizeof(reboot_to_bootloader));
+
+  return result;
 }
 
 void Crazyflie::sysoff()
@@ -216,6 +235,211 @@ float Crazyflie::vbat()
   addRequest(shutdown, 2);
   handleRequests();
   return getRequestResult<nrf51vbatResponse>(0)->vbat;
+}
+
+void Crazyflie::writeFlash(
+  BootloaderTarget target,
+  const std::vector<uint8_t>& data)
+{
+  // Get info about the target
+  bootloaderGetInfoRequest req(target);
+  startBatchRequest();
+  addRequest(req, 3);
+  handleRequests(/*crtpMode=*/false);
+  const bootloaderGetInfoResponse* response = getRequestResult<bootloaderGetInfoResponse>(0);
+  uint16_t pageSize = response->pageSize;
+  uint16_t flashStart = response->flashStart;
+  uint16_t nBuffPage = response->nBuffPage;
+  // std::cout << "pageSize: " << pageSize
+  //           << " nBuffPage: " << nBuffPage
+  //           << " nFlashPage: " << response->nFlashPage
+  //           << " flashStart: " << flashStart
+  //           << " version: " << (int)response->version
+  //           << std::endl;
+
+  uint16_t numPages = ceil(data.size() / (float)pageSize);
+  if (numPages + flashStart >= response->nFlashPage) {
+    std::stringstream sstr;
+    sstr << "Requested size too large!";
+    throw std::runtime_error(sstr.str());
+  }
+  // std::cout << "numPages: " << numPages << std::endl;
+
+  // write flash
+  size_t offset = 0;
+  uint16_t usedBuffers = 0;
+  // startBatchRequest();
+  for (uint16_t page = flashStart; page < numPages + flashStart; ++page) {
+    for (uint16_t address = 0; address < pageSize; address += 25) {
+      // std::cout << "request: " << page << " " << address << std::endl;
+      bootloaderLoadBufferRequest req(target, usedBuffers, address);
+      size_t requestedSize = std::min<size_t>(data.size() - offset, std::min<size_t>(25, pageSize - address));
+      memcpy(req.data, &data[offset], requestedSize);
+      // addRequest(req, 0);
+      // for (size_t i = 0; i < 10; ++i)
+      // std::cout << "request: " << req.page << " " << req.address << " " << requestedSize << std::endl;
+      // for (size_t i = 0; i < 10; ++i) {
+
+      auto start = std::chrono::system_clock::now();
+      // while (true) {
+        sendPacketOrTimeout((uint8_t*)&req, 7 + requestedSize);
+      //   startBatchRequest();
+      //   bootloaderReadBufferRequest req2(target, usedBuffers, address);
+      //   addRequest(req2, 7);
+      //   handleRequests(/*crtpMode=*/false);
+      //   const bootloaderReadBufferResponse* response = getRequestResult<bootloaderReadBufferResponse>(0);
+      //   if (memcmp(req.data, response->data, requestedSize) == 0) {
+      //     break;
+      //   }
+      //   auto end = std::chrono::system_clock::now();
+      //   std::chrono::duration<double> elapsedSeconds = end-start;
+      //   if (elapsedSeconds.count() > 1.0) {
+      //     throw std::runtime_error("timeout");
+      //   }
+      // }
+      offset += requestedSize;
+      if (offset >= data.size()) {
+        break;
+      }
+    }
+    ++usedBuffers;
+    if (usedBuffers == nBuffPage
+        || page == numPages + flashStart - 1) {
+
+
+      // startBatchRequest();
+      // for (uint16_t buf = 0; buf < usedBuffers; ++buf) {
+      //   for (uint16_t address = 0; address < pageSize; address += 25) {
+      //     // std::cout << "request: " << page << " " << address << std::endl;
+      //     bootloaderReadBufferRequest req(target, buf, address);
+      //     addRequest(req, 7);
+      //   }
+      // }
+      // handleRequests(/*crtpMode=*/false);
+
+
+      // upload all the buffers now
+      // std::cout << "try to upload buffers!" << std::endl;
+      // handleRequests(/*crtpMode=*/false);
+      // std::cout << "buffers uploaded!" << std::endl;
+
+      // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+      // write flash
+      bootloaderWriteFlashRequest req(target, 0, page - usedBuffers + 1, usedBuffers);
+      sendPacketOrTimeout((uint8_t*)&req, sizeof(req));
+
+      auto start = std::chrono::system_clock::now();
+
+      size_t tries = 0;
+      while (true) {
+        Crazyradio::Ack ack;
+        bootloaderFlashStatusRequest statReq(target);
+        sendPacket((const uint8_t*)&statReq, sizeof(statReq), ack);
+        if (   ack.ack
+            && ack.size == 5
+            && memcmp(&req, ack.data, 3) == 0) {
+          if (ack.data[3] != 1 || ack.data[4] != 0) {
+            throw std::runtime_error("Error during flashing!");
+          }
+          break;
+        }
+
+        // std::cout << page - usedBuffers + 1 << "," << usedBuffers << std::endl;
+        // startBatchRequest();
+        // bootloaderWriteFlashRequest req(target, 0, page - usedBuffers + 1, usedBuffers);
+        // addRequest(req, 3);
+        // handleRequests(/*crtpMode=*/false);
+        // const bootloaderWriteFlashResponse* response = getRequestResult<bootloaderWriteFlashResponse>(0);
+        // if (response->done == 1 && response->error == 0) {
+        //   break;
+        // }
+        auto end = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsedSeconds = end-start;
+        if (elapsedSeconds.count() > 0.5) {
+          start = end;
+          sendPacketOrTimeout((uint8_t*)&req, sizeof(req));
+          ++tries;
+          if (tries > 5) {
+            throw std::runtime_error("timeout");
+          }
+        }
+      }
+
+      // std::cout << "Flashed: " << (page - flashStart) / (float)numPages * 100.0 << " %" << std::endl;
+
+      // get ready to fill more buffers
+      // if (page != numPages + flashStart - 1) {
+      //   startBatchRequest();
+      // }
+      usedBuffers = 0;
+    }
+  }
+
+
+}
+
+void Crazyflie::readFlash(
+  BootloaderTarget target,
+  size_t size,
+  std::vector<uint8_t>& data)
+{
+  // Get info about the target
+  bootloaderGetInfoRequest req(target);
+  startBatchRequest();
+  addRequest(req, 3);
+  handleRequests(/*crtpMode=*/false);
+  const bootloaderGetInfoResponse* response = getRequestResult<bootloaderGetInfoResponse>(0);
+  uint16_t pageSize = response->pageSize;
+  uint16_t flashStart = response->flashStart;
+  // std::cout << "pageSize: " << pageSize
+  //           << " nBuffPage: " << response->nBuffPage
+  //           << " nFlashPage: " << response->nFlashPage
+  //           << " flashStart: " << flashStart
+  //           << " version: " << (int)response->version
+  //           << std::endl;
+
+  uint16_t numPages = ceil(size / (float)pageSize);
+  if (numPages + flashStart >= response->nFlashPage) {
+    std::stringstream sstr;
+    sstr << "Requested size too large!";
+    throw std::runtime_error(sstr.str());
+  }
+  // std::cout << "numPages: " << numPages << std::endl;
+
+  // read flash
+  size_t offset = 0;
+  startBatchRequest();
+  for (uint16_t page = flashStart; page < numPages + flashStart; ++page) {
+    for (uint16_t address = 0; address < pageSize; address += 25) {
+      // std::cout << "request: " << page << " " << address << std::endl;
+      bootloaderReadFlashRequest req(target, page, address);
+      addRequest(req, 7);
+      size_t requestedSize = std::min(25, pageSize - address);
+      offset += requestedSize;
+      if (offset > size) {
+        break;
+      }
+    }
+  }
+  handleRequests(/*crtpMode=*/false);
+
+  // update output
+  data.resize(size);
+  size_t i = 0;
+  offset = 0;
+  for (uint16_t page = flashStart; page < numPages + flashStart; ++page) {
+    for (uint16_t address = 0; address < pageSize; address += 25) {
+      const bootloaderReadFlashResponse* response = getRequestResult<bootloaderReadFlashResponse>(i++);
+      size_t requestedSize = std::min(25, pageSize - address);
+      // std::cout << "offset: " << offset << " reqS: " << requestedSize;
+      memcpy(&data[offset], response->data, std::min(size - offset, requestedSize));
+      offset += requestedSize;
+      if (offset > size) {
+        break;
+      }
+    }
+  }
 }
 
 void Crazyflie::requestLogToc()

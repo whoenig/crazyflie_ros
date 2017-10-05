@@ -107,6 +107,16 @@ target_link_libraries(console
   ${Boost_LIBRARIES}
 )
 
+### flash
+
+add_executable(flash
+  src/flash.cpp
+)
+target_link_libraries(flash
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############
