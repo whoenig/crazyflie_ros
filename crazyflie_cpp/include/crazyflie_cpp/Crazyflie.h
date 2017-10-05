@@ -86,6 +86,10 @@ public:
 
   void reboot();
   void rebootToBootloader();
+  void sysoff();
+  void trySysOff();
+  void alloff();
+  void syson();
   float vbat();
 
   void requestLogToc();
@@ -183,6 +187,11 @@ private:
   bool sendPacket(
     const uint8_t* data,
     uint32_t length);
+
+ void sendPacketOrTimeout(
+   const uint8_t* data,
+   uint32_t length,
+   float timeout = 1.0);
 
   void handleAck(
     const Crazyradio::Ack& result);

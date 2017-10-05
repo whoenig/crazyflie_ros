@@ -172,6 +172,34 @@ void Crazyflie::rebootToBootloader()
   while(!sendPacket(reboot_to_bootloader, sizeof(reboot_to_bootloader))) {}
 }
 
+void Crazyflie::sysoff()
+{
+  const uint8_t shutdown[] = {0xFF, 0xFE, 0x02};
+  sendPacketOrTimeout(shutdown, sizeof(shutdown));
+}
+
+void Crazyflie::trySysOff()
+{
+  const uint8_t shutdown[] = {0xFF, 0xFE, 0x02};
+  for (size_t i = 0; i < 10; ++i) {
+    if (sendPacket(shutdown, sizeof(shutdown))) {
+      break;
+    }
+  }
+}
+
+void Crazyflie::alloff()
+{
+  const uint8_t shutdown[] = {0xFF, 0xFE, 0x01};
+  sendPacketOrTimeout(shutdown, sizeof(shutdown));
+}
+
+void Crazyflie::syson()
+{
+  const uint8_t shutdown[] = {0xFF, 0xFE, 0x03};
+  sendPacketOrTimeout(shutdown, sizeof(shutdown));
+}
+
 float Crazyflie::vbat()
 {
   struct nrf51vbatResponse
@@ -330,6 +358,21 @@ bool Crazyflie::sendPacket(
   Crazyradio::Ack ack;
   sendPacket(data, length, ack);
   return ack.ack;
+}
+
+ void Crazyflie::sendPacketOrTimeout(
+   const uint8_t* data,
+   uint32_t length,
+   float timeout)
+{
+  auto start = std::chrono::system_clock::now();
+  while (!sendPacket(data, length)) {
+    auto end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsedSeconds = end-start;
+    if (elapsedSeconds.count() > timeout) {
+      throw std::runtime_error("timeout");
+    }
+  }
 }
 
 void Crazyflie::sendPacket(

@@ -7,17 +7,25 @@ enum Mode
 {
   RebootToFirmware,
   RebootToBootloader,
+  SysOff,
+  SysOn,
+  AllOff,
 };
 
 std::istream& operator>>(std::istream& in, Mode& mode)
 {
   std::string token;
   in >> token;
-  std::cout << token << std::endl;
   if (token == "firmware")
     mode = RebootToFirmware;
   else if (token == "bootloader")
     mode = RebootToBootloader;
+  else if (token == "sysoff")
+    mode = SysOff;
+  else if (token == "syson")
+    mode = SysOn;
+  else if (token == "alloff")
+    mode = AllOff;
   else throw boost::program_options::validation_error(boost::program_options::validation_error::invalid_option_value);
   return in;
 }
@@ -35,7 +43,7 @@ int main(int argc, char **argv)
   desc.add_options()
     ("help", "produce help message")
     ("uri", po::value<std::string>(&uri)->default_value(defaultUri), "unique ressource identifier")
-    ("mode", po::value<Mode>(&mode)->default_value(mode), "reboot mode {firmware,bootloader}")
+    ("mode", po::value<Mode>(&mode)->default_value(mode), "reboot mode {firmware,bootloader,sysoff,syson,alloff}")
   ;
 
   try
@@ -58,7 +66,6 @@ int main(int argc, char **argv)
 
   try
   {
-    std::cout << mode << std::endl;
     Crazyflie cf(uri);
     switch (mode)
     {
@@ -67,6 +74,15 @@ int main(int argc, char **argv)
         break;
       case RebootToBootloader:
         cf.rebootToBootloader();
+        break;
+      case SysOff:
+        cf.sysoff();
+        break;
+      case SysOn:
+        cf.syson();
+        break;
+      case AllOff:
+        cf.alloff();
         break;
     }
 
