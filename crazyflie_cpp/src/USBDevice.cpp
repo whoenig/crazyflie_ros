@@ -136,7 +136,9 @@ void USBDevice::open(
     }
     else
     {
-        throw std::runtime_error("No matching USB Device found!");
+        std::stringstream sstr;
+        sstr << "No matching USB Device with devid = " << devid << " found!";
+        throw std::runtime_error(sstr.str());
     }
 }
 
