@@ -77,6 +77,16 @@ target_link_libraries(reboot
   ${Boost_LIBRARIES}
 )
 
+### battery
+
+add_executable(battery
+  src/battery.cpp
+)
+target_link_libraries(battery
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############

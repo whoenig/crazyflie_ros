@@ -172,6 +172,23 @@ void Crazyflie::rebootToBootloader()
   while(!sendPacket(reboot_to_bootloader, sizeof(reboot_to_bootloader))) {}
 }
 
+float Crazyflie::vbat()
+{
+  struct nrf51vbatResponse
+  {
+    uint8_t dummy1;
+    uint8_t dummy2;
+    uint8_t dummy3;
+    float vbat;
+  } __attribute__((packed));
+
+  const uint8_t shutdown[] = {0xFF, 0xFE, 0x04};
+  startBatchRequest();
+  addRequest(shutdown, 2);
+  handleRequests();
+  return getRequestResult<nrf51vbatResponse>(0)->vbat;
+}
+
 void Crazyflie::requestLogToc()
 {
   // Find the number of log variables in TOC

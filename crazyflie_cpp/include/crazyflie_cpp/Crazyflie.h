@@ -86,6 +86,7 @@ public:
 
   void reboot();
   void rebootToBootloader();
+  float vbat();
 
   void requestLogToc();
 
