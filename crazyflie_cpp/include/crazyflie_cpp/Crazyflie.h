@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstring>
+#include <sstream>
 
 #include "Crazyradio.h"
 #include "crtp.h"
@@ -8,6 +9,7 @@
 #include <set>
 #include <map>
 #include <iostream>
+#include <chrono>
 
 class Crazyflie
 {
@@ -63,6 +65,11 @@ public:
     std::string name;
   };
 
+  enum BootloaderTarget {
+    TargetSTM32 = 0xFF,
+    TargetNRF51 = 0xFE,
+  };
+
 public:
   Crazyflie(
     const std::string& link_uri);
@@ -90,8 +97,21 @@ public:
   void sendPing();
 
   void reboot();
-  void rebootToBootloader();
+  // returns new address
+  uint64_t rebootToBootloader();
+  void sysoff();
+  void trySysOff();
+  void alloff();
+  void syson();
+  float vbat();
 
+  void writeFlash(
+    BootloaderTarget target,
+    const std::vector<uint8_t>& data);
+  void readFlash(
+    BootloaderTarget target,
+    size_t size,
+    std::vector<uint8_t>& data);
   void requestLogToc();
 
   void requestParamToc();
@@ -137,6 +157,11 @@ public:
     m_linkQualityCallback = cb;
   }
 
+  void setConsoleCallback(
+    std::function<void(const char*)> cb) {
+    m_consoleCallback = cb;
+  }
+
   static size_t size(LogType t) {
     switch(t) {
       case LogTypeUint8:
@@ -156,13 +181,84 @@ public:
     }
   }
 
-protected:
+  /**
+   * Returns a copy of the en-queued CRTP packets which were not handled by
+   * handleAck.
+   * @return  A vector of Ack data structures, where each Ack contains the data
+   * from a single packet.
+   */
+  std::vector<Crazyradio::Ack> retrieveGenericPackets() {
+    std::vector<Crazyradio::Ack> packets = m_generic_packets;
+    m_generic_packets.clear();
+    return packets;
+  }
+
+  /**
+  * En-queues a generic crtpPacket into a vector so that it can be transmitted later.
+  * @param packet the crtpPacket to be en-queued.
+  */
+  void queueOutgoingPacket(const crtpPacket_t& packet) {
+    m_outgoing_packets.push_back(packet);
+  }
+
+  void transmitPackets();
+
+private:
+  void sendPacket(
+    const uint8_t* data,
+    uint32_t length,
+    Crazyradio::Ack& result);
+
   bool sendPacket(
     const uint8_t* data,
     uint32_t length);
 
+ void sendPacketOrTimeout(
+   const uint8_t* data,
+   uint32_t length,
+   float timeout = 1.0);
+
   void handleAck(
     const Crazyradio::Ack& result);
+
+  std::vector<Crazyradio::Ack> m_generic_packets;
+  std::vector<crtpPacket_t> m_outgoing_packets;
+
+  /**
+   * En-queues an unhandled Ack into a vector so that it can be retrieved later.
+   * @param result The unhandled Ack to be en-queued.
+   */
+  void queueGenericPacket(const Crazyradio::Ack& result) {
+    m_generic_packets.push_back(result);
+  }
+
+  void startBatchRequest();
+
+  void addRequest(
+    const uint8_t* data,
+    size_t numBytes,
+    size_t numBytesToMatch);
+
+  template<typename R>
+  void addRequest(
+    const R& request,
+    size_t numBytesToMatch)
+  {
+    addRequest(
+      reinterpret_cast<const uint8_t*>(&request), sizeof(request), numBytesToMatch);
+  }
+
+  void handleRequests(
+    float baseTime = 0.5,
+    float timePerRequest = 0.05);
+
+  void handleBatchAck(
+    const Crazyradio::Ack& result);
+
+  template<typename R>
+  const R* getRequestResult(size_t index) const {
+    return reinterpret_cast<const R*>(m_batchRequests[index].ack.data);
+  }
 
 private:
   struct logInfo {
@@ -220,35 +316,37 @@ private:
 
 private:
   Crazyradio* m_radio;
+  ITransport* m_transport;
   int m_devId;
 
   uint8_t m_channel;
   uint64_t m_address;
   Crazyradio::Datarate m_datarate;
 
-  logInfo m_logInfo;
   std::vector<LogTocEntry> m_logTocEntries;
-  std::set<size_t> m_logTocEntriesRequested;
-
   std::map<uint8_t, std::function<void(crtpLogDataResponse*, uint8_t)> > m_logBlockCb;
 
-  bool m_blockReset;
-  std::set<uint8_t> m_blockCreated;
-  std::set<uint8_t> m_blockStarted;
-  std::set<uint8_t> m_blockStopped;
-
-  paramInfo m_paramInfo;
   std::vector<ParamTocEntry> m_paramTocEntries;
-  std::set<size_t> m_paramTocEntriesRequested;
   std::map<uint8_t, ParamValue> m_paramValues;
-  std::set<size_t> m_paramValuesRequested;
 
   std::function<void(const crtpPlatformRSSIAck*)> m_emptyAckCallback;
   std::function<void(float)> m_linkQualityCallback;
+  std::function<void(const char*)> m_consoleCallback;
 
   template<typename T>
   friend class LogBlock;
   friend class LogBlockGeneric;
+
+  // batch system
+  struct batchRequest
+  {
+    std::vector<uint8_t> request;
+    size_t numBytesToMatch;
+    ITransport::Ack ack;
+    bool finished;
+  };
+  std::vector<batchRequest> m_batchRequests;
+  size_t m_numRequestsFinished;
 };
 
 template<class T>
@@ -275,14 +373,22 @@ public:
         ++i;
       }
       else {
-        std::cerr << "Could not find " << pair.first << "." << pair.second << " in log toc!" << std::endl;
+        std::stringstream sstr;
+        sstr << "Could not find " << pair.first << "." << pair.second << " in log toc!";
+        throw std::runtime_error(sstr.str());
       }
     }
-    m_cf->m_blockCreated.clear();
-    do
-    {
-      m_cf->sendPacket((const uint8_t*)&request, 3 + 2*i);
-    } while(m_cf->m_blockCreated.find(m_id) == m_cf->m_blockCreated.end());
+
+    m_cf->startBatchRequest();
+    m_cf->addRequest(reinterpret_cast<const uint8_t*>(&request), 3 + 2*i, 2);
+    m_cf->handleRequests();
+    auto r = m_cf->getRequestResult<crtpLogControlResponse>(0);
+    if (r->result != crtpLogControlResultOk
+        && r->result != crtpLogControlResultBlockExists) {
+      std::stringstream sstr;
+      sstr << "Could not create log block! Result: " << (int)r->result << " " << (int)m_id << " " << (int)r->requestByte1 << " " << (int)r->command;
+      throw std::runtime_error(sstr.str());
+    }
   }
 
   ~LogBlock()
@@ -295,23 +401,17 @@ public:
   void start(uint8_t period)
   {
     crtpLogStartRequest request(m_id, period);
-    while (m_cf->m_blockStarted.find(m_id) == m_cf->m_blockStarted.end()) {
-      m_cf->sendPacket((const uint8_t*)&request, sizeof(request));
-    }
-    m_cf->m_blockStopped.erase(m_id);
+    m_cf->startBatchRequest();
+    m_cf->addRequest(request, 2);
+    m_cf->handleRequests();
   }
 
   void stop()
   {
-    int timeout = 50;
     crtpLogStopRequest request(m_id);
-    while (m_cf->m_blockStopped.find(m_id) == m_cf->m_blockStopped.end()) {
-      m_cf->sendPacket((const uint8_t*)&request, sizeof(request));
-      if (!timeout--) {
-        break;
-      }
-    }
-    m_cf->m_blockStarted.erase(m_id);
+    m_cf->startBatchRequest();
+    m_cf->addRequest(request, 2);
+    m_cf->handleRequests();
   }
 
 private:
@@ -322,7 +422,7 @@ private:
       m_callback(time_in_ms, t);
     }
     else {
-      std::cerr << "Size doesn't match!" << std::endl;
+      throw std::runtime_error("Size doesn't match!");
     }
   }
 
@@ -360,8 +460,10 @@ public:
       if (entry) {
         s += Crazyflie::size(entry->type);
         if (s > 26) {
-          std::cerr << "Can't configure that many variables in a single log block!"
-                    << " Ignoring " << first << "." << second << std::endl;
+          std::stringstream sstr;
+          sstr << "Can't configure that many variables in a single log block!"
+               << " Ignoring " << first << "." << second << std::endl;
+          throw std::runtime_error(sstr.str());
         } else {
           request.items[i].logType = entry->type;
           request.items[i].id = entry->id;
@@ -370,14 +472,19 @@ public:
         }
       }
       else {
-        std::cerr << "Could not find " << first << "." << second << " in log toc!" << std::endl;
+        std::stringstream sstr;
+        sstr << "Could not find " << first << "." << second << " in log toc!";
+        throw std::runtime_error(sstr.str());
       }
     }
-    m_cf->m_blockCreated.clear();
-    do
-    {
-      m_cf->sendPacket((const uint8_t*)&request, 3 + 2*i);
-    } while(m_cf->m_blockCreated.find(m_id) == m_cf->m_blockCreated.end());
+    m_cf->startBatchRequest();
+    m_cf->addRequest(reinterpret_cast<const uint8_t*>(&request), 3 + 2*i, 2);
+    m_cf->handleRequests();
+    auto r = m_cf->getRequestResult<crtpLogControlResponse>(0);
+    if (r->result != crtpLogControlResultOk
+        && r->result != crtpLogControlResultBlockExists) {
+      throw std::runtime_error("Could not create log block!");
+    }
   }
 
   ~LogBlockGeneric()
@@ -390,23 +497,17 @@ public:
   void start(uint8_t period)
   {
     crtpLogStartRequest request(m_id, period);
-    while (m_cf->m_blockStarted.find(m_id) == m_cf->m_blockStarted.end()) {
-      m_cf->sendPacket((const uint8_t*)&request, sizeof(request));
-    }
-    m_cf->m_blockStopped.erase(m_id);
+    m_cf->startBatchRequest();
+    m_cf->addRequest(request, 2);
+    m_cf->handleRequests();
   }
 
   void stop()
   {
-    int timeout = 50;
     crtpLogStopRequest request(m_id);
-    while (m_cf->m_blockStopped.find(m_id) == m_cf->m_blockStopped.end()) {
-      m_cf->sendPacket((const uint8_t*)&request, sizeof(request));
-      if (!timeout--) {
-        break;
-      }
-    }
-    m_cf->m_blockStarted.erase(m_id);
+    m_cf->startBatchRequest();
+    m_cf->addRequest(request, 2);
+    m_cf->handleRequests();
   }
 
 private:

@@ -77,6 +77,46 @@ target_link_libraries(reboot
   ${Boost_LIBRARIES}
 )
 
+### battery
+
+add_executable(battery
+  src/battery.cpp
+)
+target_link_libraries(battery
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+### version
+
+add_executable(version
+  src/version.cpp
+)
+target_link_libraries(version
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+### console
+
+add_executable(console
+  src/console.cpp
+)
+target_link_libraries(console
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+### flash
+
+add_executable(flash
+  src/flash.cpp
+)
+target_link_libraries(flash
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############

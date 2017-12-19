@@ -17,8 +17,6 @@ Clone the package into your catkin workspace:
 git clone https://github.com/whoenig/crazyflie_ros.git
 ```
 
-If you want to use joystick teleoperation, you should setup the hector_quadrotor package (http://wiki.ros.org/hector_quadrotor).
-
 ## Usage
 
 There are six packages included: crazyflie_cpp, crazyflie_driver, crazyflie_tools, crazyflie_description, crazyflie_controller, and crazyflie_demo.

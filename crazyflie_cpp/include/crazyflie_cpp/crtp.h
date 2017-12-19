@@ -2,6 +2,8 @@
 
 #include "Crazyradio.h"
 
+#define CRTP_MAX_DATA_SIZE 30
+
 // Header
 struct crtp
 {
@@ -19,7 +21,7 @@ struct crtp
     port    = (byte >> 4) & 0xF;
   }
 
-  bool operator==(const crtp& other) {
+  bool operator==(const crtp& other) const {
     return channel == other.channel && port == other.port;
   }
 
@@ -27,6 +29,18 @@ struct crtp
   uint8_t link:2;
   uint8_t port:4;
 } __attribute__((packed));
+
+// Packet structure definition
+typedef struct {
+  uint8_t size;
+  union {
+    struct {
+      uint8_t header;
+      uint8_t data[CRTP_MAX_DATA_SIZE];
+    };
+    uint8_t raw[CRTP_MAX_DATA_SIZE+1];
+  };
+} crtpPacket_t;
 
 // Port 0 (Console)
 struct crtpConsoleResponse
@@ -41,6 +55,7 @@ struct crtpConsoleResponse
 
 // Port 2 (Parameters)
 
+struct crtpParamTocGetItemResponse;
 struct crtpParamTocGetItemRequest
 {
   crtpParamTocGetItemRequest(
@@ -48,12 +63,18 @@ struct crtpParamTocGetItemRequest
     : header(2, 0)
     , command(0)
     , id(id)
-    {
-    }
+  {
+  }
 
-    const crtp header;
-    const uint8_t command;
-    uint8_t id;
+  bool operator==(const crtpParamTocGetItemRequest& other) const {
+    return header == other.header && command == other.command && id == other.id;
+  }
+
+  typedef crtpParamTocGetItemResponse Response;
+
+  const crtp header;
+  const uint8_t command;
+  uint8_t id;
 } __attribute__((packed));
 
 struct crtpParamTocGetItemResponse
@@ -74,16 +95,23 @@ struct crtpParamTocGetItemResponse
   char text[28]; // group, name
 } __attribute__((packed));
 
+struct crtpParamTocGetInfoResponse;
 struct crtpParamTocGetInfoRequest
 {
   crtpParamTocGetInfoRequest()
     : header(2, 0)
     , command(1)
-    {
-    }
+  {
+  }
 
-    const crtp header;
-    const uint8_t command;
+  bool operator==(const crtpParamTocGetInfoRequest& other) const {
+    return header == other.header && command == other.command;
+  }
+
+  typedef crtpParamTocGetInfoResponse Response;
+
+  const crtp header;
+  const uint8_t command;
 } __attribute__((packed));
 
 struct crtpParamTocGetInfoResponse
@@ -99,17 +127,24 @@ struct crtpParamTocGetInfoResponse
   uint32_t crc;
 } __attribute__((packed));
 
+struct crtpParamValueResponse;
 struct crtpParamReadRequest
 {
   crtpParamReadRequest(
     uint8_t id)
     : header(2, 1)
     , id(id)
-    {
-    }
+  {
+  }
 
-    const crtp header;
-    const uint8_t id;
+  bool operator==(const crtpParamReadRequest& other) const {
+    return header == other.header && id == other.id;
+  }
+
+  typedef crtpParamValueResponse Response;
+
+  const crtp header;
+  const uint8_t id;
 } __attribute__((packed));
 
 template <class T>
@@ -137,8 +172,7 @@ struct crtpParamValueResponse
             crtp(response.data[0]) == crtp(2, 2));
   }
 
-  crtp header;
-  uint8_t id;
+  crtpParamReadRequest request;
   union {
     uint8_t valueUint8;
     int8_t valueInt8;
@@ -177,6 +211,7 @@ struct crtpSetpointRequest
 
 // Port 5 (Data logging)
 
+struct crtpLogGetInfoResponse;
 struct crtpLogGetInfoRequest
 {
   crtpLogGetInfoRequest()
@@ -185,8 +220,14 @@ struct crtpLogGetInfoRequest
     {
     }
 
-    const crtp header;
-    const uint8_t command;
+  bool operator==(const crtpLogGetInfoRequest& other) const {
+    return header == other.header && command == other.command;
+  }
+
+  typedef crtpLogGetInfoResponse Response;
+
+  const crtp header;
+  const uint8_t command;
 } __attribute__((packed));
 
 struct crtpLogGetInfoResponse
@@ -208,18 +249,25 @@ struct crtpLogGetInfoResponse
   uint8_t log_max_ops;
 } __attribute__((packed));
 
+struct crtpLogGetItemResponse;
 struct crtpLogGetItemRequest
 {
   crtpLogGetItemRequest(uint8_t id)
     : header(5, 0)
     , command(0)
     , id(id)
-    {
-    }
+  {
+  }
 
-    const crtp header;
-    const uint8_t command;
-    uint8_t id;
+  bool operator==(const crtpLogGetItemRequest& other) const {
+    return header == other.header && command == other.command && id == other.id;
+  }
+
+  typedef crtpLogGetItemResponse Response;
+
+  const crtp header;
+  const uint8_t command;
+  uint8_t id;
 } __attribute__((packed));
 
 struct crtpLogGetItemResponse

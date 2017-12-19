@@ -5,6 +5,10 @@
 #include "crazyflie_driver/GenericLogData.h"
 #include "crazyflie_driver/UpdateParams.h"
 #include "crazyflie_driver/FullState.h"
+#include "crazyflie_driver/sendPacket.h"
+#include "crazyflie_driver/crtpPacket.h"
+#include "crazyflie_cpp/Crazyradio.h"
+#include "crazyflie_cpp/crtp.h"
 #include "std_srvs/Empty.h"
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/PointStamped.h"
@@ -48,7 +52,8 @@ public:
     bool enable_logging_temperature,
     bool enable_logging_magnetic_field,
     bool enable_logging_pressure,
-    bool enable_logging_battery)
+    bool enable_logging_battery,
+    bool enable_logging_packets)
     : m_cf(link_uri)
     , m_tf_prefix(tf_prefix)
     , m_isEmergency(false)
@@ -63,6 +68,7 @@ public:
     , m_enable_logging_magnetic_field(enable_logging_magnetic_field)
     , m_enable_logging_pressure(enable_logging_pressure)
     , m_enable_logging_battery(enable_logging_battery)
+    , m_enable_logging_packets(enable_logging_packets)
     , m_serviceEmergency()
     , m_serviceUpdateParams()
     , m_subscribeCmdVel()
@@ -98,12 +104,17 @@ public:
     if (m_enable_logging_battery) {
       m_pubBattery = n.advertise<std_msgs::Float32>(tf_prefix + "/battery", 10);
     }
+    if (m_enable_logging_packets) {
+      m_pubPackets = n.advertise<crazyflie_driver::crtpPacket>(tf_prefix + "/packets", 10);
+    }
     m_pubRssi = n.advertise<std_msgs::Float32>(tf_prefix + "/rssi", 10);
 
     for (auto& logBlock : m_logBlocks)
     {
       m_pubLogDataGeneric.push_back(n.advertise<crazyflie_driver::GenericLogData>(tf_prefix + "/" + logBlock.topic_name, 10));
     }
+
+    m_sendPacketServer = n.advertiseService(tf_prefix + "/send_packet"  , &CrazyflieROS::sendPacket, this);
 
     m_thread = std::thread(&CrazyflieROS::run, this);
   }
@@ -113,6 +124,53 @@ public:
     ROS_INFO("Disconnecting ...");
     m_isEmergency = true;
     m_thread.join();
+  }
+
+  /**
+   * Service callback which transmits a packet to the crazyflie
+   * @param  req The service request, which contains a crtpPacket to transmit.
+   * @param  res The service response, which is not used.
+   * @return     returns true always
+   */
+  bool sendPacket (
+    crazyflie_driver::sendPacket::Request &req,
+    crazyflie_driver::sendPacket::Response &res)
+  {
+    /** Convert the message struct to the packet struct */
+    crtpPacket_t packet;
+    packet.size = req.packet.size;
+    packet.header = req.packet.header;
+    for (int i = 0; i < CRTP_MAX_DATA_SIZE; i++) {
+      packet.data[i] = req.packet.data[i];
+    }
+    m_cf.queueOutgoingPacket(packet);
+    return true;
+  }
+
+private:
+  ros::ServiceServer m_sendPacketServer;
+
+  /**
+   * Publishes any generic packets en-queued by the crazyflie to a crtpPacket
+   * topic.
+   */
+  void publishPackets() {
+    std::vector<Crazyradio::Ack> packets = m_cf.retrieveGenericPackets();
+    if (!packets.empty())
+    {
+      std::vector<Crazyradio::Ack>::iterator it;
+      for (it = packets.begin(); it != packets.end(); it++)
+      {
+        crazyflie_driver::crtpPacket packet;
+        packet.size = it->size;
+        packet.header = it->data[0];
+        for(int i = 0; i < packet.size; i++)
+        {
+          packet.data[i] = it->data[i+1];
+        }
+        m_pubPackets.publish(packet);
+      }
+    }
   }
 
 private:
@@ -256,12 +314,14 @@ private:
   {
     // m_cf.reboot();
 
+    auto start = std::chrono::system_clock::now();
+
     m_cf.logReset();
 
     std::function<void(float)> cb_lq = std::bind(&CrazyflieROS::onLinkQuality, this, std::placeholders::_1);
     m_cf.setLinkQualityCallback(cb_lq);
 
-    auto start = std::chrono::system_clock::now();
+
 
     if (m_enableParameters)
     {
@@ -380,7 +440,11 @@ private:
     while(!m_isEmergency) {
       // make sure we ping often enough to stream data out
       if (m_enableLogging && !m_sentSetpoint && !m_sentExternalPosition) {
+        m_cf.transmitPackets();
         m_cf.sendPing();
+        if(m_enable_logging_packets) {
+          this->publishPackets();
+        }
       }
       m_sentSetpoint = false;
       m_sentExternalPosition = false;
@@ -509,6 +573,7 @@ private:
   bool m_enable_logging_magnetic_field;
   bool m_enable_logging_pressure;
   bool m_enable_logging_battery;
+  bool m_enable_logging_packets;
 
   ros::ServiceServer m_serviceEmergency;
   ros::ServiceServer m_serviceUpdateParams;
@@ -520,6 +585,7 @@ private:
   ros::Publisher m_pubMag;
   ros::Publisher m_pubPressure;
   ros::Publisher m_pubBattery;
+  ros::Publisher m_pubPackets;
   ros::Publisher m_pubRssi;
   std::vector<ros::Publisher> m_pubLogDataGeneric;
 
@@ -562,7 +628,8 @@ bool add_crazyflie(
     req.enable_logging_temperature,
     req.enable_logging_magnetic_field,
     req.enable_logging_pressure,
-    req.enable_logging_battery);
+    req.enable_logging_battery,
+    req.enable_logging_packets);
 
   crazyflies[req.uri] = cf;
 

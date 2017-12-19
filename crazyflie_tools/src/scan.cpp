@@ -2,6 +2,8 @@
 
 #include <boost/program_options.hpp>
 #include <crazyflie_cpp/Crazyradio.h>
+#include <crazyflie_cpp/CrazyflieUSB.h>
+
 
 int main(int argc, char **argv)
 {
@@ -37,42 +39,61 @@ int main(int argc, char **argv)
 
   try
   {
-    uint64_t address;
-    std::stringstream sstr;
-    sstr << std::hex << addressStr;
-    sstr >> address;
+    uint32_t numCrazyradios = Crazyradio::numDevices();
+    if (numCrazyradios > 0) {
+      uint64_t address;
+      std::stringstream sstr;
+      sstr << std::hex << addressStr;
+      sstr >> address;
 
-    Crazyradio radio(0);
-    radio.setAddress(address);
+      Crazyradio radio(0);
+      std::cout << "Found Crazyradio with version " << radio.version() << std::endl;
+      radio.setAddress(address);
 
-    for (uint8_t datarate = 0; datarate < 3; ++datarate) {
-      radio.setDatarate((Crazyradio::Datarate)datarate);
-      for (uint8_t channel = 0; channel <= 125; ++channel) {
-        radio.setChannel(channel);
+      for (uint8_t datarate = 0; datarate < 3; ++datarate) {
+        radio.setDatarate((Crazyradio::Datarate)datarate);
+        for (uint8_t channel = 0; channel <= 125; ++channel) {
+          radio.setChannel(channel);
 
-        uint8_t test[] = {0xFF};
-        Crazyradio::Ack ack;
-        radio.sendPacket(test, sizeof(test), ack);
-        if (ack.ack) {
-          std::cout << "radio://0/" << (uint32_t)channel << "/";
-          switch(datarate) {
-          case Crazyradio::Datarate_250KPS:
-            std::cout << "250K";
-            break;
-          case Crazyradio::Datarate_1MPS:
-            std::cout << "1M";
-            break;
-          case Crazyradio::Datarate_2MPS:
-            std::cout << "2M";
-            break;
+          uint8_t test[] = {0xFF};
+          Crazyradio::Ack ack;
+          radio.sendPacket(test, sizeof(test), ack);
+          if (ack.ack) {
+            std::cout << "radio://0/" << (uint32_t)channel << "/";
+            switch(datarate) {
+            case Crazyradio::Datarate_250KPS:
+              std::cout << "250K";
+              break;
+            case Crazyradio::Datarate_1MPS:
+              std::cout << "1M";
+              break;
+            case Crazyradio::Datarate_2MPS:
+              std::cout << "2M";
+              break;
+            }
+
+            if (defaultAddressStr != addressStr) {
+              std::cout << "/" << addressStr.substr(2);
+            }
+            std::cout << std::endl;
           }
-
-          if (defaultAddressStr != addressStr) {
-            std::cout << "/" << addressStr.substr(2);
-          }
-          std::cout << std::endl;
         }
       }
+    } else {
+      std::cout << "No Crazyradio found." << std::endl;
+    }
+
+    uint32_t numCFoverUSB = CrazyflieUSB::numDevices();
+    if (numCFoverUSB > 0) {
+      CrazyflieUSB cfusb(0);
+      std::cout << "Found Crazyflie via USB with version " << cfusb.version() << std::endl;
+
+      for (uint32_t i = 0; i < numCFoverUSB; ++i) {
+        std::cout << "usb://" << i << std::endl;
+      }
+
+    } else {
+      std::cout << "No Crazyflie over USB found." << std::endl;
     }
     return 0;
   }
