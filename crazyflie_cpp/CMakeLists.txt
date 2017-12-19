@@ -36,6 +36,7 @@ include_directories(
 add_library(crazyflie_cpp
   src/Crazyradio.cpp
   src/Crazyflie.cpp
+  src/crtp.cpp
 )
 
 ## Specify libraries to link a library or executable target against

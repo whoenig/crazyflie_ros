@@ -108,6 +108,22 @@ void Crazyflie::sendSetpoint(
   sendPacket((const uint8_t*)&request, sizeof(request));
 }
 
+void Crazyflie::sendFullStateSetpoint(
+    float x, float y, float z,
+    float vx, float vy, float vz,
+    float ax, float ay, float az,
+    float qx, float qy, float qz, float qw,
+    float rollRate, float pitchRate, float yawRate)
+{
+  crtpFullStateSetpointRequest request(
+    x, y, z,
+    vx, vy, vz,
+    ax, ay, az,
+    qx, qy, qz, qw,
+    rollRate, pitchRate, yawRate);
+  sendPacket((const uint8_t*)&request, sizeof(request));
+}
+
 void Crazyflie::sendExternalPositionUpdate(
   float x,
   float y,

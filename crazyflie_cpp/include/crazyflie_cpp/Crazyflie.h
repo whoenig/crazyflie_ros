@@ -75,6 +75,13 @@ public:
     float yawrate,
     uint16_t thrust);
 
+  void sendFullStateSetpoint(
+    float x, float y, float z,
+    float vx, float vy, float vz,
+    float ax, float ay, float az,
+    float qx, float qy, float qz, float qw,
+    float rollRate, float pitchRate, float yawRate);
+
   void sendExternalPositionUpdate(
     float x,
     float y,
