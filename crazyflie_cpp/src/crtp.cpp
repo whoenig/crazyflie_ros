@@ -2,11 +2,8 @@
 #include <math.h>
 #include "crtp.h"
 
-//
-// >>>>>>>>>>>>>>>>>>>>>>>>>> NOTE!!!!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// The data compression routines should be kept in sync with
-// datacompression.h in the Crazyflie firmware.
-//
+// Note: the quaternion compression code is copied from
+// github.com/jpreiss/quatcompress
 
 // compress a unit quaternion into 32 bits.
 // assumes input quaternion is normalized. will fail if not.
@@ -65,29 +62,6 @@ static inline void quatdecompress(uint32_t comp, float q[4])
 	q[i_largest] = sqrtf(1.0f - sum_squares);
 }
 
-// fixed point conversions.
-// the limits on position and velocity may need to be modified depending on use case.
-
-#define MAKE_FIXED_CONV(name, limit) \
-static inline int16_t name ## _float_to_fix16(float x) \
-{ \
-  float normalized = x / limit; \
-  if (normalized > 1.0f) normalized = 1.0f; \
-  if (normalized < -1.0f) normalized = -1.0f; \
-  return INT16_MAX * normalized; \
-} \
-static inline float name ## _fix16_to_float(int16_t x) \
-{ \
-  return (limit / INT16_MAX) * ((float)x); \
-} \
-
-MAKE_FIXED_CONV(position, 8.0f)
-MAKE_FIXED_CONV(velocity, 20.0f)
-MAKE_FIXED_CONV(accel, 20.0f)
-MAKE_FIXED_CONV(attitudeRate, 20.0f)
-#undef MAKE_FIXED_CONV
-
-
 crtpFullStateSetpointRequest::crtpFullStateSetpointRequest(
   float x, float y, float z,
   float vx, float vy, float vz,
@@ -96,19 +70,20 @@ crtpFullStateSetpointRequest::crtpFullStateSetpointRequest(
   float rollRate, float pitchRate, float yawRate)
   : header(0x07, 0), type(6)
 {
-	this->x = position_float_to_fix16(x);
-	this->y = position_float_to_fix16(y);
-	this->z = position_float_to_fix16(z);
-	this->vx = velocity_float_to_fix16(vx);
-	this->vy = velocity_float_to_fix16(vy);
-	this->vz = velocity_float_to_fix16(vz);
-	this->ax = accel_float_to_fix16(ax);
-	this->ay = accel_float_to_fix16(ay);
-	this->az = accel_float_to_fix16(az);
+	float s = (float)(1.0 / 1000.0);
+	this->x = s * x;
+	this->y = s * y;
+	this->z = s * z;
+	this->vx = s * vx;
+	this->vy = s * vy;
+	this->vz = s * vz;
+	this->ax = s * ax;
+	this->ay = s * ay;
+	this->az = s * az;
 
 	float q[4] = { qx, qy, qz, qw };
 	this->quat = quatcompress(q);
-	this->omegax = attitudeRate_float_to_fix16(rollRate);
-	this->omegay = attitudeRate_float_to_fix16(pitchRate);
-	this->omegaz = attitudeRate_float_to_fix16(yawRate);
+	this->omegax = s * rollRate;
+	this->omegay = s * pitchRate;
+	this->omegaz = s * yawRate;
 }
