@@ -40,6 +40,7 @@ add_message_files(
   FILES
   LogBlock.msg
   GenericLogData.msg
+  FullState.msg
   crtpPacket.msg
 )
 
@@ -47,6 +48,7 @@ add_message_files(
 generate_messages(
   DEPENDENCIES
    std_msgs
+   geometry_msgs
 )
 
 ###################################

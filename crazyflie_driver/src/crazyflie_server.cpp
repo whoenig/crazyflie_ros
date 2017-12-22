@@ -4,6 +4,7 @@
 #include "crazyflie_driver/LogBlock.h"
 #include "crazyflie_driver/GenericLogData.h"
 #include "crazyflie_driver/UpdateParams.h"
+#include "crazyflie_driver/FullState.h"
 #include "crazyflie_driver/sendPacket.h"
 #include "crazyflie_driver/crtpPacket.h"
 #include "crazyflie_cpp/Crazyradio.h"
@@ -71,6 +72,7 @@ public:
     , m_serviceEmergency()
     , m_serviceUpdateParams()
     , m_subscribeCmdVel()
+    , m_subscribeCmdFullState()
     , m_subscribeExternalPosition()
     , m_pubImu()
     , m_pubTemp()
@@ -83,6 +85,7 @@ public:
   {
     ros::NodeHandle n;
     m_subscribeCmdVel = n.subscribe(tf_prefix + "/cmd_vel", 1, &CrazyflieROS::cmdVelChanged, this);
+    m_subscribeCmdFullState = n.subscribe(tf_prefix + "/cmd_full_state", 1, &CrazyflieROS::cmdFullStateSetpoint, this);
     m_subscribeExternalPosition = n.subscribe(tf_prefix + "/external_position", 1, &CrazyflieROS::positionMeasurementChanged, this);
     m_serviceEmergency = n.advertiseService(tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
 
@@ -263,6 +266,40 @@ private:
 
       m_cf.sendSetpoint(roll, pitch, yawrate, thrust);
       m_sentSetpoint = true;
+    }
+  }
+
+  void cmdFullStateSetpoint(
+    const crazyflie_driver::FullState::ConstPtr& msg)
+  {
+    //ROS_INFO("got a full state setpoint");
+    if (!m_isEmergency) {
+      float x = msg->pose.position.x;
+      float y = msg->pose.position.y;
+      float z = msg->pose.position.z;
+      float vx = msg->twist.linear.x;
+      float vy = msg->twist.linear.y;
+      float vz = msg->twist.linear.z;
+      float ax = msg->acc.x;
+      float ay = msg->acc.y;
+      float az = msg->acc.z;
+
+      float qx = msg->pose.orientation.x;
+      float qy = msg->pose.orientation.y;
+      float qz = msg->pose.orientation.z;
+      float qw = msg->pose.orientation.w;
+      float rollRate = msg->twist.angular.x;
+      float pitchRate = msg->twist.angular.y;
+      float yawRate = msg->twist.angular.z;
+
+      m_cf.sendFullStateSetpoint(
+        x, y, z,
+        vx, vy, vz,
+        ax, ay, az,
+        qx, qy, qz, qw,
+        rollRate, pitchRate, yawRate);
+      m_sentSetpoint = true;
+      //ROS_INFO("set a full state setpoint");
     }
   }
 
@@ -541,6 +578,7 @@ private:
   ros::ServiceServer m_serviceEmergency;
   ros::ServiceServer m_serviceUpdateParams;
   ros::Subscriber m_subscribeCmdVel;
+  ros::Subscriber m_subscribeCmdFullState;
   ros::Subscriber m_subscribeExternalPosition;
   ros::Publisher m_pubImu;
   ros::Publisher m_pubTemp;
