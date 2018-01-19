@@ -70,7 +70,7 @@ crtpFullStateSetpointRequest::crtpFullStateSetpointRequest(
   float rollRate, float pitchRate, float yawRate)
   : header(0x07, 0), type(6)
 {
-	float s = (float)(1.0 / 1000.0);
+	float s = 1000.0;
 	this->x = s * x;
 	this->y = s * y;
 	this->z = s * z;
