@@ -34,8 +34,8 @@ if __name__ == '__main__':
         t = (msg.header.stamp - start_time).to_sec()
         print(t)
         if t > traj.duration:
-            # break
-            t = traj.duration
+            break
+            # t = traj.duration
 
         e = traj.eval(t)
 
