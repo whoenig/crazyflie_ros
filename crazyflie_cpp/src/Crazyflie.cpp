@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <thread>
 #include <cmath>
+#include <inttypes.h>
 
 #define MAX_RADIOS 16
 #define MAX_USB     4
@@ -45,7 +46,7 @@ Crazyflie::Crazyflie(
   char datarateType;
   bool success = false;
 
-  success = std::sscanf(link_uri.c_str(), "radio://%d/%d/%d%c/%lx",
+  success = std::sscanf(link_uri.c_str(), "radio://%d/%d/%d%c/%" SCNx64,
      &m_devId, &channel, &datarate,
      &datarateType, &m_address) == 5;
   if (!success) {
