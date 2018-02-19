@@ -31,7 +31,12 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 add_service_files(
   FILES
   AddCrazyflie.srv
+  GoTo.srv
+  Land.srv
   RemoveCrazyflie.srv
+  SetGroupMask.srv
+  Stop.srv
+  Takeoff.srv
   UpdateParams.srv
   sendPacket.srv
 )

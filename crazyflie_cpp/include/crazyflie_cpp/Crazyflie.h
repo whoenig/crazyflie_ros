@@ -203,6 +203,17 @@ public:
 
   void transmitPackets();
 
+  // High-Level setpoints
+  void setGroupMask(uint8_t groupMask);
+
+  void takeoff(float height, float duration, uint8_t groupMask = 0);
+
+  void land(float height, float duration, uint8_t groupMask = 0);
+
+  void stop(uint8_t groupMask = 0);
+
+  void goTo(float x, float y, float z, float yaw, float duration, bool relative = false, uint8_t groupMask = 0);
+
 private:
   void sendPacket(
     const uint8_t* data,

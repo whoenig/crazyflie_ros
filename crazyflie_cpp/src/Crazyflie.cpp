@@ -850,3 +850,35 @@ void Crazyflie::handleBatchAck(
   }
 }
 
+void Crazyflie::setGroupMask(uint8_t groupMask)
+{
+  crtpCommanderHighLevelSetGroupMaskRequest request(groupMask);
+  startBatchRequest();
+  addRequest(request, 2);
+  handleRequests();
+}
+
+void Crazyflie::takeoff(float height, float duration, uint8_t groupMask)
+{
+  crtpCommanderHighLevelTakeoffRequest req(groupMask, height, duration);
+  sendPacketOrTimeout((uint8_t*)&req, sizeof(req));
+}
+
+void Crazyflie::land(float height, float duration, uint8_t groupMask)
+{
+  crtpCommanderHighLevelLandRequest req(groupMask, height, duration);
+  sendPacketOrTimeout((uint8_t*)&req, sizeof(req));
+}
+
+void Crazyflie::stop(uint8_t groupMask)
+{
+  crtpCommanderHighLevelStopRequest req(groupMask);
+  sendPacketOrTimeout((uint8_t*)&req, sizeof(req));
+}
+
+void Crazyflie::goTo(float x, float y, float z, float yaw, float duration, bool relative, uint8_t groupMask)
+{
+  crtpCommanderHighLevelGoToRequest req(groupMask, relative, x, y, z, yaw, duration);
+  sendPacketOrTimeout((uint8_t*)&req, sizeof(req));
+}
+

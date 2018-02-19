@@ -460,6 +460,106 @@ struct crtpFullStateSetpointRequest
   int16_t omegaz;
 } __attribute__((packed));
 
+// Port 0x08 (High-level Setpoints)
+
+struct crtpCommanderHighLevelSetGroupMaskRequest
+{
+  crtpCommanderHighLevelSetGroupMaskRequest(
+    uint8_t groupMask)
+    : header(0x08, 0)
+    , command(0)
+    {
+      groupMask = groupMask;
+    }
+
+    const crtp header;
+    const uint8_t command;
+    uint8_t groupMask;
+} __attribute__((packed));
+
+struct crtpCommanderHighLevelTakeoffRequest
+{
+  crtpCommanderHighLevelTakeoffRequest(
+    uint8_t groupMask,
+    float height,
+    float duration)
+    : header(0x08, 0)
+    , command(1)
+    {
+      groupMask = groupMask;
+      height = height;
+      duration = duration;
+    }
+
+    const crtp header;
+    const uint8_t command;
+    uint8_t groupMask;        // mask for which CFs this should apply to
+    float height;             // m (absolute)
+    float duration;           // s (time it should take until target height is reached)
+} __attribute__((packed));
+
+struct crtpCommanderHighLevelLandRequest
+{
+  crtpCommanderHighLevelLandRequest(
+    uint8_t groupMask,
+    float height,
+    float duration)
+    : header(0x08, 0)
+    , command(2)
+    {
+      groupMask = groupMask;
+      height = height;
+      duration = duration;
+    }
+
+    const crtp header;
+    const uint8_t command;
+    uint8_t groupMask;        // mask for which CFs this should apply to
+    float height;             // m (absolute)
+    float duration;           // s (time it should take until target height is reached)
+} __attribute__((packed));
+
+struct crtpCommanderHighLevelStopRequest
+{
+  crtpCommanderHighLevelStopRequest(
+    uint8_t groupMask)
+    : header(0x08, 0)
+    , command(3)
+    {
+      groupMask = groupMask;
+    }
+
+    const crtp header;
+    const uint8_t command;
+    uint8_t groupMask;        // mask for which CFs this should apply to
+} __attribute__((packed));
+
+struct crtpCommanderHighLevelGoToRequest
+{
+  crtpCommanderHighLevelGoToRequest(
+    uint8_t groupMask,
+    bool relative,
+    float x,
+    float y,
+    float z,
+    float yaw,
+    float duration)
+    : header(0x08, 0)
+    , command(4)
+    {
+      groupMask = groupMask;
+    }
+
+    const crtp header;
+    const uint8_t command;
+    uint8_t groupMask; // mask for which CFs this should apply to
+    uint8_t relative;  // set to true, if position/yaw are relative to current setpoint
+    float x; // m
+    float y; // m
+    float z; // m
+    float yaw; // deg
+    float duration; // sec
+} __attribute__((packed));
 
 // Port 13 (Platform)
 
