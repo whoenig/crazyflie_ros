@@ -89,6 +89,14 @@ public:
     float qx, float qy, float qz, float qw,
     float rollRate, float pitchRate, float yawRate);
 
+  void sendHoverSetpoint(
+    float vx,
+    float vy,
+    float yawrate,
+    float zDistance);
+
+  void sendStop();
+
   void sendExternalPositionUpdate(
     float x,
     float y,

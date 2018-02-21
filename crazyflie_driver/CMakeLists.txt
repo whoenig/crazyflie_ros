@@ -42,6 +42,8 @@ add_message_files(
   GenericLogData.msg
   FullState.msg
   crtpPacket.msg
+  Hover.msg
+  Stop.msg
 )
 
 ## Generate added messages and services with any dependencies listed here

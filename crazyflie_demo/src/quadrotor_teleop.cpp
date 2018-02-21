@@ -1,6 +1,5 @@
 //=================================================================================================
 // Copyright (c) 2012, Johannes Meyer, TU Darmstadt
-//               2018, Wolfgang Hoenig, USC
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -60,8 +59,6 @@ private:
     Axis yaw;
   } axes_;
 
-  double frequency_;
-
 public:
   Teleop()
   {
@@ -78,8 +75,6 @@ public:
     params.param<double>("y_velocity_max", axes_.y.max, 2.0);
     params.param<double>("z_velocity_max", axes_.z.max, 2.0);
 
-    params.param<double>("frequency", frequency_, 100);
-
     joy_subscriber_ = node_handle_.subscribe<sensor_msgs::Joy>("joy", 1, boost::bind(&Teleop::joyTwistCallback, this, _1));
     velocity_publisher_ = node_handle_.advertise<geometry_msgs::Twist>("cmd_vel", 10);
   }
@@ -89,55 +84,43 @@ public:
     stop();
   }
 
-  void execute()
-  {
-    ros::Rate loop_rate(frequency_);
-    while (ros::ok()) {
-      velocity_publisher_.publish(velocity_);
-
-      ros::spinOnce();
-      loop_rate.sleep();
-    }
-  }
-
   void joyTwistCallback(const sensor_msgs::JoyConstPtr &joy)
   {
     velocity_.linear.x = getAxis(joy, axes_.x);
     velocity_.linear.y = getAxis(joy, axes_.y);
     velocity_.linear.z = getAxis(joy, axes_.z);
     velocity_.angular.z = getAxis(joy, axes_.yaw);
+    velocity_publisher_.publish(velocity_);
   }
 
   sensor_msgs::Joy::_axes_type::value_type getAxis(const sensor_msgs::JoyConstPtr &joy, Axis axis)
   {
-    if (axis.axis == 0) {
-      return 0;
-    }
+    if (axis.axis == 0)
+    {return 0;}
     sensor_msgs::Joy::_axes_type::value_type sign = 1.0;
-    if (axis.axis < 0) {
+    if (axis.axis < 0)
+    {
       sign = -1.0;
       axis.axis = -axis.axis;
     }
-    if ((size_t) axis.axis > joy->axes.size()) {
-      return 0;
-    }
+    if ((size_t) axis.axis > joy->axes.size())
+    {return 0;}
     return sign * joy->axes[axis.axis - 1] * axis.max;
   }
 
   sensor_msgs::Joy::_buttons_type::value_type getButton(const sensor_msgs::JoyConstPtr &joy, int button)
   {
-    if (button <= 0) {
-      return 0;
-    }
-    if ((size_t) button > joy->buttons.size()) {
-      return 0;
-    }
+    if (button <= 0)
+    {return 0;}
+    if ((size_t) button > joy->buttons.size())
+    {return 0;}
     return joy->buttons[button - 1];
   }
 
   void stop()
   {
-    if(velocity_publisher_.getNumSubscribers() > 0) {
+    if(velocity_publisher_.getNumSubscribers() > 0)
+    {
       velocity_ = geometry_msgs::Twist();
       velocity_publisher_.publish(velocity_);
     }
@@ -149,7 +132,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "quadrotor_teleop");
 
   Teleop teleop;
-  teleop.execute();
+  ros::spin();
 
   return 0;
 }

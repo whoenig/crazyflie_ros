@@ -10,7 +10,6 @@ int main(int argc, char **argv)
 
   std::string addressStr;
   std::string defaultAddressStr("0xE7E7E7E7E7");
-  bool verbose = false;
 
   namespace po = boost::program_options;
 
@@ -18,7 +17,6 @@ int main(int argc, char **argv)
   desc.add_options()
     ("help", "produce help message")
     ("address", po::value<std::string>(&addressStr)->default_value(defaultAddressStr), "device address")
-    ("verbose,v", "verbose output")
   ;
 
   try
@@ -31,7 +29,6 @@ int main(int argc, char **argv)
       std::cout << desc << "\n";
       return 0;
     }
-    verbose = vm.count("verbose");
   }
   catch(po::error& e)
   {
@@ -50,11 +47,9 @@ int main(int argc, char **argv)
       sstr >> address;
 
       Crazyradio radio(0);
-      if (verbose) {
-        std::cout << "Found Crazyradio with version " << radio.version() << std::endl;
-      }
+      std::cout << "Found Crazyradio with version " << radio.version() << std::endl;
       radio.setAddress(address);
-      size_t numCFsFound = 0;
+
       for (uint8_t datarate = 0; datarate < 3; ++datarate) {
         radio.setDatarate((Crazyradio::Datarate)datarate);
         for (uint8_t channel = 0; channel <= 125; ++channel) {
@@ -64,7 +59,6 @@ int main(int argc, char **argv)
           Crazyradio::Ack ack;
           radio.sendPacket(test, sizeof(test), ack);
           if (ack.ack) {
-            ++numCFsFound;
             std::cout << "radio://0/" << (uint32_t)channel << "/";
             switch(datarate) {
             case Crazyradio::Datarate_250KPS:
@@ -85,28 +79,21 @@ int main(int argc, char **argv)
           }
         }
       }
-
-      if (   numCFsFound == 0
-          && verbose) {
-        std::cout << "No Crazyflie found. Did you specify the correct address?" << std::endl;
-      }
-    } else if (verbose) {
+    } else {
       std::cout << "No Crazyradio found." << std::endl;
     }
 
     uint32_t numCFoverUSB = CrazyflieUSB::numDevices();
     if (numCFoverUSB > 0) {
       CrazyflieUSB cfusb(0);
-      if (verbose) {
-        std::cout << "Found Crazyflie connected via USB cable with version " << cfusb.version() << std::endl;
-      }
+      std::cout << "Found Crazyflie via USB with version " << cfusb.version() << std::endl;
 
       for (uint32_t i = 0; i < numCFoverUSB; ++i) {
         std::cout << "usb://" << i << std::endl;
       }
 
-    } else if (verbose) {
-      std::cout << "No Crazyflie connected via USB cable found." << std::endl;
+    } else {
+      std::cout << "No Crazyflie over USB found." << std::endl;
     }
     return 0;
   }
