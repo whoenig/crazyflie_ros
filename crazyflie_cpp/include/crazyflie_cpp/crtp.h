@@ -432,6 +432,42 @@ struct crtpExternalPositionUpdate
   float z;
 }  __attribute__((packed));
 
+struct crtpStopRequest
+{
+  crtpStopRequest();
+  const crtp header;
+  uint8_t type;
+} __attribute__((packed));
+
+struct crtpHoverSetpointRequest
+{
+  crtpHoverSetpointRequest(
+    float vx,
+    float vy,
+    float yawrate,
+    float zDistance);
+  const crtp header;
+  uint8_t type;
+  float vx;
+  float vy;
+  float yawrate;
+  float zDistance;
+} __attribute__((packed));
+
+struct crtpPositionSetpointRequest
+{
+  crtpPositionSetpointRequest(
+    float x,
+    float y,
+    float z,
+    float yaw);
+  const crtp header;
+  uint8_t type;
+  float x;
+  float y;
+  float z;
+  float yaw;
+} __attribute__((packed));
 
 // Port 0x07 (Generic Setpoint)
 

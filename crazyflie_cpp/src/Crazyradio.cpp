@@ -135,9 +135,6 @@ void Crazyradio::sendPacket(
     uint32_t length,
     Ack& result)
 {
-    result.ack = false;
-    result.size = 0;
-
     int status;
     int transferred;
 
@@ -153,9 +150,6 @@ void Crazyradio::sendPacket(
         length,
         &transferred,
         /*timeout*/ 1000);
-    if (status == LIBUSB_ERROR_TIMEOUT) {
-        return;
-    }
     if (status != LIBUSB_SUCCESS) {
         throw std::runtime_error(libusb_error_name(status));
     }
@@ -166,6 +160,8 @@ void Crazyradio::sendPacket(
     }
 
     // Read result
+    result.ack = false;
+    result.size = 0;
     status = libusb_bulk_transfer(
         m_handle,
         /* endpoint*/ (0x81 | LIBUSB_ENDPOINT_IN),
@@ -173,9 +169,6 @@ void Crazyradio::sendPacket(
         sizeof(result) - 1,
         &transferred,
         /*timeout*/ 1000);
-    if (status == LIBUSB_ERROR_TIMEOUT) {
-        return;
-    }
     if (status != LIBUSB_SUCCESS) {
         throw std::runtime_error(libusb_error_name(status));
     }
@@ -202,9 +195,6 @@ void Crazyradio::sendPacketNoAck(
         length,
         &transferred,
         /*timeout*/ 1000);
-    if (status == LIBUSB_ERROR_TIMEOUT) {
-        return;
-    }
     if (status != LIBUSB_SUCCESS) {
         throw std::runtime_error(libusb_error_name(status));
     }

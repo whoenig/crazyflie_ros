@@ -1,12 +1,13 @@
-#include <ros/ros.h>
-#include <ros/callback_queue.h>
-
+#include "ros/ros.h"
 #include "crazyflie_driver/AddCrazyflie.h"
 #include "crazyflie_driver/RemoveCrazyflie.h"
 #include "crazyflie_driver/LogBlock.h"
 #include "crazyflie_driver/GenericLogData.h"
 #include "crazyflie_driver/UpdateParams.h"
 #include "crazyflie_driver/FullState.h"
+#include "crazyflie_driver/Hover.h"
+#include "crazyflie_driver/Stop.h"
+#include "crazyflie_driver/Position.h"
 #include "crazyflie_driver/sendPacket.h"
 #include "crazyflie_driver/crtpPacket.h"
 #include "crazyflie_cpp/Crazyradio.h"
@@ -75,6 +76,9 @@ public:
     , m_serviceUpdateParams()
     , m_subscribeCmdVel()
     , m_subscribeCmdFullState()
+    , m_subscribeCmdHover()
+    , m_subscribeCmdStop()
+    , m_subscribeCmdPosition()
     , m_subscribeExternalPosition()
     , m_pubImu()
     , m_pubTemp()
@@ -85,6 +89,42 @@ public:
     , m_sentSetpoint(false)
     , m_sentExternalPosition(false)
   {
+    ros::NodeHandle n;
+    m_subscribeCmdVel = n.subscribe(tf_prefix + "/cmd_vel", 1, &CrazyflieROS::cmdVelChanged, this);
+    m_subscribeCmdFullState = n.subscribe(tf_prefix + "/cmd_full_state", 1, &CrazyflieROS::cmdFullStateSetpoint, this);
+    m_subscribeCmdHover = n.subscribe(tf_prefix + "/cmd_hover", 1, &CrazyflieROS::cmdHoverSetpoint, this);
+    m_subscribeCmdStop = n.subscribe(tf_prefix + "/cmd_stop", 1, &CrazyflieROS::cmdStop, this);
+    m_subscribeCmdPosition = n.subscribe(tf_prefix + "/cmd_position", 1, &CrazyflieROS::cmdPositionSetpoint, this);
+    m_subscribeExternalPosition = n.subscribe(tf_prefix + "/external_position", 1, &CrazyflieROS::positionMeasurementChanged, this);
+    m_serviceEmergency = n.advertiseService(tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
+
+    if (m_enable_logging_imu) {
+      m_pubImu = n.advertise<sensor_msgs::Imu>(tf_prefix + "/imu", 10);
+    }
+    if (m_enable_logging_temperature) {
+      m_pubTemp = n.advertise<sensor_msgs::Temperature>(tf_prefix + "/temperature", 10);
+    }
+    if (m_enable_logging_magnetic_field) {
+      m_pubMag = n.advertise<sensor_msgs::MagneticField>(tf_prefix + "/magnetic_field", 10);
+    }
+    if (m_enable_logging_pressure) {
+      m_pubPressure = n.advertise<std_msgs::Float32>(tf_prefix + "/pressure", 10);
+    }
+    if (m_enable_logging_battery) {
+      m_pubBattery = n.advertise<std_msgs::Float32>(tf_prefix + "/battery", 10);
+    }
+    if (m_enable_logging_packets) {
+      m_pubPackets = n.advertise<crazyflie_driver::crtpPacket>(tf_prefix + "/packets", 10);
+    }
+    m_pubRssi = n.advertise<std_msgs::Float32>(tf_prefix + "/rssi", 10);
+
+    for (auto& logBlock : m_logBlocks)
+    {
+      m_pubLogDataGeneric.push_back(n.advertise<crazyflie_driver::GenericLogData>(tf_prefix + "/" + logBlock.topic_name, 10));
+    }
+
+    m_sendPacketServer = n.advertiseService(tf_prefix + "/send_packet"  , &CrazyflieROS::sendPacket, this);
+
     m_thread = std::thread(&CrazyflieROS::run, this);
   }
 
@@ -177,6 +217,47 @@ private:
       U value;
       ros::param::get(ros_param, value);
       m_cf.setParam<T>(id, (T)value);
+  }
+
+void cmdHoverSetpoint(
+    const crazyflie_driver::Hover::ConstPtr& msg)
+  {
+     //ROS_INFO("got a hover setpoint");
+    if (!m_isEmergency) {
+      float vx = msg->vx;
+      float vy = msg->vy;
+      float yawRate = msg->yawrate;
+      float zDistance = msg->zDistance;
+
+      m_cf.sendHoverSetpoint(vx, vy, yawRate, zDistance);
+      m_sentSetpoint = true;
+      //ROS_INFO("set a hover setpoint");
+    }
+  }
+
+void cmdStop(
+    const crazyflie_driver::Stop::ConstPtr& msg)
+  {
+     //ROS_INFO("got a stop setpoint");
+    if (!m_isEmergency) {
+      m_cf.sendStop();
+      m_sentSetpoint = true;
+      //ROS_INFO("set a stop setpoint");
+    }
+  }
+
+void cmdPositionSetpoint(
+    const crazyflie_driver::Position::ConstPtr& msg)
+  {
+    if(!m_isEmergency) {
+      float x = msg->x;
+      float y = msg->y;
+      float z = msg->z;
+      float yaw = msg->yaw;
+
+      m_cf.sendPositionSetpoint(x, y, z, yaw);
+      m_sentSetpoint = true;
+    }
   }
 
   bool updateParams(
@@ -281,41 +362,6 @@ private:
 
   void run()
   {
-    ros::NodeHandle n;
-    n.setCallbackQueue(&m_callback_queue);
-
-    m_subscribeCmdVel = n.subscribe(m_tf_prefix + "/cmd_vel", 1, &CrazyflieROS::cmdVelChanged, this);
-    m_subscribeCmdFullState = n.subscribe(m_tf_prefix + "/cmd_full_state", 1, &CrazyflieROS::cmdFullStateSetpoint, this);
-    m_subscribeExternalPosition = n.subscribe(m_tf_prefix + "/external_position", 1, &CrazyflieROS::positionMeasurementChanged, this);
-    m_serviceEmergency = n.advertiseService(m_tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
-
-    if (m_enable_logging_imu) {
-      m_pubImu = n.advertise<sensor_msgs::Imu>(m_tf_prefix + "/imu", 10);
-    }
-    if (m_enable_logging_temperature) {
-      m_pubTemp = n.advertise<sensor_msgs::Temperature>(m_tf_prefix + "/temperature", 10);
-    }
-    if (m_enable_logging_magnetic_field) {
-      m_pubMag = n.advertise<sensor_msgs::MagneticField>(m_tf_prefix + "/magnetic_field", 10);
-    }
-    if (m_enable_logging_pressure) {
-      m_pubPressure = n.advertise<std_msgs::Float32>(m_tf_prefix + "/pressure", 10);
-    }
-    if (m_enable_logging_battery) {
-      m_pubBattery = n.advertise<std_msgs::Float32>(m_tf_prefix + "/battery", 10);
-    }
-    if (m_enable_logging_packets) {
-      m_pubPackets = n.advertise<crazyflie_driver::crtpPacket>(m_tf_prefix + "/packets", 10);
-    }
-    m_pubRssi = n.advertise<std_msgs::Float32>(m_tf_prefix + "/rssi", 10);
-
-    for (auto& logBlock : m_logBlocks)
-    {
-      m_pubLogDataGeneric.push_back(n.advertise<crazyflie_driver::GenericLogData>(m_tf_prefix + "/" + logBlock.topic_name, 10));
-    }
-
-    m_sendPacketServer = n.advertiseService(m_tf_prefix + "/send_packet"  , &CrazyflieROS::sendPacket, this);
-
     // m_cf.reboot();
 
     auto start = std::chrono::system_clock::now();
@@ -358,6 +404,7 @@ private:
             break;
         }
       }
+      ros::NodeHandle n;
       m_serviceUpdateParams = n.advertiseService(m_tf_prefix + "/update_params", &CrazyflieROS::updateParams, this);
     }
 
@@ -451,9 +498,6 @@ private:
       }
       m_sentSetpoint = false;
       m_sentExternalPosition = false;
-
-      // Execute any ROS related functions now
-      m_callback_queue.callAvailable(ros::WallDuration(0.0));
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
@@ -585,6 +629,9 @@ private:
   ros::ServiceServer m_serviceUpdateParams;
   ros::Subscriber m_subscribeCmdVel;
   ros::Subscriber m_subscribeCmdFullState;
+  ros::Subscriber m_subscribeCmdHover;
+  ros::Subscriber m_subscribeCmdStop;
+  ros::Subscriber m_subscribeCmdPosition;
   ros::Subscriber m_subscribeExternalPosition;
   ros::Publisher m_pubImu;
   ros::Publisher m_pubTemp;
@@ -598,7 +645,6 @@ private:
   bool m_sentSetpoint, m_sentExternalPosition;
 
   std::thread m_thread;
-  ros::CallbackQueue m_callback_queue;
 };
 
 static std::map<std::string, CrazyflieROS*> crazyflies;
@@ -668,17 +714,10 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "crazyflie_server");
   ros::NodeHandle n;
-  ros::CallbackQueue callback_queue;
-  n.setCallbackQueue(&callback_queue);
 
   ros::ServiceServer serviceAdd = n.advertiseService("add_crazyflie", add_crazyflie);
   ros::ServiceServer serviceRemove = n.advertiseService("remove_crazyflie", remove_crazyflie);
-
-  while(ros::ok()) {
-    // Execute any ROS related functions now
-    callback_queue.callAvailable(ros::WallDuration(0.0));
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
+  ros::spin();
 
   return 0;
 }

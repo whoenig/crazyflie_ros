@@ -13,7 +13,6 @@
 #include <stdexcept>
 #include <thread>
 #include <cmath>
-#include <inttypes.h>
 
 #define MAX_RADIOS 16
 #define MAX_USB     4
@@ -46,7 +45,7 @@ Crazyflie::Crazyflie(
   char datarateType;
   bool success = false;
 
-  success = std::sscanf(link_uri.c_str(), "radio://%d/%d/%d%c/%" SCNx64,
+  success = std::sscanf(link_uri.c_str(), "radio://%d/%d/%d%c/%lx",
      &m_devId, &channel, &datarate,
      &datarateType, &m_address) == 5;
   if (!success) {
@@ -123,6 +122,32 @@ void Crazyflie::sendSetpoint(
   uint16_t thrust)
 {
   crtpSetpointRequest request(roll, pitch, yawrate, thrust);
+  sendPacket((const uint8_t*)&request, sizeof(request));
+}
+
+void Crazyflie::sendStop()
+{
+  crtpStopRequest request;
+  sendPacket((const uint8_t*)&request, sizeof(request));
+}
+
+void Crazyflie::sendPositionSetpoint(
+  float x,
+  float y,
+  float z,
+  float yaw)
+{
+  crtpPositionSetpointRequest request(x, y, z, yaw);
+  sendPacket((const uint8_t*)&request, sizeof(request));
+}
+
+void Crazyflie::sendHoverSetpoint(
+  float vx,
+  float vy,
+  float yawrate,
+  float zDistance)
+{
+  crtpHoverSetpointRequest request(vx, vy, yawrate, zDistance);
   sendPacket((const uint8_t*)&request, sizeof(request));
 }
 
