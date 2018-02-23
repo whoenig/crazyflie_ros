@@ -7,6 +7,7 @@
 #include "crazyflie_driver/FullState.h"
 #include "crazyflie_driver/Hover.h"
 #include "crazyflie_driver/Stop.h"
+#include "crazyflie_driver/Position.h"
 #include "crazyflie_driver/sendPacket.h"
 #include "crazyflie_driver/crtpPacket.h"
 #include "crazyflie_cpp/Crazyradio.h"
@@ -77,6 +78,7 @@ public:
     , m_subscribeCmdFullState()
     , m_subscribeCmdHover()
     , m_subscribeCmdStop()
+    , m_subscribeCmdPosition()
     , m_subscribeExternalPosition()
     , m_pubImu()
     , m_pubTemp()
@@ -92,6 +94,7 @@ public:
     m_subscribeCmdFullState = n.subscribe(tf_prefix + "/cmd_full_state", 1, &CrazyflieROS::cmdFullStateSetpoint, this);
     m_subscribeCmdHover = n.subscribe(tf_prefix + "/cmd_hover", 1, &CrazyflieROS::cmdHoverSetpoint, this);
     m_subscribeCmdStop = n.subscribe(tf_prefix + "/cmd_stop", 1, &CrazyflieROS::cmdStop, this);
+    m_subscribeCmdPosition = n.subscribe(tf_prefix + "/cmd_position", 1, &CrazyflieROS::cmdPositionSetpoint, this);
     m_subscribeExternalPosition = n.subscribe(tf_prefix + "/external_position", 1, &CrazyflieROS::positionMeasurementChanged, this);
     m_serviceEmergency = n.advertiseService(tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
 
@@ -240,6 +243,20 @@ void cmdStop(
       m_cf.sendStop();
       m_sentSetpoint = true;
       //ROS_INFO("set a stop setpoint");
+    }
+  }
+
+void cmdPositionSetpoint(
+    const crazyflie_driver::Position::ConstPtr& msg)
+  {
+    if(!m_isEmergency) {
+      float x = msg->x;
+      float y = msg->y;
+      float z = msg->z;
+      float yaw = msg->yaw;
+
+      m_cf.sendPositionSetpoint(x, y, z, yaw);
+      m_sentSetpoint = true;
     }
   }
 
@@ -614,6 +631,7 @@ private:
   ros::Subscriber m_subscribeCmdFullState;
   ros::Subscriber m_subscribeCmdHover;
   ros::Subscriber m_subscribeCmdStop;
+  ros::Subscriber m_subscribeCmdPosition;
   ros::Subscriber m_subscribeExternalPosition;
   ros::Publisher m_pubImu;
   ros::Publisher m_pubTemp;

@@ -97,6 +97,12 @@ public:
 
   void sendStop();
 
+  void sendPositionSetpoint(
+    float x,
+    float y,
+    float z,
+    float yaw);
+
   void sendExternalPositionUpdate(
     float x,
     float y,

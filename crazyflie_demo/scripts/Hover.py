@@ -9,11 +9,6 @@ from crazyflie_driver.srv import UpdateParams
 if __name__ == '__main__':
     rospy.init_node('hover', anonymous=True)
     worldFrame = rospy.get_param("~worldFrame", "/world")
-    # name = rospy.get_param("~name") what is name?
-    # r = rospy.get_param("~rate")
-    # x = rospy.get_param("~x")
-    # y = rospy.get_param("~y")
-    # z = rospy.get_param("~z")
 
     rate = rospy.Rate(10) # 10 hz
     name = "cmd_hover"
@@ -46,11 +41,7 @@ if __name__ == '__main__':
     update_params(["kalman/resetEstimation"])
     rospy.sleep(0.5)
 
-    # take off to 0.5 m zDistance, spend 3 secs
-    start = rospy.get_time()
-    # rospy.loginfo("start: ")
-    # rospy.loginfo(start)
-
+    # take off
     while not rospy.is_shutdown():
         for y in range(10):
             msg.vx = 0.0
@@ -58,15 +49,13 @@ if __name__ == '__main__':
             msg.yawrate = 0.0
             msg.zDistance = y / 25.0
             now = rospy.get_time()
-            # if (now - start > 3.0):
-            #    break
             msg.header.seq += 1
             msg.header.stamp = rospy.Time.now()
-            rospy.loginfo("sending...")
-            rospy.loginfo(msg.vx)
-            rospy.loginfo(msg.vy)
-            rospy.loginfo(msg.yawrate)
-            rospy.loginfo(msg.zDistance)
+            #rospy.loginfo("sending...")
+            #rospy.loginfo(msg.vx)
+            #rospy.loginfo(msg.vy)
+            #rospy.loginfo(msg.yawrate)
+            #rospy.loginfo(msg.zDistance)
             # rospy.loginfo(now)
             pub.publish(msg)
             rate.sleep()
@@ -77,11 +66,11 @@ if __name__ == '__main__':
             msg.zDistance = 0.4
             msg.header.seq += 1
             msg.header.stamp = rospy.Time.now()
-            rospy.loginfo("sending...")
-            rospy.loginfo(msg.vx)
-            rospy.loginfo(msg.vy)
-            rospy.loginfo(msg.yawrate)
-            rospy.loginfo(msg.zDistance)
+            #rospy.loginfo("sending...")
+            #rospy.loginfo(msg.vx)
+            #rospy.loginfo(msg.vy)
+            #rospy.loginfo(msg.yawrate)
+            #rospy.loginfo(msg.zDistance)
             # rospy.loginfo(now)
             pub.publish(msg)
             rate.sleep()
@@ -99,11 +88,11 @@ if __name__ == '__main__':
             break
         msg.header.seq += 1
         msg.header.stamp = rospy.Time.now()
-        rospy.loginfo("sending...")
-        rospy.loginfo(msg.vx)
-        rospy.loginfo(msg.vy)
-        rospy.loginfo(msg.yawrate)
-        rospy.loginfo(msg.zDistance)
+        #rospy.loginfo("sending...")
+        #rospy.loginfo(msg.vx)
+        #rospy.loginfo(msg.vy)
+        #rospy.loginfo(msg.yawrate)
+        #rospy.loginfo(msg.zDistance)
         pub.publish(msg)
         rate.sleep()
 
@@ -119,11 +108,11 @@ if __name__ == '__main__':
             break
         msg.header.seq += 1
         msg.header.stamp = rospy.Time.now()
-        rospy.loginfo("sending...")
-        rospy.loginfo(msg.vx)
-        rospy.loginfo(msg.vy)
-        rospy.loginfo(msg.yawrate)
-        rospy.loginfo(msg.zDistance)
+        #rospy.loginfo("sending...")
+        #rospy.loginfo(msg.vx)
+        #rospy.loginfo(msg.vy)
+        #rospy.loginfo(msg.yawrate)
+        #rospy.loginfo(msg.zDistance)
         pub.publish(msg)
         rate.sleep()
 
@@ -139,11 +128,11 @@ if __name__ == '__main__':
             break
         msg.header.seq += 1
         msg.header.stamp = rospy.Time.now()
-        rospy.loginfo("sending...")
-        rospy.loginfo(msg.vx)
-        rospy.loginfo(msg.vy)
-        rospy.loginfo(msg.yawrate)
-        rospy.loginfo(msg.zDistance)
+        #rospy.loginfo("sending...")
+        ##rospy.loginfo(msg.vx)
+        #rospy.loginfo(msg.vy)
+        #rospy.loginfo(msg.yawrate)
+        #rospy.loginfo(msg.zDistance)
         pub.publish(msg)
         rate.sleep()
 
@@ -159,11 +148,11 @@ if __name__ == '__main__':
             break
         msg.header.seq += 1
         msg.header.stamp = rospy.Time.now()
-        rospy.loginfo("sending...")
-        rospy.loginfo(msg.vx)
-        rospy.loginfo(msg.vy)
-        rospy.loginfo(msg.yawrate)
-        rospy.loginfo(msg.zDistance)
+        #rospy.loginfo("sending...")
+        #rospy.loginfo(msg.vx)
+        #rospy.loginfo(msg.vy)
+        #rospy.loginfo(msg.yawrate)
+        #rospy.loginfo(msg.zDistance)
         pub.publish(msg)
         rate.sleep()
 
@@ -179,11 +168,11 @@ if __name__ == '__main__':
             break
         msg.header.seq += 1
         msg.header.stamp = rospy.Time.now()
-        rospy.loginfo("sending...")
-        rospy.loginfo(msg.vx)
-        rospy.loginfo(msg.vy)
-        rospy.loginfo(msg.yawrate)
-        rospy.loginfo(msg.zDistance)
+        #rospy.loginfo("sending...")
+        #rospy.loginfo(msg.vx)
+        #rospy.loginfo(msg.vy)
+        #rospy.loginfo(msg.yawrate)
+        #rospy.loginfo(msg.zDistance)
         pub.publish(msg)
         rate.sleep()
 

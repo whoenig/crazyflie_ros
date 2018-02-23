@@ -105,3 +105,17 @@ crtpHoverSetpointRequest::crtpHoverSetpointRequest(
 	this->yawrate = yawrate;
 	this->zDistance = zDistance;
 }
+
+// m in position, degree in yaw
+crtpPositionSetpointRequest::crtpPositionSetpointRequest(
+	float x,
+	float y,
+	float z,
+	float yaw)
+	: header(0X07, 0), type(7)
+{
+	this->x = x;
+	this->y = y;
+	this->z = z;
+	this->yaw = yaw;
+}

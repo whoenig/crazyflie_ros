@@ -44,6 +44,7 @@ add_message_files(
   crtpPacket.msg
   Hover.msg
   Stop.msg
+  Position.msg
 )
 
 ## Generate added messages and services with any dependencies listed here

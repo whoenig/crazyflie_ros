@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="uri" default="radio://0/80/2M" />
+
+  <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
+  </include>
+
+  <group ns="crazyflie">
+    <!--<param name="crazyflie/pid_rate/yaw_kp" value="200"/>-->
+    <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
+      <arg name="uri" value="$(arg uri)" />
+      <arg name="tf_prefix" value="crazyflie" />
+      <arg name="enable_logging" value="False" />
+    </include>
+
+    <node name="crazyflie_demo_hover" pkg="crazyflie_demo" type="Position.py" output="screen">
+    </node>
+  </group>
+
+</launch>

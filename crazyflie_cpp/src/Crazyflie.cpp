@@ -131,6 +131,16 @@ void Crazyflie::sendStop()
   sendPacket((const uint8_t*)&request, sizeof(request));
 }
 
+void Crazyflie::sendPositionSetpoint(
+  float x,
+  float y,
+  float z,
+  float yaw)
+{
+  crtpPositionSetpointRequest request(x, y, z, yaw);
+  sendPacket((const uint8_t*)&request, sizeof(request));
+}
+
 void Crazyflie::sendHoverSetpoint(
   float vx,
   float vy,

@@ -454,6 +454,21 @@ struct crtpHoverSetpointRequest
   float zDistance;
 } __attribute__((packed));
 
+struct crtpPositionSetpointRequest
+{
+  crtpPositionSetpointRequest(
+    float x,
+    float y,
+    float z,
+    float yaw);
+  const crtp header;
+  uint8_t type;
+  float x;
+  float y;
+  float z;
+  float yaw;
+} __attribute__((packed));
+
 // Port 0x07 (Generic Setpoint)
 
 struct crtpFullStateSetpointRequest
