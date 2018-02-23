@@ -3,6 +3,7 @@
 import rospy
 import tf
 from crazyflie_driver.msg import Hover
+from crazyflie_driver.msg import Stop
 from crazyflie_driver.srv import UpdateParams
 
 if __name__ == '__main__':
@@ -27,6 +28,12 @@ if __name__ == '__main__':
     msg.zDistance = 0.0
 
     pub = rospy.Publisher(name, Hover, queue_size=1)
+
+    stop_pub = rospy.Publisher("cmd_stop", Stop, queue_size=1)
+    stop_msg = Stop()
+    stop_msg.header.seq = 0
+    stop_msg.header.stamp = rospy.Time.now()
+    stop_msg.header.frame_id = worldFrame
 
     rospy.wait_for_service('update_params')
     rospy.loginfo("found update_params service")
@@ -80,10 +87,10 @@ if __name__ == '__main__':
             rate.sleep()
         break
 
-    # vx = 0.1, spend 3 secs, go forward 0.3m
+    # vx = 0.2, spend 3 secs, go forward 0.6m
     start = rospy.get_time()
     while not rospy.is_shutdown():
-        msg.vx = 0.1
+        msg.vx = 0.2
         msg.vy = 0.0
         msg.yawrate = 0.0
         msg.zDistance = 0.4
@@ -100,11 +107,11 @@ if __name__ == '__main__':
         pub.publish(msg)
         rate.sleep()
 
-    # vy = 0.1, spend 3 secs, go right 0.3m
+    # vy = 0.2, spend 3 secs, go right 0.6m
     start = rospy.get_time()
     while not rospy.is_shutdown():
         msg.vx = 0.0
-        msg.vy = 0.1
+        msg.vy = 0.2
         msg.yawrate = 0.0
         msg.zDistance = 0.4
         now = rospy.get_time()
@@ -120,10 +127,10 @@ if __name__ == '__main__':
         pub.publish(msg)
         rate.sleep()
 
-    # vx = -0.1, spend 3 secs, go backward 0.3m
+    # vx = -0.2, spend 3 secs, go backward 0.6m
     start = rospy.get_time()
     while not rospy.is_shutdown():
-        msg.vx = -0.1
+        msg.vx = -0.2
         msg.vy = 0.0
         msg.yawrate = 0.0
         msg.zDistance = 0.4
@@ -140,11 +147,11 @@ if __name__ == '__main__':
         pub.publish(msg)
         rate.sleep()
 
-    # vy = -0.1, spend 3 secs, go left 0.3m
+    # vy = -0.2, spend 3 secs, go left 0.6m
     start = rospy.get_time()
     while not rospy.is_shutdown():
         msg.vx = 0.0
-        msg.vy = -0.1
+        msg.vy = -0.2
         msg.yawrate = 0.0
         msg.zDistance = 0.4
         now = rospy.get_time()
@@ -160,7 +167,7 @@ if __name__ == '__main__':
         pub.publish(msg)
         rate.sleep()
 
-    # land, spend 3 secs
+    # land, spend 1 secs
     start = rospy.get_time()
     while not rospy.is_shutdown():
         msg.vx = 0.0
@@ -168,7 +175,7 @@ if __name__ == '__main__':
         msg.yawrate = 0.0
         msg.zDistance = 0.0
         now = rospy.get_time()
-        if (now - start > 3.0):
+        if (now - start > 1.0):
             break
         msg.header.seq += 1
         msg.header.stamp = rospy.Time.now()
@@ -179,3 +186,5 @@ if __name__ == '__main__':
         rospy.loginfo(msg.zDistance)
         pub.publish(msg)
         rate.sleep()
+
+    stop_pub.publish(stop_msg)
