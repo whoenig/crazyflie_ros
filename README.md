@@ -10,16 +10,26 @@ ROS stack for Bitcraze Crazyflie (http://www.bitcraze.se/), with the following f
 * Includes external controller for waypoint navigation (if motion capture system is available)
 * No dependency to the Bitcraze SDK (Driver and Controller written in C++)
 
+A tutorial (for a slightly older version) is available in W. Hönig and N. Ayanian. "Flying Multiple UAVs Using ROS", Chapter in Robot Operating System (ROS): The Complete Reference (Volume 2), Springer, 2017. (see http://act.usc.edu/publications.html for a free pre-print).
+
+If you want to control many Crazyflies or look for a good controller for a single Crazyflie, take a look at http://crazyswarm.readthedocs.io/en/latest/. We are currently in the process to unify the Crazyswarm and crazyflie_ros as well as contributing the Crazyswarm firmware changes back to the official firmware.
+
 ## Installation
 
 Clone the package into your catkin workspace:
 ```
 git clone https://github.com/whoenig/crazyflie_ros.git
+cd crazyflie_ros
+git submodule init
+git submodule update
 ```
+
+Use `catkin_make` on your workspace to compile.
 
 ## Usage
 
 There are six packages included: crazyflie_cpp, crazyflie_driver, crazyflie_tools, crazyflie_description, crazyflie_controller, and crazyflie_demo.
+Note that the below description might be slightly out-of-date, as we continue merging the Crazyswarm and crazyflie_ros.
 
 ### Crazyflie_Cpp
 
