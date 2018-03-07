@@ -468,8 +468,8 @@ struct crtpCommanderHighLevelSetGroupMaskRequest
     uint8_t groupMask)
     : header(0x08, 0)
     , command(0)
+    , groupMask(groupMask)
     {
-      groupMask = groupMask;
     }
 
     const crtp header;
@@ -485,10 +485,10 @@ struct crtpCommanderHighLevelTakeoffRequest
     float duration)
     : header(0x08, 0)
     , command(1)
+    , groupMask(groupMask)
+    , height(height)
+    , duration(duration)
     {
-      groupMask = groupMask;
-      height = height;
-      duration = duration;
     }
 
     const crtp header;
@@ -506,10 +506,10 @@ struct crtpCommanderHighLevelLandRequest
     float duration)
     : header(0x08, 0)
     , command(2)
+    , groupMask(groupMask)
+    , height(height)
+    , duration(duration)
     {
-      groupMask = groupMask;
-      height = height;
-      duration = duration;
     }
 
     const crtp header;
@@ -525,8 +525,8 @@ struct crtpCommanderHighLevelStopRequest
     uint8_t groupMask)
     : header(0x08, 0)
     , command(3)
+    , groupMask(groupMask)
     {
-      groupMask = groupMask;
     }
 
     const crtp header;
@@ -546,8 +546,14 @@ struct crtpCommanderHighLevelGoToRequest
     float duration)
     : header(0x08, 0)
     , command(4)
+    , groupMask(groupMask)
+    , relative(relative)
+    , x(x)
+    , y(y)
+    , z(z)
+    , yaw(yaw)
+    , duration(duration)
     {
-      groupMask = groupMask;
     }
 
     const crtp header;

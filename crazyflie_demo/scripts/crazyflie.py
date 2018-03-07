@@ -4,6 +4,9 @@ import rospy
 import numpy as np
 from crazyflie_driver.srv import *
 
+def arrayToGeometryPoint(a):
+    return geometry_msgs.msg.Point(a[0], a[1], a[2])
+
 class Crazyflie:
     def __init__(self, prefix, tf):
         self.prefix = prefix
@@ -18,7 +21,7 @@ class Crazyflie:
         rospy.wait_for_service(prefix + "/stop")
         self.stopService = rospy.ServiceProxy(prefix + "/stop", Stop)
         rospy.wait_for_service(prefix + "/go_to")
-        self.goToService = rospy.ServiceProxy(prefix + "/go_to", Hover)
+        self.goToService = rospy.ServiceProxy(prefix + "/go_to", GoTo)
         rospy.wait_for_service(prefix + "/update_params")
         self.updateParamsService = rospy.ServiceProxy(prefix + "/update_params", UpdateParams)
 
@@ -36,7 +39,7 @@ class Crazyflie:
 
     def goTo(self, goal, yaw, duration, relative = False, groupMask = 0):
         gp = arrayToGeometryPoint(goal)
-        self.hoverService(groupMask, relative, gp, yaw, rospy.Duration.from_sec(duration))
+        self.goToService(groupMask, relative, gp, yaw, rospy.Duration.from_sec(duration))
 
     def position(self):
         self.tf.waitForTransform("/world", "/cf" + str(self.id), rospy.Time(0), rospy.Duration(10))
