@@ -337,6 +337,9 @@ private:
 
     auto start = std::chrono::system_clock::now();
 
+    std::function<void(const char*)> cb_console = std::bind(&CrazyflieROS::onConsole, this, std::placeholders::_1);
+    m_cf.setConsoleCallback(cb_console);
+
     m_cf.logReset();
 
     std::function<void(float)> cb_lq = std::bind(&CrazyflieROS::onLinkQuality, this, std::placeholders::_1);
@@ -579,6 +582,10 @@ private:
       if (linkQuality < 0.7) {
         ROS_WARN("Link Quality low (%f)", linkQuality);
       }
+  }
+
+  void onConsole(const char* msg) {
+    ROS_INFO("CF Console: %s", msg);
   }
 
   bool setGroupMask(
