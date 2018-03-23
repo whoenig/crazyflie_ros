@@ -2,12 +2,18 @@
 #include <ros/callback_queue.h>
 
 #include "crazyflie_driver/AddCrazyflie.h"
+#include "crazyflie_driver/GoTo.h"
+#include "crazyflie_driver/Land.h"
 #include "crazyflie_driver/RemoveCrazyflie.h"
+#include "crazyflie_driver/SetGroupMask.h"
+#include "crazyflie_driver/Stop.h"
+#include "crazyflie_driver/Takeoff.h"
+#include "crazyflie_driver/UpdateParams.h"
+#include "crazyflie_driver/sendPacket.h"
+
 #include "crazyflie_driver/LogBlock.h"
 #include "crazyflie_driver/GenericLogData.h"
-#include "crazyflie_driver/UpdateParams.h"
 #include "crazyflie_driver/FullState.h"
-#include "crazyflie_driver/sendPacket.h"
 #include "crazyflie_driver/crtpPacket.h"
 #include "crazyflie_cpp/Crazyradio.h"
 #include "crazyflie_cpp/crtp.h"
@@ -73,6 +79,11 @@ public:
     , m_enable_logging_packets(enable_logging_packets)
     , m_serviceEmergency()
     , m_serviceUpdateParams()
+    , m_serviceSetGroupMask()
+    , m_serviceTakeoff()
+    , m_serviceLand()
+    , m_serviceStop()
+    , m_serviceGoTo()
     , m_subscribeCmdVel()
     , m_subscribeCmdFullState()
     , m_subscribeExternalPosition()
@@ -288,6 +299,12 @@ private:
     m_subscribeCmdFullState = n.subscribe(m_tf_prefix + "/cmd_full_state", 1, &CrazyflieROS::cmdFullStateSetpoint, this);
     m_subscribeExternalPosition = n.subscribe(m_tf_prefix + "/external_position", 1, &CrazyflieROS::positionMeasurementChanged, this);
     m_serviceEmergency = n.advertiseService(m_tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
+
+    m_serviceSetGroupMask = n.advertiseService(m_tf_prefix + "/set_group_mask", &CrazyflieROS::setGroupMask, this);
+    m_serviceTakeoff = n.advertiseService(m_tf_prefix + "/takeoff", &CrazyflieROS::takeoff, this);
+    m_serviceLand = n.advertiseService(m_tf_prefix + "/land", &CrazyflieROS::land, this);
+    m_serviceStop = n.advertiseService(m_tf_prefix + "/stop", &CrazyflieROS::stop, this);
+    m_serviceGoTo = n.advertiseService(m_tf_prefix + "/go_to", &CrazyflieROS::goTo, this);
 
     if (m_enable_logging_imu) {
       m_pubImu = n.advertise<sensor_msgs::Imu>(m_tf_prefix + "/imu", 10);
@@ -564,6 +581,51 @@ private:
       }
   }
 
+  bool setGroupMask(
+    crazyflie_driver::SetGroupMask::Request& req,
+    crazyflie_driver::SetGroupMask::Response& res)
+  {
+    ROS_INFO("SetGroupMask requested");
+    m_cf.setGroupMask(req.groupMask);
+    return true;
+  }
+
+  bool takeoff(
+    crazyflie_driver::Takeoff::Request& req,
+    crazyflie_driver::Takeoff::Response& res)
+  {
+    ROS_INFO("Takeoff requested");
+    m_cf.takeoff(req.height, req.duration.toSec(), req.groupMask);
+    return true;
+  }
+
+  bool land(
+    crazyflie_driver::Land::Request& req,
+    crazyflie_driver::Land::Response& res)
+  {
+    ROS_INFO("Land requested");
+    m_cf.land(req.height, req.duration.toSec(), req.groupMask);
+    return true;
+  }
+
+  bool stop(
+    crazyflie_driver::Stop::Request& req,
+    crazyflie_driver::Stop::Response& res)
+  {
+    ROS_INFO("Stop requested");
+    m_cf.stop(req.groupMask);
+    return true;
+  }
+
+  bool goTo(
+    crazyflie_driver::GoTo::Request& req,
+    crazyflie_driver::GoTo::Response& res)
+  {
+    ROS_INFO("GoTo requested");
+    m_cf.goTo(req.goal.x, req.goal.y, req.goal.z, req.yaw, req.duration.toSec(), req.relative, req.groupMask);
+    return true;
+  }
+
 private:
   Crazyflie m_cf;
   std::string m_tf_prefix;
@@ -583,6 +645,14 @@ private:
 
   ros::ServiceServer m_serviceEmergency;
   ros::ServiceServer m_serviceUpdateParams;
+
+  // High-level setpoints
+  ros::ServiceServer m_serviceSetGroupMask;
+  ros::ServiceServer m_serviceTakeoff;
+  ros::ServiceServer m_serviceLand;
+  ros::ServiceServer m_serviceStop;
+  ros::ServiceServer m_serviceGoTo;
+
   ros::Subscriber m_subscribeCmdVel;
   ros::Subscriber m_subscribeCmdFullState;
   ros::Subscriber m_subscribeExternalPosition;
