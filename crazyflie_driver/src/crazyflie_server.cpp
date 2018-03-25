@@ -6,9 +6,11 @@
 #include "crazyflie_driver/Land.h"
 #include "crazyflie_driver/RemoveCrazyflie.h"
 #include "crazyflie_driver/SetGroupMask.h"
+#include "crazyflie_driver/StartTrajectory.h"
 #include "crazyflie_driver/Stop.h"
 #include "crazyflie_driver/Takeoff.h"
 #include "crazyflie_driver/UpdateParams.h"
+#include "crazyflie_driver/UploadTrajectoryPieces.h"
 #include "crazyflie_driver/sendPacket.h"
 
 #include "crazyflie_driver/LogBlock.h"
@@ -84,6 +86,8 @@ public:
     , m_serviceLand()
     , m_serviceStop()
     , m_serviceGoTo()
+    , m_serviceUploadTrajectoryPieces()
+    , m_serviceStartTrajectory()
     , m_subscribeCmdVel()
     , m_subscribeCmdFullState()
     , m_subscribeExternalPosition()
@@ -305,6 +309,8 @@ private:
     m_serviceLand = n.advertiseService(m_tf_prefix + "/land", &CrazyflieROS::land, this);
     m_serviceStop = n.advertiseService(m_tf_prefix + "/stop", &CrazyflieROS::stop, this);
     m_serviceGoTo = n.advertiseService(m_tf_prefix + "/go_to", &CrazyflieROS::goTo, this);
+    m_serviceUploadTrajectoryPieces = n.advertiseService(m_tf_prefix + "/upload_trajectory_pieces", &CrazyflieROS::uploadTrajectoryPieces, this);
+    m_serviceStartTrajectory = n.advertiseService(m_tf_prefix + "/start_trajectory", &CrazyflieROS::startTrajectory, this);
 
     if (m_enable_logging_imu) {
       m_pubImu = n.advertise<sensor_msgs::Imu>(m_tf_prefix + "/imu", 10);
@@ -449,6 +455,9 @@ private:
 
 
     }
+
+    ROS_INFO("Requesting memories...");
+    m_cf.requestMemoryToc();
 
     ROS_INFO("Ready...");
     auto end = std::chrono::system_clock::now();
@@ -633,6 +642,44 @@ private:
     return true;
   }
 
+  bool uploadTrajectoryPieces(
+    crazyflie_driver::UploadTrajectoryPieces::Request& req,
+    crazyflie_driver::UploadTrajectoryPieces::Response& res)
+  {
+    ROS_INFO("UploadTrajectoryPieces requested");
+
+    std::vector<Crazyflie::poly4d> pieces(req.pieces.size());
+    for (size_t i = 0; i < pieces.size(); ++i) {
+      if (   req.pieces[i].poly_x.size() != 8
+          || req.pieces[i].poly_y.size() != 8
+          || req.pieces[i].poly_z.size() != 8
+          || req.pieces[i].poly_yaw.size() != 8) {
+        ROS_FATAL("Wrong number of pieces!");
+        return false;
+      }
+      pieces[i].duration = req.pieces[i].duration.toSec();
+      for (size_t j = 0; j < 8; ++j) {
+        pieces[i].p[0][j] = req.pieces[i].poly_x[j];
+        pieces[i].p[1][j] = req.pieces[i].poly_y[j];
+        pieces[i].p[2][j] = req.pieces[i].poly_z[j];
+        pieces[i].p[3][j] = req.pieces[i].poly_yaw[j];
+      }
+    }
+    m_cf.uploadTrajectoryPieces(req.index, pieces);
+
+    ROS_INFO("Upload completed!");
+    return true;
+  }
+
+  bool startTrajectory(
+    crazyflie_driver::StartTrajectory::Request& req,
+    crazyflie_driver::StartTrajectory::Response& res)
+  {
+    ROS_INFO("StartTrajectory requested");
+    m_cf.startTrajectory(req.index, req.numPieces, req.timescale, req.reversed, req.relative, req.groupMask);
+    return true;
+  }
+
 private:
   Crazyflie m_cf;
   std::string m_tf_prefix;
@@ -659,6 +706,8 @@ private:
   ros::ServiceServer m_serviceLand;
   ros::ServiceServer m_serviceStop;
   ros::ServiceServer m_serviceGoTo;
+  ros::ServiceServer m_serviceUploadTrajectoryPieces;
+  ros::ServiceServer m_serviceStartTrajectory;
 
   ros::Subscriber m_subscribeCmdVel;
   ros::Subscriber m_subscribeCmdFullState;

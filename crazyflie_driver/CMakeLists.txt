@@ -35,9 +35,11 @@ add_service_files(
   Land.srv
   RemoveCrazyflie.srv
   SetGroupMask.srv
+  StartTrajectory.srv
   Stop.srv
   Takeoff.srv
   UpdateParams.srv
+  UploadTrajectoryPieces.srv
   sendPacket.srv
 )
 
@@ -46,6 +48,7 @@ add_message_files(
   LogBlock.msg
   GenericLogData.msg
   FullState.msg
+  TrajectoryPolynomialPiece.msg
   crtpPacket.msg
 )
 
