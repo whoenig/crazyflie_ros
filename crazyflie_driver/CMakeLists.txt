@@ -51,7 +51,6 @@ add_message_files(
   TrajectoryPolynomialPiece.msg
   crtpPacket.msg
   Hover.msg
-  Stop.msg
   Position.msg
 )
 

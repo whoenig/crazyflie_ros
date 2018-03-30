@@ -23,6 +23,7 @@
 #include "crazyflie_cpp/Crazyradio.h"
 #include "crazyflie_cpp/crtp.h"
 #include "std_srvs/Empty.h"
+#include <std_msgs/Empty.h>
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/PointStamped.h"
 #include "sensor_msgs/Imu.h"
@@ -217,7 +218,7 @@ void cmdHoverSetpoint(
   }
 
 void cmdStop(
-    const crazyflie_driver::Stop::ConstPtr& msg)
+    const std_msgs::Empty::ConstPtr& msg)
   {
      //ROS_INFO("got a stop setpoint");
     if (!m_isEmergency) {
@@ -350,9 +351,9 @@ void cmdPositionSetpoint(
     m_subscribeCmdFullState = n.subscribe(m_tf_prefix + "/cmd_full_state", 1, &CrazyflieROS::cmdFullStateSetpoint, this);
     m_subscribeExternalPosition = n.subscribe(m_tf_prefix + "/external_position", 1, &CrazyflieROS::positionMeasurementChanged, this);
     m_serviceEmergency = n.advertiseService(m_tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
-	m_subscribeCmdHover = n.subscribe(tf_prefix + "/cmd_hover", 1, &CrazyflieROS::cmdHoverSetpoint, this);
-    m_subscribeCmdStop = n.subscribe(tf_prefix + "/cmd_stop", 1, &CrazyflieROS::cmdStop, this);
-    m_subscribeCmdPosition = n.subscribe(tf_prefix + "/cmd_position", 1, &CrazyflieROS::cmdPositionSetpoint, this);
+    m_subscribeCmdHover = n.subscribe(m_tf_prefix + "/cmd_hover", 1, &CrazyflieROS::cmdHoverSetpoint, this);
+    m_subscribeCmdStop = n.subscribe(m_tf_prefix + "/cmd_stop", 1, &CrazyflieROS::cmdStop, this);
+    m_subscribeCmdPosition = n.subscribe(m_tf_prefix + "/cmd_position", 1, &CrazyflieROS::cmdPositionSetpoint, this);
 
 
     m_serviceSetGroupMask = n.advertiseService(m_tf_prefix + "/set_group_mask", &CrazyflieROS::setGroupMask, this);
