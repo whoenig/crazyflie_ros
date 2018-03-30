@@ -50,6 +50,34 @@ double radToDeg(double rad) {
     return rad * 180.0 / pi();
 }
 
+class ROSLogger : public Logger
+{
+public:
+  ROSLogger()
+    : Logger()
+  {
+  }
+
+  virtual ~ROSLogger() {}
+
+  virtual void info(const std::string& msg)
+  {
+    ROS_INFO("%s", msg.c_str());
+  }
+
+  virtual void warning(const std::string& msg)
+  {
+    ROS_WARN("%s", msg.c_str());
+  }
+
+  virtual void error(const std::string& msg)
+  {
+    ROS_ERROR("%s", msg.c_str());
+  }
+};
+
+static ROSLogger rosLogger;
+
 class CrazyflieROS
 {
 public:
@@ -68,7 +96,7 @@ public:
     bool enable_logging_pressure,
     bool enable_logging_battery,
     bool enable_logging_packets)
-    : m_cf(link_uri)
+    : m_cf(link_uri, rosLogger)
     , m_tf_prefix(tf_prefix)
     , m_isEmergency(false)
     , m_roll_trim(roll_trim)
