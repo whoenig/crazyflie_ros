@@ -50,6 +50,9 @@ add_message_files(
   FullState.msg
   TrajectoryPolynomialPiece.msg
   crtpPacket.msg
+  Hover.msg
+  Stop.msg
+  Position.msg
 )
 
 ## Generate added messages and services with any dependencies listed here

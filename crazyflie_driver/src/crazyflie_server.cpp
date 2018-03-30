@@ -16,6 +16,9 @@
 #include "crazyflie_driver/LogBlock.h"
 #include "crazyflie_driver/GenericLogData.h"
 #include "crazyflie_driver/FullState.h"
+#include "crazyflie_driver/Hover.h"
+#include "crazyflie_driver/Stop.h"
+#include "crazyflie_driver/Position.h"
 #include "crazyflie_driver/crtpPacket.h"
 #include "crazyflie_cpp/Crazyradio.h"
 #include "crazyflie_cpp/crtp.h"
@@ -90,6 +93,9 @@ public:
     , m_serviceStartTrajectory()
     , m_subscribeCmdVel()
     , m_subscribeCmdFullState()
+    , m_subscribeCmdHover()
+    , m_subscribeCmdStop()
+    , m_subscribeCmdPosition()
     , m_subscribeExternalPosition()
     , m_pubImu()
     , m_pubTemp()
@@ -192,6 +198,47 @@ private:
       U value;
       ros::param::get(ros_param, value);
       m_cf.setParam<T>(id, (T)value);
+  }
+
+void cmdHoverSetpoint(
+    const crazyflie_driver::Hover::ConstPtr& msg)
+  {
+     //ROS_INFO("got a hover setpoint");
+    if (!m_isEmergency) {
+      float vx = msg->vx;
+      float vy = msg->vy;
+      float yawRate = msg->yawrate;
+      float zDistance = msg->zDistance;
+
+      m_cf.sendHoverSetpoint(vx, vy, yawRate, zDistance);
+      m_sentSetpoint = true;
+      //ROS_INFO("set a hover setpoint");
+    }
+  }
+
+void cmdStop(
+    const crazyflie_driver::Stop::ConstPtr& msg)
+  {
+     //ROS_INFO("got a stop setpoint");
+    if (!m_isEmergency) {
+      m_cf.sendStop();
+      m_sentSetpoint = true;
+      //ROS_INFO("set a stop setpoint");
+    }
+  }
+
+void cmdPositionSetpoint(
+    const crazyflie_driver::Position::ConstPtr& msg)
+  {
+    if(!m_isEmergency) {
+      float x = msg->x;
+      float y = msg->y;
+      float z = msg->z;
+      float yaw = msg->yaw;
+
+      m_cf.sendPositionSetpoint(x, y, z, yaw);
+      m_sentSetpoint = true;
+    }
   }
 
   bool updateParams(
@@ -303,6 +350,10 @@ private:
     m_subscribeCmdFullState = n.subscribe(m_tf_prefix + "/cmd_full_state", 1, &CrazyflieROS::cmdFullStateSetpoint, this);
     m_subscribeExternalPosition = n.subscribe(m_tf_prefix + "/external_position", 1, &CrazyflieROS::positionMeasurementChanged, this);
     m_serviceEmergency = n.advertiseService(m_tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
+	m_subscribeCmdHover = n.subscribe(tf_prefix + "/cmd_hover", 1, &CrazyflieROS::cmdHoverSetpoint, this);
+    m_subscribeCmdStop = n.subscribe(tf_prefix + "/cmd_stop", 1, &CrazyflieROS::cmdStop, this);
+    m_subscribeCmdPosition = n.subscribe(tf_prefix + "/cmd_position", 1, &CrazyflieROS::cmdPositionSetpoint, this);
+
 
     m_serviceSetGroupMask = n.advertiseService(m_tf_prefix + "/set_group_mask", &CrazyflieROS::setGroupMask, this);
     m_serviceTakeoff = n.advertiseService(m_tf_prefix + "/takeoff", &CrazyflieROS::takeoff, this);
@@ -711,6 +762,9 @@ private:
 
   ros::Subscriber m_subscribeCmdVel;
   ros::Subscriber m_subscribeCmdFullState;
+  ros::Subscriber m_subscribeCmdHover;
+  ros::Subscriber m_subscribeCmdStop;
+  ros::Subscriber m_subscribeCmdPosition;
   ros::Subscriber m_subscribeExternalPosition;
   ros::Publisher m_pubImu;
   ros::Publisher m_pubTemp;
