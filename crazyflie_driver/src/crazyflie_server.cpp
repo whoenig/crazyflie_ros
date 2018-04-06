@@ -810,84 +810,160 @@ private:
   ros::CallbackQueue m_callback_queue;
 };
 
-static std::map<std::string, CrazyflieROS*> crazyflies;
-
-bool add_crazyflie(
-  crazyflie_driver::AddCrazyflie::Request  &req,
-  crazyflie_driver::AddCrazyflie::Response &res)
+class CrazyflieServer
 {
-  ROS_INFO("Adding %s as %s with trim(%f, %f). Logging: %d, Parameters: %d, Use ROS time: %d",
-    req.uri.c_str(),
-    req.tf_prefix.c_str(),
-    req.roll_trim,
-    req.pitch_trim,
-    req.enable_parameters,
-    req.enable_logging,
-    req.use_ros_time);
+public:
+  CrazyflieServer()
+  {
 
-  // Ignore if the uri is already in use
-  if (crazyflies.find(req.uri) != crazyflies.end()) {
-    ROS_ERROR("Cannot add %s, already added.", req.uri.c_str());
-    return false;
   }
 
-  CrazyflieROS* cf = new CrazyflieROS(
-    req.uri,
-    req.tf_prefix,
-    req.roll_trim,
-    req.pitch_trim,
-    req.enable_logging,
-    req.enable_parameters,
-    req.log_blocks,
-    req.use_ros_time,
-    req.enable_logging_imu,
-    req.enable_logging_temperature,
-    req.enable_logging_magnetic_field,
-    req.enable_logging_pressure,
-    req.enable_logging_battery,
-    req.enable_logging_packets);
+  void run()
+  {
+    ros::NodeHandle n;
+    ros::CallbackQueue callback_queue;
+    n.setCallbackQueue(&callback_queue);
 
-  crazyflies[req.uri] = cf;
+    ros::ServiceServer serviceAdd = n.advertiseService("add_crazyflie", &CrazyflieServer::add_crazyflie, this);
+    ros::ServiceServer serviceRemove = n.advertiseService("remove_crazyflie", &CrazyflieServer::remove_crazyflie, this);
 
-  return true;
-}
+    // // High-level API
+    // ros::ServiceServer serviceTakeoff = n.advertiseService("takeoff", &CrazyflieServer::takeoff, this);
+    // ros::ServiceServer serviceLand = n.advertiseService("land", &CrazyflieROS::land, this);
+    // ros::ServiceServer serviceStop = n.advertiseService("stop", &CrazyflieROS::stop, this);
+    // ros::ServiceServer serviceGoTo = n.advertiseService("go_to", &CrazyflieROS::goTo, this);
+    // ros::ServiceServer startTrajectory = n.advertiseService("start_trajectory", &CrazyflieROS::startTrajectory, this);
 
-bool remove_crazyflie(
-  crazyflie_driver::RemoveCrazyflie::Request  &req,
-  crazyflie_driver::RemoveCrazyflie::Response &res)
-{
-
-  if (crazyflies.find(req.uri) == crazyflies.end()) {
-    ROS_ERROR("Cannot remove %s, not connected.", req.uri.c_str());
-    return false;
+    while(ros::ok()) {
+      // Execute any ROS related functions now
+      callback_queue.callAvailable(ros::WallDuration(0.0));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
   }
 
-  ROS_INFO("Removing crazyflie at uri %s.", req.uri.c_str());
+private:
 
-  crazyflies[req.uri]->stop();
-  delete crazyflies[req.uri];
-  crazyflies.erase(req.uri);
+  bool add_crazyflie(
+    crazyflie_driver::AddCrazyflie::Request  &req,
+    crazyflie_driver::AddCrazyflie::Response &res)
+  {
+    ROS_INFO("Adding %s as %s with trim(%f, %f). Logging: %d, Parameters: %d, Use ROS time: %d",
+      req.uri.c_str(),
+      req.tf_prefix.c_str(),
+      req.roll_trim,
+      req.pitch_trim,
+      req.enable_parameters,
+      req.enable_logging,
+      req.use_ros_time);
 
-  ROS_INFO("Crazyflie %s removed.", req.uri.c_str());
+    // Ignore if the uri is already in use
+    if (m_crazyflies.find(req.uri) != m_crazyflies.end()) {
+      ROS_ERROR("Cannot add %s, already added.", req.uri.c_str());
+      return false;
+    }
 
-  return true;
-}
+    CrazyflieROS* cf = new CrazyflieROS(
+      req.uri,
+      req.tf_prefix,
+      req.roll_trim,
+      req.pitch_trim,
+      req.enable_logging,
+      req.enable_parameters,
+      req.log_blocks,
+      req.use_ros_time,
+      req.enable_logging_imu,
+      req.enable_logging_temperature,
+      req.enable_logging_magnetic_field,
+      req.enable_logging_pressure,
+      req.enable_logging_battery,
+      req.enable_logging_packets);
+
+    m_crazyflies[req.uri] = cf;
+
+    return true;
+  }
+
+  bool remove_crazyflie(
+    crazyflie_driver::RemoveCrazyflie::Request  &req,
+    crazyflie_driver::RemoveCrazyflie::Response &res)
+  {
+
+    if (m_crazyflies.find(req.uri) == m_crazyflies.end()) {
+      ROS_ERROR("Cannot remove %s, not connected.", req.uri.c_str());
+      return false;
+    }
+
+    ROS_INFO("Removing crazyflie at uri %s.", req.uri.c_str());
+
+    m_crazyflies[req.uri]->stop();
+    delete m_crazyflies[req.uri];
+    m_crazyflies.erase(req.uri);
+
+    ROS_INFO("Crazyflie %s removed.", req.uri.c_str());
+
+    return true;
+  }
+
+  // bool takeoff(
+  //   crazyflie_driver::Takeoff::Request& req,
+  //   crazyflie_driver::Takeoff::Response& res)
+  // {
+  //   ROS_INFO("Takeoff requested");
+  //   m_cfbc.takeoff(req.height, req.duration.toSec(), req.groupMask);
+  //   return true;
+  // }
+
+  // bool land(
+  //   crazyflie_driver::Land::Request& req,
+  //   crazyflie_driver::Land::Response& res)
+  // {
+  //   ROS_INFO("Land requested");
+  //   m_cfbc.land(req.height, req.duration.toSec(), req.groupMask);
+  //   return true;
+  // }
+
+  // bool stop(
+  //   crazyflie_driver::Stop::Request& req,
+  //   crazyflie_driver::Stop::Response& res)
+  // {
+  //   ROS_INFO("Stop requested");
+  //   m_cfbc.stop(req.groupMask);
+  //   return true;
+  // }
+
+  // bool goTo(
+  //   crazyflie_driver::GoTo::Request& req,
+  //   crazyflie_driver::GoTo::Response& res)
+  // {
+  //   ROS_INFO("GoTo requested");
+  //   // this is always relative
+  //   m_cfbc.goTo(req.goal.x, req.goal.y, req.goal.z, req.yaw, req.duration.toSec(), req.groupMask);
+  //   return true;
+  // }
+
+  // bool startTrajectory(
+  //   crazyflie_driver::StartTrajectory::Request& req,
+  //   crazyflie_driver::StartTrajectory::Response& res)
+  // {
+  //   ROS_INFO("StartTrajectory requested");
+  //   // this is always relative
+  //   m_cfbc.startTrajectory(req.index, req.numPieces, req.timescale, req.reversed, req.groupMask);
+  //   return true;
+  // }
+
+private:
+  std::map<std::string, CrazyflieROS*> m_crazyflies;
+};
+
+
+
 
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "crazyflie_server");
-  ros::NodeHandle n;
-  ros::CallbackQueue callback_queue;
-  n.setCallbackQueue(&callback_queue);
 
-  ros::ServiceServer serviceAdd = n.advertiseService("add_crazyflie", add_crazyflie);
-  ros::ServiceServer serviceRemove = n.advertiseService("remove_crazyflie", remove_crazyflie);
-
-  while(ros::ok()) {
-    // Execute any ROS related functions now
-    callback_queue.callAvailable(ros::WallDuration(0.0));
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
+  CrazyflieServer cfserver;
+  cfserver.run();
 
   return 0;
 }
