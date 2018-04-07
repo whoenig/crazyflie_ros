@@ -22,24 +22,22 @@ if __name__ == '__main__':
 
     traj1 = uav_trajectory.Trajectory()
     traj1.loadcsv("takeoff.csv")
-    idx1 = 0
 
     traj2 = uav_trajectory.Trajectory()
     traj2.loadcsv("figure8.csv")
-    idx2 = len(traj1.polynomials)
 
     print(traj1.duration)
 
-    cf.uploadTrajectoryPieces(idx1, traj1)
-    cf.uploadTrajectoryPieces(idx2, traj2)
+    cf.uploadTrajectory(0, 0, traj1)
+    cf.uploadTrajectory(1, len(traj1.polynomials), traj2)
 
-    cf.startTrajectory(idx1, len(traj1.polynomials))
-    time.sleep(traj1.duration)
+    cf.startTrajectory(0, timescale=1.0)
+    time.sleep(traj1.duration * 2.0)
 
-    cf.startTrajectory(idx2, len(traj2.polynomials))
-    time.sleep(traj2.duration)
+    cf.startTrajectory(1, timescale=2.0)
+    time.sleep(traj2.duration * 2.0)
 
-    cf.startTrajectory(idx1, len(traj1.polynomials), reverse=True)
-    time.sleep(traj1.duration)
+    cf.startTrajectory(0, timescale=1.0, reverse=True)
+    time.sleep(traj1.duration * 1.0)
 
     cf.stop()

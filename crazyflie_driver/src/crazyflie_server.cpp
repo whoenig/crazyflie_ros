@@ -10,7 +10,7 @@
 #include "crazyflie_driver/Stop.h"
 #include "crazyflie_driver/Takeoff.h"
 #include "crazyflie_driver/UpdateParams.h"
-#include "crazyflie_driver/UploadTrajectoryPieces.h"
+#include "crazyflie_driver/UploadTrajectory.h"
 #include "crazyflie_driver/sendPacket.h"
 
 #include "crazyflie_driver/LogBlock.h"
@@ -118,7 +118,7 @@ public:
     , m_serviceLand()
     , m_serviceStop()
     , m_serviceGoTo()
-    , m_serviceUploadTrajectoryPieces()
+    , m_serviceUploadTrajectory()
     , m_serviceStartTrajectory()
     , m_subscribeCmdVel()
     , m_subscribeCmdFullState()
@@ -389,7 +389,7 @@ void cmdPositionSetpoint(
     m_serviceLand = n.advertiseService(m_tf_prefix + "/land", &CrazyflieROS::land, this);
     m_serviceStop = n.advertiseService(m_tf_prefix + "/stop", &CrazyflieROS::stop, this);
     m_serviceGoTo = n.advertiseService(m_tf_prefix + "/go_to", &CrazyflieROS::goTo, this);
-    m_serviceUploadTrajectoryPieces = n.advertiseService(m_tf_prefix + "/upload_trajectory_pieces", &CrazyflieROS::uploadTrajectoryPieces, this);
+    m_serviceUploadTrajectory = n.advertiseService(m_tf_prefix + "/upload_trajectory", &CrazyflieROS::uploadTrajectory, this);
     m_serviceStartTrajectory = n.advertiseService(m_tf_prefix + "/start_trajectory", &CrazyflieROS::startTrajectory, this);
 
     if (m_enable_logging_imu) {
@@ -722,11 +722,11 @@ void cmdPositionSetpoint(
     return true;
   }
 
-  bool uploadTrajectoryPieces(
-    crazyflie_driver::UploadTrajectoryPieces::Request& req,
-    crazyflie_driver::UploadTrajectoryPieces::Response& res)
+  bool uploadTrajectory(
+    crazyflie_driver::UploadTrajectory::Request& req,
+    crazyflie_driver::UploadTrajectory::Response& res)
   {
-    ROS_INFO("UploadTrajectoryPieces requested");
+    ROS_INFO("UploadTrajectory requested");
 
     std::vector<Crazyflie::poly4d> pieces(req.pieces.size());
     for (size_t i = 0; i < pieces.size(); ++i) {
@@ -745,7 +745,7 @@ void cmdPositionSetpoint(
         pieces[i].p[3][j] = req.pieces[i].poly_yaw[j];
       }
     }
-    m_cf.uploadTrajectoryPieces(req.index, pieces);
+    m_cf.uploadTrajectory(req.trajectoryId, req.pieceOffset, pieces);
 
     ROS_INFO("Upload completed!");
     return true;
@@ -756,7 +756,7 @@ void cmdPositionSetpoint(
     crazyflie_driver::StartTrajectory::Response& res)
   {
     ROS_INFO("StartTrajectory requested");
-    m_cf.startTrajectory(req.index, req.numPieces, req.timescale, req.reversed, req.relative, req.groupMask);
+    m_cf.startTrajectory(req.trajectoryId, req.timescale, req.reversed, req.relative, req.groupMask);
     return true;
   }
 
@@ -786,7 +786,7 @@ private:
   ros::ServiceServer m_serviceLand;
   ros::ServiceServer m_serviceStop;
   ros::ServiceServer m_serviceGoTo;
-  ros::ServiceServer m_serviceUploadTrajectoryPieces;
+  ros::ServiceServer m_serviceUploadTrajectory;
   ros::ServiceServer m_serviceStartTrajectory;
 
   ros::Subscriber m_subscribeCmdVel;

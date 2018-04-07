@@ -1,6 +1,5 @@
 uint8 groupMask
-uint32 index
-uint8 numPieces
+uint8 trajectoryId
 float32 timescale
 bool reversed
 bool relative

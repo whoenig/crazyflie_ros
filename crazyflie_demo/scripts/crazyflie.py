@@ -23,8 +23,8 @@ class Crazyflie:
         self.stopService = rospy.ServiceProxy(prefix + "/stop", Stop)
         rospy.wait_for_service(prefix + "/go_to")
         self.goToService = rospy.ServiceProxy(prefix + "/go_to", GoTo)
-        rospy.wait_for_service(prefix + "/upload_trajectory_pieces")
-        self.uploadTrajectoryPiecesService = rospy.ServiceProxy(prefix + "/upload_trajectory_pieces", UploadTrajectoryPieces)
+        rospy.wait_for_service(prefix + "/upload_trajectory")
+        self.uploadTrajectoryService = rospy.ServiceProxy(prefix + "/upload_trajectory", UploadTrajectory)
         rospy.wait_for_service(prefix + "/start_trajectory")
         self.startTrajectoryService = rospy.ServiceProxy(prefix + "/start_trajectory", StartTrajectory)
         rospy.wait_for_service(prefix + "/update_params")
@@ -47,7 +47,7 @@ class Crazyflie:
         gp = arrayToGeometryPoint(goal)
         self.goToService(groupMask, relative, gp, yaw, rospy.Duration.from_sec(duration))
 
-    def uploadTrajectoryPieces(self, index, trajectory):
+    def uploadTrajectory(self, trajectoryId, pieceOffset, trajectory):
         pieces = []
         for poly in trajectory.polynomials:
             piece = TrajectoryPolynomialPiece()
@@ -57,10 +57,10 @@ class Crazyflie:
             piece.poly_z   = poly.pz.p
             piece.poly_yaw = poly.pyaw.p
             pieces.append(piece)
-        self.uploadTrajectoryPiecesService(index, pieces)
+        self.uploadTrajectoryService(trajectoryId, pieceOffset, pieces)
 
-    def startTrajectory(self, index, numPieces, timescale = 1.0, reverse = False, relative = True, groupMask = 0):
-        self.startTrajectoryService(groupMask, index, numPieces, timescale, reverse, relative)
+    def startTrajectory(self, trajectoryId, timescale = 1.0, reverse = False, relative = True, groupMask = 0):
+        self.startTrajectoryService(groupMask, trajectoryId, timescale, reverse, relative)
 
     def position(self):
         self.tf.waitForTransform("/world", "/cf" + str(self.id), rospy.Time(0), rospy.Duration(10))

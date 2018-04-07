@@ -39,7 +39,7 @@ add_service_files(
   Stop.srv
   Takeoff.srv
   UpdateParams.srv
-  UploadTrajectoryPieces.srv
+  UploadTrajectory.srv
   sendPacket.srv
 )
 
