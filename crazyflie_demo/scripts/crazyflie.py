@@ -30,8 +30,7 @@ class Crazyflie:
         rospy.wait_for_service(prefix + "/update_params")
         self.updateParamsService = rospy.ServiceProxy(prefix + "/update_params", UpdateParams)
 
-
-    def setGroup(self, groupMask):
+    def setGroupMask(self, groupMask):
         self.setGroupMaskService(groupMask)
 
     def takeoff(self, targetHeight, duration, groupMask = 0):
