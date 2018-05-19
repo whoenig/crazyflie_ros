@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="uri1" default="radio://0/80/2M/E7E7E7E701" /> <!--Adjust this parameter-->
+  <arg name="uri2" default="radio://0/80/2M/E7E7E7E702" /> <!--Adjust this parameter-->
+  <arg name="uri3" default="radio://0/80/2M/E7E7E7E703" /> <!--Adjust this parameter-->
+  <arg name="frame1" default="crazyflie1" /> <!--For OptiTrack users: frame name should match the Rigid-body name on Motive-->
+  <arg name="frame2" default="crazyflie2" /> <!--For OptiTrack users: frame name should match the Rigid-body name on Motive-->
+  <arg name="frame3" default="crazyflie3" /> <!--For OptiTrack users: frame name should match the Rigid-body name on Motive-->
+  <arg name="ip" default="172.16.1.1" /> <!--Adjust this paramter-->
+  <arg name="port" default="3883" />
+
+  <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
+  </include>
+
+  <group ns="crazyflie1">
+    <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
+      <param name="uri" value="$(arg uri1)" />
+      <param name="tf_prefix" value="crazyflie1" />
+      <param name="enable_logging" value="False" /> <!--Logging is disabled to reduce unnecessary bandwith consumption-->
+      <param name="enable_logging_imu" value="False" />
+      <param name="enable_logging_temperature" value="False" />
+      <param name="enable_logging_magnetic_field" value="False" />
+      <param name="enable_logging_pressure" value="False" />
+      <param name="enable_logging_battery" value="False" />
+      <param name="enable_logging_packets" value="False" />
+      <rosparam>
+        genericLogTopics: ["log1"]
+        genericLogTopicFrequencies: [100]
+        genericLogTopic_log1_Variables: ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z"]
+      </rosparam>
+    </node>
+
+    <node name="pose" pkg="crazyflie_demo" type="publish_external_position_vrpn.py" output="screen">
+      <param name="topic" value="/vrpn_client_node/crazyflie1/pose" />
+    </node>
+  </group>
+
+  <group ns="crazyflie2">
+    <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
+      <param name="uri" value="$(arg uri2)" />
+      <param name="tf_prefix" value="crazyflie2" />
+      <param name="enable_logging" value="False" /> <!--Logging is disabled to reduce unnecessary bandwith consumption-->
+      <param name="enable_logging_imu" value="False" />
+      <param name="enable_logging_temperature" value="False" />
+      <param name="enable_logging_magnetic_field" value="False" />
+      <param name="enable_logging_pressure" value="False" />
+      <param name="enable_logging_battery" value="False" />
+      <param name="enable_logging_packets" value="False" />
+      <rosparam>
+        genericLogTopics: ["log1"]
+        genericLogTopicFrequencies: [100]
+        genericLogTopic_log1_Variables: ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z"]
+      </rosparam>
+    </node>
+
+    <node name="pose" pkg="crazyflie_demo" type="publish_external_position_vrpn.py" output="screen">
+      <param name="topic" value="/vrpn_client_node/crazyflie2/pose" />
+    </node>
+  </group>
+
+<!--For two Crazyflies, put the next group in comment-->
+
+  <group ns="crazyflie3">
+    <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
+      <param name="uri" value="$(arg uri3)" />
+      <param name="tf_prefix" value="crazyflie3" />
+      <param name="enable_logging" value="False" /> 
+      <param name="enable_logging_imu" value="False" />
+      <param name="enable_logging_temperature" value="False" />
+      <param name="enable_logging_magnetic_field" value="False" />
+      <param name="enable_logging_pressure" value="False" />
+      <param name="enable_logging_battery" value="False" />
+      <param name="enable_logging_packets" value="False" />
+      <rosparam>
+        genericLogTopics: ["log1"]
+        genericLogTopicFrequencies: [100]
+        genericLogTopic_log1_Variables: ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z"]
+      </rosparam>
+    </node>
+
+    <node name="pose" pkg="crazyflie_demo" type="publish_external_position_vrpn.py" output="screen">
+      <param name="topic" value="/vrpn_client_node/crazyflie3/pose" />
+    </node>
+  </group>
+
+  <!-- run a single vrpn client -->
+  <node pkg="vrpn_client_ros" type="vrpn_client_node" name="vrpn_client_node" output="screen">
+    <rosparam subst_value="true">
+      server: $(arg ip)
+      port: $(arg port)
+      update_frequency: 100.0
+      frame_id: /world
+      use_server_time: false
+      broadcast_tf: false
+      refresh_tracker_frequency: 1.0 <!-- VRPN will add all trackers found on connection -->
+    </rosparam>
+  </node>
+
+ </launch>
