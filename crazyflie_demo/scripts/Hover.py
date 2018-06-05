@@ -3,7 +3,7 @@
 import rospy
 import tf
 from crazyflie_driver.msg import Hover
-from crazyflie_driver.msg import Stop
+from std_msgs.msg import Empty
 from crazyflie_driver.srv import UpdateParams
 from threading import Thread
 
@@ -27,11 +27,8 @@ class Crazyflie:
         self.msg.header.frame_id = worldFrame
         self.msg.yawrate = 0
 
-        self.stop_pub = rospy.Publisher(prefix + "/cmd_stop", Stop, queue_size=1)
-        self.stop_msg = Stop()
-        self.stop_msg.header.seq = 0
-        self.stop_msg.header.stamp = rospy.Time.now()
-        self.stop_msg.header.frame_id = worldFrame
+        self.stop_pub = rospy.Publisher(prefix + "/cmd_stop", Empty, queue_size=1)
+        self.stop_msg = Empty()
 
 
     # determine direction of speed based on distance
