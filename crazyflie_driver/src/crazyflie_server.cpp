@@ -167,32 +167,6 @@ public:
   }
 
 private:
-  ros::ServiceServer m_sendPacketServer;
-
-  /**
-   * Publishes any generic packets en-queued by the crazyflie to a crtpPacket
-   * topic.
-   */
-  void publishPackets() {
-    std::vector<Crazyradio::Ack> packets = m_cf.retrieveGenericPackets();
-    if (!packets.empty())
-    {
-      std::vector<Crazyradio::Ack>::iterator it;
-      for (it = packets.begin(); it != packets.end(); it++)
-      {
-        crazyflie_driver::crtpPacket packet;
-        packet.size = it->size;
-        packet.header = it->data[0];
-        for(int i = 0; i < packet.size; i++)
-        {
-          packet.data[i] = it->data[i+1];
-        }
-        m_pubPackets.publish(packet);
-      }
-    }
-  }
-
-private:
   struct logImu {
     float acc_x;
     float acc_y;
@@ -431,7 +405,8 @@ void cmdPositionSetpoint(
     std::function<void(float)> cb_lq = std::bind(&CrazyflieROS::onLinkQuality, this, std::placeholders::_1);
     m_cf.setLinkQualityCallback(cb_lq);
 
-
+    std::function<void(const ITransport::Ack&)> cb_genericPacket = std::bind(&CrazyflieROS::onGenericPacket, this, std::placeholders::_1);
+    m_cf.setGenericPacketCallback(cb_genericPacket);
 
     if (m_enableParameters)
     {
@@ -554,9 +529,6 @@ void cmdPositionSetpoint(
       if (m_enableLogging && !m_sentSetpoint && !m_sentExternalPosition) {
         m_cf.transmitPackets();
         m_cf.sendPing();
-        if(m_enable_logging_packets) {
-          this->publishPackets();
-        }
       }
       m_sentSetpoint = false;
       m_sentExternalPosition = false;
@@ -677,6 +649,14 @@ void cmdPositionSetpoint(
     ROS_INFO("CF Console: %s", msg);
   }
 
+  void onGenericPacket(const ITransport::Ack& ack) {
+    crazyflie_driver::crtpPacket packet;
+    packet.size = ack.size;
+    packet.header = ack.data[0];
+    memcpy(&packet.data[0], &ack.data[1], ack.size);
+    m_pubPackets.publish(packet);
+  }
+
   bool setGroupMask(
     crazyflie_driver::SetGroupMask::Request& req,
     crazyflie_driver::SetGroupMask::Response& res)
@@ -779,6 +759,7 @@ private:
 
   ros::ServiceServer m_serviceEmergency;
   ros::ServiceServer m_serviceUpdateParams;
+  ros::ServiceServer m_sendPacketServer;
 
   // High-level setpoints
   ros::ServiceServer m_serviceSetGroupMask;
