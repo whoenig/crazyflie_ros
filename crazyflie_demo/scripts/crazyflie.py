@@ -4,6 +4,7 @@ import rospy
 import numpy as np
 from crazyflie_driver.srv import *
 from crazyflie_driver.msg import TrajectoryPolynomialPiece
+from tf import TransformListener
 
 def arrayToGeometryPoint(a):
     return geometry_msgs.msg.Point(a[0], a[1], a[2])
@@ -12,6 +13,7 @@ class Crazyflie:
     def __init__(self, prefix, tf):
         self.prefix = prefix
         self.tf = tf
+        self.tl = TransformListener()
 
         rospy.wait_for_service(prefix + "/set_group_mask")
         self.setGroupMaskService = rospy.ServiceProxy(prefix + "/set_group_mask", SetGroupMask)
@@ -62,8 +64,8 @@ class Crazyflie:
         self.startTrajectoryService(groupMask, trajectoryId, timescale, reverse, relative)
 
     def position(self):
-        self.tf.waitForTransform("/world", "/cf" + str(self.id), rospy.Time(0), rospy.Duration(10))
-        position, quaternion = self.tf.lookupTransform("/world", "/cf" + str(self.id), rospy.Time(0))
+        self.tl.waitForTransform("/world", self.tf, rospy.Time(0), rospy.Duration(1))
+        position, quaternion = self.tl.lookupTransform("/world", self.tf, rospy.Time(0))
         return np.array(position)
 
     def getParam(self, name):
