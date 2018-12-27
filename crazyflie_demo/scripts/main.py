@@ -4,7 +4,7 @@ from __future__ import division
 import rospy
 import tf
 from tf import TransformListener
-from geometry_msgs.msg import PoseStamped, TransformStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped, Twist
 from math import *
 import math
 import time
@@ -24,13 +24,13 @@ np.set_printoptions(formatter={'float': '{: 0.2f}'.format})
 
 
 # PARAMETERs #############
-toFly            = 1
+toFly            = 0
 tacile_glove_on  = 0
 pos_ctrl         = 1
 pos_coef         = 3.0 #2
 vel_ctrl         = 0
 vel_koef         = 1.0
-impedance_on     = 0
+impedance_on     = 1
 TAKEOFFHEIGHT    = 1.0 # meters 1.45
 TakeoffTime      = 4     # seconds
 l                = 0.4     # distance between drones, meters
@@ -41,7 +41,7 @@ cf1_name         = 'cf1'
 cf2_name         = 'cf2'
 cf3_name         = 'cf3'
 human_name       = 'karton_big' #'glove' 'karton_big'
-obstacle_name_list = []
+obstacle_name_list = ['obstacle3', 'obstacle4']
 # obstacle_name_list = ['obstacle0', 'obstacle1', 'obstacle2', 'obstacle3', 'obstacle4', 'obstacle5', 'obstacle6', 'obstacle7', 'obstacle8', 'obstacle9', 'obstacle10', 'obstacle11', 'obstacle12', 'obstacle13']
 # 'obstacle13', 'obstacle14', 'obstacle15', 'obstacle16', 'obstacle17', 'obstacle18', 'obstacle19', 'obstacle20', 'obstacle21', 'obstacle22', 'obstacle23', 'obstacle24', 'obstacle25'
 data_recording = False
@@ -57,8 +57,7 @@ if tacile_glove_on:
 	swarmlib.startXbee()
 
 
-###########################################################################################################
-# if __name__ == '__main__':
+# START ##########################################################################################################
 rospy.init_node('follow_multiple', anonymous=True)
 
 # Objects init  TODO: swarmlib.swarm_manager(drone_name_list)
@@ -93,19 +92,35 @@ if data_recording:
 	swarmlib.start_recording(cf1_name, cf2_name, cf3_name, human_name, obstacle_name_list, subject_name, tacile_glove_on)
 
 
-rate = rospy.Rate(60)
-while not rospy.is_shutdown():
-	for drone in swarm: drone.position()
-	human.position()
-	if impedance_on and not vel_ctrl:
-		# HUMAN IMPEDANCE
-		hum_vel = swarmlib.hum_vel(human.pose)
-		imp_pose, imp_vel, imp_time_prev = swarmlib.impedance_human(hum_vel, imp_pose_prev, imp_vel_prev, imp_time_prev)
-		imp_pose_prev = imp_pose
-		imp_vel_prev = imp_vel
 
-	# all drones follow a human with or wo impedance
-	if vel_ctrl:
+rate = rospy.Rate(100)
+while not rospy.is_shutdown():
+
+	swarmlib.publish_vel(human.vel, 'human_vel')
+	swarmlib.publish_vel(drone1.vel, 'drone1_vel')
+	swarmlib.publish_vel(drone1.vel_sp, 'drone1_vel_sp')
+
+
+	for drone in swarm: drone.position()
+	for drone in swarm: drone.velocity()
+	for drone in swarm: drone.velocity_sp()
+	human.position()
+	human.velocity()
+
+	# Human following strategies for the leader drone
+	if pos_ctrl:
+		if not initialized:
+			human_pose_init = human.pose # np.array([human_pose[0],human_pose[1],human_pose[2]])
+			if toFly:
+				drone1_pose_init = drone1.pose# + np.array([1,0,0])
+			else:
+				drone1_pose_init = np.array([1.4, 0, 0])
+			initialized = True
+		dx, dy = (human.pose - human_pose_init)[:2]
+		drone1.sp = np.array([  drone1_pose_init[0] + pos_coef*dx,
+								drone1_pose_init[1] + pos_coef*dy    ,
+								human.pose[2]        ]) #TAKEOFFHEIGHT
+	elif vel_ctrl:
 		if not initialized:
 			point_to_follow_pose_prev = np.array([drone1.pose[0],drone1.pose[1],TAKEOFFHEIGHT])
 			human_pose_init = human.pose
@@ -125,54 +140,87 @@ while not rospy.is_shutdown():
 		time_prev = time_now
 		point_to_follow_pose_prev = point_to_follow_pose
 		drone1.sp = point_to_follow_pose
-	elif pos_ctrl:
-		if not initialized:
-			human_pose_init = human.pose # np.array([human_pose[0],human_pose[1],human_pose[2]])
-			if toFly:
-				drone1_pose_init = drone1.pose# + np.array([1,0,0])
-			else:
-				drone1_pose_init = np.array([1.4, 0, 0])
-			initialized = True
-		dx, dy = (human.pose - human_pose_init)[:2]
-		drone1.sp = np.array([  drone1_pose_init[0] + pos_coef*dx,
-								drone1_pose_init[1] + pos_coef*dy    ,
-								human.pose[2]        ]) #TAKEOFFHEIGHT
 	else:
 		drone1.sp = np.array([  human.pose[0] -3.5*l , #   5
 								human.pose[1]        ,
 								TAKEOFFHEIGHT              ])
-	np.putmask(drone1.sp, drone1.sp >= uper_limits, uper_limits)
-	np.putmask(drone1.sp, drone1.sp <= lower_limits, lower_limits)
-	# triangel with equal sides
-	drone2.sp = drone1.sp + np.array([-l*0.86 , l/2,	0])
-	# drone3.sp = drone1.sp + np.array([-l*0.86 ,-l/2, 0])
-	drone3.sp = drone2.sp + np.array([0 ,-l, 0])
+	# drone1.apply_limits(uper_limits, lower_limits)
 
-	if impedance_on and not vel_ctrl:
-		drone1.sp = drone1.sp + imp_pose
-		drone2.sp = drone2.sp + imp_pose
-		drone3.sp = drone3.sp + imp_pose
-		drone2.sp[1] = drone2.sp[1] - imp_pose[0]*0.15
-		drone3.sp[1] = drone3.sp[1] + imp_pose[0]*0.15
+	if not impedance_on: # simple triangle
+		drone2.sp = drone1.sp + np.array([-l*0.86 , l/2, 0]) # triangle with equal sides
+		drone3.sp = drone1.sp + np.array([-l*0.86 ,-l/2, 0]) # triangle with equal sides
+		# drone3.sp = drone2.sp + np.array([0 ,-l, 0])
+	if impedance_on and not vel_ctrl: # Drone-to-drone IMPEDANCE from human
+		hum_vel = swarmlib.hum_vel(human.pose)
+		imp_pose, imp_vel, imp_time_prev = swarmlib.impedance_human(hum_vel, imp_pose_prev, imp_vel_prev, imp_time_prev)
+		imp_pose_prev = imp_pose; imp_vel_prev = imp_vel
 
-	# ROTATION due to hand position
-	centroid = swarmlib.centroid_calc(drone1, drone2, drone3)
-	drone1.sp = swarmlib.rotate(centroid, drone1, human)
-	drone2.sp = swarmlib.rotate(centroid, drone2, human)
-	drone3.sp = swarmlib.rotate(centroid, drone3, human)
+		# drone1.sp = drone1.sp + imp_pose # human-to swarm impedance
+		# within swarm impedance:
+		drone2.sp = drone1.sp + np.array([-l*0.86 , l/2, 0]) + imp_pose # triangle with equal sides
+		drone3.sp = drone1.sp + np.array([-l*0.86 ,-l/2, 0]) + imp_pose # triangle with equal sides
+
+		drone2.sp[1] = drone2.sp[1] - imp_pose[0]*0.5
+		drone3.sp[1] = drone3.sp[1] + imp_pose[0]*0.5
+
+
+	# # ROTATION due to hand position
+	# centroid = swarmlib.centroid_calc(drone1, drone2, drone3)
+	# for drone in swarm:
+	# 	drone.sp = swarmlib.rotate(centroid, drone, human)
+
 
 	# # OBSTACLEs
-	centroid_before_obstacles = swarmlib.centroid_calc(drone1, drone2, drone3)
-	for q in range(len(obstacle_objects_list)):
-		drone1, delta1 = swarmlib.pose_update_obstacle(drone1, obstacle_objects_list[q], R_obstacles)
-		# drone2.sp = drone1.sp + np.array([-l*0.86 , l/2,	0])
-		drone2, delta2 = swarmlib.pose_update_obstacle(drone2, obstacle_objects_list[q], R_obstacles)
-		# drone3.sp = drone2.sp + np.array([0 ,-l, 0])
-		drone3, delta3 = swarmlib.pose_update_obstacle(drone3, obstacle_objects_list[q], R_obstacles)
+	# centroid_before_obstacles = swarmlib.centroid_calc(drone1, drone2, drone3)
+
+	# Update obstacles status
+	for drone in swarm:
+		for obstacle in obstacle_objects_list:
+			drone = swarmlib.update_obstacle(drone, obstacle, R_obstacles)
+			if drone.near_obstacle: # each drone could be only near one obstacle (just an assumption),
+				break               # then if one obstacle is near -> break the loop over obstacles
+
+	print '\ndrone1.near_obstacle', drone1.near_obstacle
+	if drone1.near_obstacle:
+		print 'drone1.nearest_obstacle', drone1.nearest_obstacle.name
+	print "drone1.rad_imp.inside", drone1.rad_imp.inside
+	print "drone1.rad_imp.penetration", drone1.rad_imp.penetration
+	print 'drone1.rad_imp.imp_pose', drone1.rad_imp.imp_pose
+	print 'np.linalg.norm(drone1.rad_imp.penetration)', np.linalg.norm(drone1.rad_imp.penetration)
+
+	# Move over the circle avoiding obstacle
+	for drone in swarm:
+		if drone.near_obstacle:
+			swarmlib.pose_update_obstacle_circle(drone, R_obstacles)
+
+	if drone1.near_obstacle:
+		path_limit = 100
+		drone1.publish_path_(limit=path_limit) #set -1 for unlimited path
+
+
+	# Radius impedance
+	for drone in swarm:
+		if drone.near_obstacle:
+			drone = swarmlib.radius_obstacle_impedance(drone)
+
+	# print 'drone1.rad_imp.imp_pose', drone1.rad_imp.imp_pose
+
+	# for obstacle in obstacle_objects_list:
+	# 	drone1 = swarmlib.pose_update_obstacle(drone1, obstacle, R_obstacles)
+	# 	drone2 = swarmlib.pose_update_obstacle(drone2, obstacle, R_obstacles)
+	# 	drone3 = swarmlib.pose_update_obstacle(drone3, obstacle, R_obstacles)
+
+	# # tl.waitForTransform("/world", '/vicon/karton_big/karton_big', rospy.Time(0), rospy.Duration(1))
+	# twist = tl.lookupTwist('/world', '/vicon/karton_big/karton_big', rospy.Time(0), rospy.Duration(0.5)) #Twist
+	# swarmlib.publish_vel(twist, 'human_vel')
+	# print twist[0]
+
+
+
 
 	# TO VISUALIZE
 	human.publish_position()
-	path_limit = 2000
+	path_limit = 100
 	for drone in swarm:
 		drone.publish_sp()
 		drone.publish_path(limit=path_limit) #set -1 for unlimited path
@@ -235,8 +283,6 @@ while not rospy.is_shutdown():
 	rate.sleep()
 
 	# END #######################################################################
-
-
 
 
 
