@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- drone 100 with blue tape -->
+<!--   <arg name="uri" default="radio://0/100/2M/E7E7E7E70A" />
+  <arg name="frame" default="/vicon/cf100/cf100" /> -->
+  <arg name="uri" default="radio://0/80/2M/E7E7E7E701" />
+  <arg name="frame" default="/vicon/cf1/cf1" />
+
+
+
+
+  <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
+  </include>
+
+  <group ns="cf1">
+    <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
+      <param name="uri" value="$(arg uri)" />
+      <param name="tf_prefix" value="cf1" />
+      <param name="enable_logging_imu" value="False" />
+      <param name="enable_logging_temperature" value="False" />
+      <param name="enable_logging_magnetic_field" value="False" />
+      <param name="enable_logging_pressure" value="False" />
+      <param name="enable_logging_battery" value="False" />
+      <param name="enable_logging_packets" value="False" />
+      <rosparam>
+        genericLogTopics: ["log1"]
+        genericLogTopicFrequencies: [100]
+        genericLogTopic_log1_Variables: ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z"]
+      </rosparam>
+    </node>
+
+    <node name="pose" pkg="crazyflie_demo" type="publish_external_position_vicon.py" output="screen">
+      <param name="topic" value="$(arg frame)" />
+    </node>
+
+    <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster" args="0 0 0 0 0 0 1 $(arg frame) /crazyflie/base_link 100" />
+  </group>
+
+  <!-- run vicon bridge -->
+  <include file="$(find vicon_bridge)/launch/vicon.launch"/>
+
+
+</launch>
