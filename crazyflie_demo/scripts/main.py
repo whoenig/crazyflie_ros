@@ -24,24 +24,24 @@ np.set_printoptions(formatter={'float': '{: 0.2f}'.format})
 
 
 # PARAMETERs #############
-toFly            = 0
-tacile_glove_on  = 0
+toFly            = 1
 pos_ctrl         = 1
 pos_coef         = 3.0 #2
 vel_ctrl         = 0
 vel_koef         = 1.0
-impedance_on     = 1
+impedance_on     = 0
 TAKEOFFHEIGHT    = 1.0 # meters 1.45
 TakeoffTime      = 4     # seconds
 l                = 0.4     # distance between drones, meters
 R_obstacles      = 0.27
+tacile_glove_on  = 0
 uper_limits      = np.array([ 1.7, 1.70, 2.5 ]) # np.array([ 2.0, 2.0, 2.5 ])
 lower_limits     = np.array([ -1.7, -1.50, -2.5 ]) # np.array([ 2.0, 2.0, 2.5 ])
 cf1_name         = 'cf1'
 cf2_name         = 'cf2'
 cf3_name         = 'cf3'
 human_name       = 'karton_big' #'glove' 'karton_big'
-obstacle_name_list = ['obstacle3', 'obstacle4']
+obstacle_name_list = []
 # obstacle_name_list = ['obstacle0', 'obstacle1', 'obstacle2', 'obstacle3', 'obstacle4', 'obstacle5', 'obstacle6', 'obstacle7', 'obstacle8', 'obstacle9', 'obstacle10', 'obstacle11', 'obstacle12', 'obstacle13']
 # 'obstacle13', 'obstacle14', 'obstacle15', 'obstacle16', 'obstacle17', 'obstacle18', 'obstacle19', 'obstacle20', 'obstacle21', 'obstacle22', 'obstacle23', 'obstacle24', 'obstacle25'
 data_recording = False
@@ -76,10 +76,10 @@ for obstacle in obstacle_name_list:
 if toFly:
 	print "takeoff"
 	cf1 = crazyflie.Crazyflie(cf1_name, '/vicon/'+cf1_name+'/'+cf1_name)
-	cf2 = crazyflie.Crazyflie(cf2_name, '/vicon/'+cf2_name+'/'+cf2_name)
-	cf3 = crazyflie.Crazyflie(cf3_name, '/vicon/'+cf3_name+'/'+cf3_name)
-	cf_list = [cf1, cf2, cf3]
-	# cf_list = [cf1]
+	# cf2 = crazyflie.Crazyflie(cf2_name, '/vicon/'+cf2_name+'/'+cf2_name)
+	# cf3 = crazyflie.Crazyflie(cf3_name, '/vicon/'+cf3_name+'/'+cf3_name)
+	# cf_list = [cf1, cf2, cf3]
+	cf_list = [cf1]
 	for cf in cf_list:
 		cf.setParam("commander/enHighLevel", 1)
 		cf.setParam("stabilizer/estimator", 2) # Use EKF
