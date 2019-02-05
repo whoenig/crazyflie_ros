@@ -14,6 +14,41 @@ A tutorial (for a slightly older version) is available in W. Hönig and N. Ayani
 
 If you want to control many Crazyflies or look for a good controller for a single Crazyflie, take a look at http://crazyswarm.readthedocs.io/en/latest/. We are currently in the process to unify the Crazyswarm and crazyflie_ros as well as contributing the Crazyswarm firmware changes back to the official firmware.
 
+## Citing This Work
+
+This project is published under the very permissive MIT License. However,
+if you use the package we appreciate if you credit this project accordingly.
+
+For academic publications, you can cite the following book chapter:
+```
+@Inbook{crazyflieROS,
+  author={Wolfgang H{\"o}nig
+          and Nora Ayanian},
+  editor={Anis Koubaa},
+  title={Flying Multiple UAVs Using ROS},
+  bookTitle={Robot Operating System (ROS): The Complete Reference  (Volume 2)},
+  year={2017},
+  publisher={Springer International Publishing},
+  pages={83--118},
+  isbn={978-3-319-54927-9},
+  doi={10.1007/978-3-319-54927-9_3},
+  url={https://doi.org/10.1007/978-3-319-54927-9_3}
+}
+
+```
+
+If your work is related to Mixed Reality, you might cite the paper which introduced the package instead, using the following bibtex entry:
+```
+@conference{HoenigMixedReality2015,
+  author = {Wolfgang H{\"o}nig and Christina Milanes and Lisa Scaria and Thai Phan and Mark Bolas and Nora Ayanian},
+  booktitle = {IEEE/RSJ Intl Conf. Intelligent Robots and Systems},
+  pages = {5382 - 5387},
+  title = {Mixed Reality for Robotics},
+  year = {2015}}
+```
+
+For any other mentioning please include my affiliation (ACTLab at University of Southern California or USC in short; The link to our webpage is http://act.usc.edu) as this work was partially done as part of my research at USC.
+
 ## Installation
 
 Clone the package into your catkin workspace:
@@ -133,25 +168,6 @@ Similar to the hector_quadrotor, package the fields are used as following:
 * Float32
 * Volts
 * update: 100ms (time between crazyflie and ROS not synchronized!)
-
-## Citing This Work
-
-This project is published under the very permissive MIT License. However,
-if you use the package we appreciate if you credit this project accordingly.
-
-For academic publications, you can cite the paper which introduced the package using the following bibtex entry:
-```
-@conference{HoenigMixedReality2015,
-  Address = {Hamburg, Germany},
-  Author = {Wolfgang Hoenig and Christina Milanes and Lisa Scaria and Thai Phan and Mark Bolas and Nora Ayanian},
-  Booktitle = {IEEE/RSJ Intl Conf. Intelligent Robots and Systems},
-  Month = {Sept},
-  Pages = {5382 - 5387},
-  Title = {Mixed Reality for Robotics},
-  Year = {2015}}
-```
-
-For any other mentioning please include my affiliation (ACTLab at University of Southern California or USC in short; The link to our webpage is http://act.usc.edu/) as this work was partially done as part of my research at USC.
 
 ## Similar Projects
 
