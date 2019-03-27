@@ -646,7 +646,14 @@ void cmdPositionSetpoint(
   }
 
   void onConsole(const char* msg) {
-    ROS_INFO("CF Console: %s", msg);
+    static std::string messageBuffer;
+    messageBuffer += msg;
+    size_t pos = messageBuffer.find('\n');
+    if (pos != std::string::npos) {
+      messageBuffer[pos] = 0;
+      ROS_INFO("CF Console: %s", messageBuffer.c_str());
+      messageBuffer.erase(0, pos+1);
+    }
   }
 
   void onGenericPacket(const ITransport::Ack& ack) {
