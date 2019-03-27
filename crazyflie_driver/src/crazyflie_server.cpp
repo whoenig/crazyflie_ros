@@ -96,7 +96,10 @@ public:
     bool enable_logging_pressure,
     bool enable_logging_battery,
     bool enable_logging_packets)
-    : m_cf(link_uri, rosLogger)
+    : m_cf(
+      link_uri,
+      rosLogger,
+      std::bind(&CrazyflieROS::onConsole, this, std::placeholders::_1))
     , m_tf_prefix(tf_prefix)
     , m_isEmergency(false)
     , m_roll_trim(roll_trim)
@@ -396,9 +399,6 @@ void cmdPositionSetpoint(
     // m_cf.reboot();
 
     auto start = std::chrono::system_clock::now();
-
-    std::function<void(const char*)> cb_console = std::bind(&CrazyflieROS::onConsole, this, std::placeholders::_1);
-    m_cf.setConsoleCallback(cb_console);
 
     m_cf.logReset();
 
