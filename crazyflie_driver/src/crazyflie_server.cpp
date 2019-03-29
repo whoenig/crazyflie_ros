@@ -383,6 +383,8 @@ void cmdPositionSetpoint(
     }
     if (m_enable_logging_packets) {
       m_pubPackets = n.advertise<crazyflie_driver::crtpPacket>(m_tf_prefix + "/packets", 10);
+      std::function<void(const ITransport::Ack&)> cb_genericPacket = std::bind(&CrazyflieROS::onGenericPacket, this, std::placeholders::_1);
+      m_cf.setGenericPacketCallback(cb_genericPacket);
     }
     m_pubRssi = n.advertise<std_msgs::Float32>(m_tf_prefix + "/rssi", 10);
 
@@ -404,9 +406,6 @@ void cmdPositionSetpoint(
 
     std::function<void(float)> cb_lq = std::bind(&CrazyflieROS::onLinkQuality, this, std::placeholders::_1);
     m_cf.setLinkQualityCallback(cb_lq);
-
-    std::function<void(const ITransport::Ack&)> cb_genericPacket = std::bind(&CrazyflieROS::onGenericPacket, this, std::placeholders::_1);
-    m_cf.setGenericPacketCallback(cb_genericPacket);
 
     if (m_enableParameters)
     {
