@@ -26,6 +26,7 @@
 #include <std_msgs/Empty.h>
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/PointStamped.h"
+#include "geometry_msgs/PoseStamped.h"
 #include "sensor_msgs/Imu.h"
 #include "sensor_msgs/Temperature.h"
 #include "sensor_msgs/MagneticField.h"
@@ -347,6 +348,15 @@ void cmdPositionSetpoint(
     m_sentExternalPosition = true;
   }
 
+  void poseMeasurementChanged(
+    const geometry_msgs::PoseStamped::ConstPtr& msg)
+  {
+    m_cf.sendExternalPoseUpdate(
+      msg->pose.position.x, msg->pose.position.y, msg->pose.position.z,
+      msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w);
+    m_sentExternalPosition = true;
+  }
+
   void run()
   {
     ros::NodeHandle n;
@@ -355,6 +365,7 @@ void cmdPositionSetpoint(
     m_subscribeCmdVel = n.subscribe(m_tf_prefix + "/cmd_vel", 1, &CrazyflieROS::cmdVelChanged, this);
     m_subscribeCmdFullState = n.subscribe(m_tf_prefix + "/cmd_full_state", 1, &CrazyflieROS::cmdFullStateSetpoint, this);
     m_subscribeExternalPosition = n.subscribe(m_tf_prefix + "/external_position", 1, &CrazyflieROS::positionMeasurementChanged, this);
+    m_subscribeExternalPose = n.subscribe(m_tf_prefix + "/external_pose", 1, &CrazyflieROS::poseMeasurementChanged, this);
     m_serviceEmergency = n.advertiseService(m_tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
     m_subscribeCmdHover = n.subscribe(m_tf_prefix + "/cmd_hover", 1, &CrazyflieROS::cmdHoverSetpoint, this);
     m_subscribeCmdStop = n.subscribe(m_tf_prefix + "/cmd_stop", 1, &CrazyflieROS::cmdStop, this);
@@ -783,6 +794,7 @@ private:
   ros::Subscriber m_subscribeCmdStop;
   ros::Subscriber m_subscribeCmdPosition;
   ros::Subscriber m_subscribeExternalPosition;
+  ros::Subscriber m_subscribeExternalPose;
   ros::Publisher m_pubImu;
   ros::Publisher m_pubTemp;
   ros::Publisher m_pubMag;
