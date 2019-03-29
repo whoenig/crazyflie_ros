@@ -26,6 +26,7 @@
 #include <std_msgs/Empty.h>
 #include "geometry_msgs/Twist.h"
 #include "geometry_msgs/PointStamped.h"
+#include "geometry_msgs/PoseStamped.h"
 #include "sensor_msgs/Imu.h"
 #include "sensor_msgs/Temperature.h"
 #include "sensor_msgs/MagneticField.h"
@@ -96,8 +97,11 @@ public:
     bool enable_logging_pressure,
     bool enable_logging_battery,
     bool enable_logging_packets)
-    : m_cf(link_uri, rosLogger)
-    , m_tf_prefix(tf_prefix)
+    : m_tf_prefix(tf_prefix)
+    , m_cf(
+      link_uri,
+      rosLogger,
+      std::bind(&CrazyflieROS::onConsole, this, std::placeholders::_1))
     , m_isEmergency(false)
     , m_roll_trim(roll_trim)
     , m_pitch_trim(pitch_trim)
@@ -140,7 +144,7 @@ public:
 
   void stop()
   {
-    ROS_INFO("Disconnecting ...");
+    ROS_INFO_NAMED(m_tf_prefix, "Disconnecting ...");
     m_isEmergency = true;
     m_thread.join();
   }
@@ -190,7 +194,7 @@ private:
     std_srvs::Empty::Request& req,
     std_srvs::Empty::Response& res)
   {
-    ROS_FATAL("Emergency requested!");
+    ROS_FATAL_NAMED(m_tf_prefix, "Emergency requested!");
     m_isEmergency = true;
 
     return true;
@@ -248,7 +252,7 @@ void cmdPositionSetpoint(
     crazyflie_driver::UpdateParams::Request& req,
     crazyflie_driver::UpdateParams::Response& res)
   {
-    ROS_INFO("Update parameters");
+    ROS_INFO_NAMED(m_tf_prefix, "Update parameters");
     for (auto&& p : req.params) {
       std::string ros_param = "/" + m_tf_prefix + "/" + p;
       size_t pos = p.find("/");
@@ -283,7 +287,7 @@ void cmdPositionSetpoint(
         }
       }
       else {
-        ROS_ERROR("Could not find param %s/%s", group.c_str(), name.c_str());
+        ROS_ERROR_NAMED(m_tf_prefix, "Could not find param %s/%s", group.c_str(), name.c_str());
       }
     }
     return true;
@@ -344,6 +348,15 @@ void cmdPositionSetpoint(
     m_sentExternalPosition = true;
   }
 
+  void poseMeasurementChanged(
+    const geometry_msgs::PoseStamped::ConstPtr& msg)
+  {
+    m_cf.sendExternalPoseUpdate(
+      msg->pose.position.x, msg->pose.position.y, msg->pose.position.z,
+      msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w);
+    m_sentExternalPosition = true;
+  }
+
   void run()
   {
     ros::NodeHandle n;
@@ -352,6 +365,7 @@ void cmdPositionSetpoint(
     m_subscribeCmdVel = n.subscribe(m_tf_prefix + "/cmd_vel", 1, &CrazyflieROS::cmdVelChanged, this);
     m_subscribeCmdFullState = n.subscribe(m_tf_prefix + "/cmd_full_state", 1, &CrazyflieROS::cmdFullStateSetpoint, this);
     m_subscribeExternalPosition = n.subscribe(m_tf_prefix + "/external_position", 1, &CrazyflieROS::positionMeasurementChanged, this);
+    m_subscribeExternalPose = n.subscribe(m_tf_prefix + "/external_pose", 1, &CrazyflieROS::poseMeasurementChanged, this);
     m_serviceEmergency = n.advertiseService(m_tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
     m_subscribeCmdHover = n.subscribe(m_tf_prefix + "/cmd_hover", 1, &CrazyflieROS::cmdHoverSetpoint, this);
     m_subscribeCmdStop = n.subscribe(m_tf_prefix + "/cmd_stop", 1, &CrazyflieROS::cmdStop, this);
@@ -399,9 +413,6 @@ void cmdPositionSetpoint(
 
     auto start = std::chrono::system_clock::now();
 
-    std::function<void(const char*)> cb_console = std::bind(&CrazyflieROS::onConsole, this, std::placeholders::_1);
-    m_cf.setConsoleCallback(cb_console);
-
     m_cf.logReset();
 
     std::function<void(float)> cb_lq = std::bind(&CrazyflieROS::onLinkQuality, this, std::placeholders::_1);
@@ -409,7 +420,7 @@ void cmdPositionSetpoint(
 
     if (m_enableParameters)
     {
-      ROS_INFO("Requesting parameters...");
+      ROS_INFO_NAMED(m_tf_prefix, "Requesting parameters...");
       m_cf.requestParamToc();
       for (auto iter = m_cf.paramsBegin(); iter != m_cf.paramsEnd(); ++iter) {
         auto entry = *iter;
@@ -449,7 +460,7 @@ void cmdPositionSetpoint(
       std::function<void(const crtpPlatformRSSIAck*)> cb_ack = std::bind(&CrazyflieROS::onEmptyAck, this, std::placeholders::_1);
       m_cf.setEmptyAckCallback(cb_ack);
 
-      ROS_INFO("Requesting Logging variables...");
+      ROS_INFO_NAMED(m_tf_prefix, "Requesting Logging variables...");
       m_cf.requestLogToc();
 
       if (m_enable_logging_imu) {
@@ -510,13 +521,13 @@ void cmdPositionSetpoint(
 
     }
 
-    ROS_INFO("Requesting memories...");
+    ROS_INFO_NAMED(m_tf_prefix, "Requesting memories...");
     m_cf.requestMemoryToc();
 
-    ROS_INFO("Ready...");
+    ROS_INFO_NAMED(m_tf_prefix, "Ready...");
     auto end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsedSeconds = end-start;
-    ROS_INFO("Elapsed: %f s", elapsedSeconds.count());
+    ROS_INFO_NAMED(m_tf_prefix, "Elapsed: %f s", elapsedSeconds.count());
 
     // Send 0 thrust initially for thrust-lock
     for (int i = 0; i < 100; ++i) {
@@ -640,12 +651,19 @@ void cmdPositionSetpoint(
 
   void onLinkQuality(float linkQuality) {
       if (linkQuality < 0.7) {
-        ROS_WARN("Link Quality low (%f)", linkQuality);
+        ROS_WARN_NAMED(m_tf_prefix, "Link Quality low (%f)", linkQuality);
       }
   }
 
   void onConsole(const char* msg) {
-    ROS_INFO("CF Console: %s", msg);
+    static std::string messageBuffer;
+    messageBuffer += msg;
+    size_t pos = messageBuffer.find('\n');
+    if (pos != std::string::npos) {
+      messageBuffer[pos] = 0;
+      ROS_INFO_NAMED(m_tf_prefix, "CF Console: %s", messageBuffer.c_str());
+      messageBuffer.erase(0, pos+1);
+    }
   }
 
   void onGenericPacket(const ITransport::Ack& ack) {
@@ -660,7 +678,7 @@ void cmdPositionSetpoint(
     crazyflie_driver::SetGroupMask::Request& req,
     crazyflie_driver::SetGroupMask::Response& res)
   {
-    ROS_INFO("SetGroupMask requested");
+    ROS_INFO_NAMED(m_tf_prefix, "SetGroupMask requested");
     m_cf.setGroupMask(req.groupMask);
     return true;
   }
@@ -669,7 +687,7 @@ void cmdPositionSetpoint(
     crazyflie_driver::Takeoff::Request& req,
     crazyflie_driver::Takeoff::Response& res)
   {
-    ROS_INFO("Takeoff requested");
+    ROS_INFO_NAMED(m_tf_prefix, "Takeoff requested");
     m_cf.takeoff(req.height, req.duration.toSec(), req.groupMask);
     return true;
   }
@@ -678,7 +696,7 @@ void cmdPositionSetpoint(
     crazyflie_driver::Land::Request& req,
     crazyflie_driver::Land::Response& res)
   {
-    ROS_INFO("Land requested");
+    ROS_INFO_NAMED(m_tf_prefix, "Land requested");
     m_cf.land(req.height, req.duration.toSec(), req.groupMask);
     return true;
   }
@@ -687,7 +705,7 @@ void cmdPositionSetpoint(
     crazyflie_driver::Stop::Request& req,
     crazyflie_driver::Stop::Response& res)
   {
-    ROS_INFO("Stop requested");
+    ROS_INFO_NAMED(m_tf_prefix, "Stop requested");
     m_cf.stop(req.groupMask);
     return true;
   }
@@ -696,7 +714,7 @@ void cmdPositionSetpoint(
     crazyflie_driver::GoTo::Request& req,
     crazyflie_driver::GoTo::Response& res)
   {
-    ROS_INFO("GoTo requested");
+    ROS_INFO_NAMED(m_tf_prefix, "GoTo requested");
     m_cf.goTo(req.goal.x, req.goal.y, req.goal.z, req.yaw, req.duration.toSec(), req.relative, req.groupMask);
     return true;
   }
@@ -705,7 +723,7 @@ void cmdPositionSetpoint(
     crazyflie_driver::UploadTrajectory::Request& req,
     crazyflie_driver::UploadTrajectory::Response& res)
   {
-    ROS_INFO("UploadTrajectory requested");
+    ROS_INFO_NAMED(m_tf_prefix, "UploadTrajectory requested");
 
     std::vector<Crazyflie::poly4d> pieces(req.pieces.size());
     for (size_t i = 0; i < pieces.size(); ++i) {
@@ -713,7 +731,7 @@ void cmdPositionSetpoint(
           || req.pieces[i].poly_y.size() != 8
           || req.pieces[i].poly_z.size() != 8
           || req.pieces[i].poly_yaw.size() != 8) {
-        ROS_FATAL("Wrong number of pieces!");
+        ROS_FATAL_NAMED(m_tf_prefix, "Wrong number of pieces!");
         return false;
       }
       pieces[i].duration = req.pieces[i].duration.toSec();
@@ -726,7 +744,7 @@ void cmdPositionSetpoint(
     }
     m_cf.uploadTrajectory(req.trajectoryId, req.pieceOffset, pieces);
 
-    ROS_INFO("Upload completed!");
+    ROS_INFO_NAMED(m_tf_prefix, "Upload completed!");
     return true;
   }
 
@@ -734,14 +752,14 @@ void cmdPositionSetpoint(
     crazyflie_driver::StartTrajectory::Request& req,
     crazyflie_driver::StartTrajectory::Response& res)
   {
-    ROS_INFO("StartTrajectory requested");
+    ROS_INFO_NAMED(m_tf_prefix, "StartTrajectory requested");
     m_cf.startTrajectory(req.trajectoryId, req.timescale, req.reversed, req.relative, req.groupMask);
     return true;
   }
 
 private:
-  Crazyflie m_cf;
   std::string m_tf_prefix;
+  Crazyflie m_cf;
   bool m_isEmergency;
   float m_roll_trim;
   float m_pitch_trim;
@@ -775,6 +793,7 @@ private:
   ros::Subscriber m_subscribeCmdStop;
   ros::Subscriber m_subscribeCmdPosition;
   ros::Subscriber m_subscribeExternalPosition;
+  ros::Subscriber m_subscribeExternalPose;
   ros::Publisher m_pubImu;
   ros::Publisher m_pubTemp;
   ros::Publisher m_pubMag;
