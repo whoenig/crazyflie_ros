@@ -14,13 +14,13 @@ x = 1  # fixed x coordination because we are building square route in plane y (y
 y = 0.5
 z = 0.5
 square_route = [(x, y, z),
-                (x, y+y, z),
-                (x, y+y, z+z),
-                (x, y, z+z)]
+                (x, y + y, z),
+                (x, y + y, z + z),
+                (x, y, z + z)]
 
 path = "/home/user/catkin_ws/src/crazyflie_ros/crazyflie_demo/routes"
 
-with open(path+'/square_y_plane_5.csv', 'w') as csvfile:
+with open(path + '/square_y_plane_5.csv', 'w') as csvfile:
     fieldnames = ['point_number', 'coordination']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 

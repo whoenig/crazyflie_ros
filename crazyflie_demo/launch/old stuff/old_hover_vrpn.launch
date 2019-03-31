@@ -20,7 +20,7 @@
 
     <!-- Load swarm plans -->
     <!--<arg name="route" default="/home/user/catkin_ws/src/crazyflie_ros/crazyflie_demo/routes/swarm_route_test" />-->
-    <arg name="route" default="/home/user/catkin_ws/src/crazyflie_ros/crazyflie_demo/routes/demo1" />
+    <arg name="route" default="/home/user/catkin_ws/src/crazyflie_ros/crazyflie_demo/routes/demo1"/>
 
     <!-- for CF num 1  -->
     <arg name="uri1" default="radio://0/80/1M/E7E7E7E7E9"/>
@@ -146,7 +146,7 @@
         </include>
 
         <node name="dynamic_route" pkg="crazyflie_demo" type="dynamic_route.py" output="screen">
-            <param name="tf_prefix" value="$(arg frame2)" />    <!-- Redundant -->
+            <param name="tf_prefix" value="$(arg frame2)"/>    <!-- Redundant -->
             <param name="frame" value="$(arg frame2)"/>
             <param name="name" value="goal"/>
             <param name="route" value="$(arg route)"/>
@@ -175,42 +175,42 @@
 
 
     <!--<group ns="$(arg frame3)">-->
-        <!--<include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">-->
-            <!--<arg name="uri" value="$(arg uri3)"/>-->
-            <!--<arg name="tf_prefix" value="$(arg frame3)"/>-->
-            <!--<arg name="enable_logging" value="False"/>-->
-        <!--</include>-->
+    <!--<include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">-->
+    <!--<arg name="uri" value="$(arg uri3)"/>-->
+    <!--<arg name="tf_prefix" value="$(arg frame3)"/>-->
+    <!--<arg name="enable_logging" value="False"/>-->
+    <!--</include>-->
 
-        <!--<include file="$(find crazyflie_controller)/launch/crazyflie2.launch">-->
-            <!--<arg name="frame" value="$(arg frame3)"/>-->
-        <!--</include>-->
+    <!--<include file="$(find crazyflie_controller)/launch/crazyflie2.launch">-->
+    <!--<arg name="frame" value="$(arg frame3)"/>-->
+    <!--</include>-->
 
-        <!--<node name="dynamic_route" pkg="crazyflie_demo" type="dynamic_route.py" output="screen">-->
-            <!--<param name="tf_prefix" value="$(arg frame3)" />    &lt;!&ndash; Redundant &ndash;&gt;-->
-            <!--<param name="frame" value="$(arg frame3)"/>-->
-            <!--<param name="name" value="goal"/>-->
-            <!--<param name="route" value="$(arg route)"/>-->
-            <!--<param name="rate" value="30"/>-->
-            <!--&lt;!&ndash;-->
-            <!--<param name="x" value="$(arg x2)"/>-->
-            <!--<param name="y" value="$(arg y2)"/>-->
-            <!--<param name="z" value="$(arg z2)"/>-->
-            <!--&ndash;&gt;-->
-        <!--</node>-->
+    <!--<node name="dynamic_route" pkg="crazyflie_demo" type="dynamic_route.py" output="screen">-->
+    <!--<param name="tf_prefix" value="$(arg frame3)" />    &lt;!&ndash; Redundant &ndash;&gt;-->
+    <!--<param name="frame" value="$(arg frame3)"/>-->
+    <!--<param name="name" value="goal"/>-->
+    <!--<param name="route" value="$(arg route)"/>-->
+    <!--<param name="rate" value="30"/>-->
+    <!--&lt;!&ndash;-->
+    <!--<param name="x" value="$(arg x2)"/>-->
+    <!--<param name="y" value="$(arg y2)"/>-->
+    <!--<param name="z" value="$(arg z2)"/>-->
+    <!--&ndash;&gt;-->
+    <!--</node>-->
 
-        <!--&lt;!&ndash;run vrpn client &ndash;&gt;-->
-        <!--<node pkg="vrpn_client_ros" name="vrpn" output="screen" type="vrpn_client_node" required="true">-->
-            <!--<rosparam subst_value="true">-->
-                <!--server: $(arg server)-->
-                <!--port: $(arg port)-->
-                <!--update_frequency: 100.0-->
-                <!--frame_id: /world-->
-                <!--child_frame_id: $(arg frame3)-->
-                <!--use_server_time: true-->
-                <!--broadcast_tf: true-->
-                <!--refresh_tracker_frequency: 1.0-->
-            <!--</rosparam>-->
-        <!--</node>-->
+    <!--&lt;!&ndash;run vrpn client &ndash;&gt;-->
+    <!--<node pkg="vrpn_client_ros" name="vrpn" output="screen" type="vrpn_client_node" required="true">-->
+    <!--<rosparam subst_value="true">-->
+    <!--server: $(arg server)-->
+    <!--port: $(arg port)-->
+    <!--update_frequency: 100.0-->
+    <!--frame_id: /world-->
+    <!--child_frame_id: $(arg frame3)-->
+    <!--use_server_time: true-->
+    <!--broadcast_tf: true-->
+    <!--refresh_tracker_frequency: 1.0-->
+    <!--</rosparam>-->
+    <!--</node>-->
     <!--</group>-->
 
 

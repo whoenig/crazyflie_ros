@@ -13,6 +13,7 @@ import sys, select, termios, tty
 
 class CrazyCommands:
     """Class for holding drone commands. """
+
     def __init__(self):
         self.x = 0
         self.y = 0
@@ -52,7 +53,7 @@ def listener():
     rospy.Subscriber("/tf", Twist, callback)
 
 
-def fly(crazy_commander,pub):
+def fly(crazy_commander, pub):
     """Crazy thread, will send crazyflie updated movement commands. """
 
     while crazy_commander.kill is False:
@@ -65,6 +66,7 @@ def fly(crazy_commander,pub):
         twist.angular.y = 0
         twist.angular.z = 0  # th # * turn
         pub.publish(twist)
+
 
 if __name__ == "__main__":
     settings = termios.tcgetattr(sys.stdin)
@@ -80,7 +82,7 @@ if __name__ == "__main__":
     crazy_command.y = 0
     crazy_command.z = 0
 
-    x,y,z = 0,0,0
+    x, y, z = 0, 0, 0
 
     # we're just going to wait for user input while adding up time once...
     print("Starting thread")
@@ -132,22 +134,22 @@ if __name__ == "__main__":
 
             if key == 'w' and z < 65000:
                 # move up
-                z = z + 1000*v_0
+                z = z + 1000 * v_0
             elif key == 's' and z > 0:
                 # move down
-                z = z - 1000*v_0
+                z = z - 1000 * v_0
             elif key == 'd' and y < 100:
                 # move left
-                y = y + 1*v_0
+                y = y + 1 * v_0
             elif key == 'a' and y > -100:
                 # move right
-                y = y - 1*v_0
+                y = y - 1 * v_0
             elif key == 'i' and x < 100:
                 # move forward
-                x = x + 1*v_0
+                x = x + 1 * v_0
             elif key == 'k' and x > -100:
                 # move backward
-                x = x - 1*v_0
+                x = x - 1 * v_0
             elif key == 'p':
                 print("Good bye.")
                 crazy_command.kill = True
@@ -171,6 +173,5 @@ if __name__ == "__main__":
         twist.angular.y = 0
         twist.angular.z = 0
         pub.publish(twist)
-
 
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)

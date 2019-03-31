@@ -10,27 +10,25 @@ import tf2_geometry_msgs
 
 from time import sleep
 
+
 def get_ranges(msg):
-
-    global pub_front , pub_back , pub_left, pub_right, seq
-    global prev_front , prev_back , prev_left, prev_right
+    global pub_front, pub_back, pub_left, pub_right, seq
+    global prev_front, prev_back, prev_left, prev_right
     global pub_front_WC
-    global tfBuffer , listener
+    global tfBuffer, listener
 
-    front = msg.values[0]/1000
-    back = -1*msg.values[1]/1000
-    left = msg.values[3]/1000
+    front = msg.values[0] / 1000
+    back = -1 * msg.values[1] / 1000
+    left = msg.values[3] / 1000
     right = -1 * msg.values[4] / 1000
 
-
-
-    transform=None
+    transform = None
     try:
         transform = tfBuffer.lookup_transform('world', 'cf1', rospy.Time(0))
     except Exception as e:
         rospy.loginfo(e)
 
-    if (front!=prev_front) :
+    if (front != prev_front):
 
         point_front = PointStamped()
         point_front.header.seq = seq
@@ -40,10 +38,10 @@ def get_ranges(msg):
         point_front.point.y = 0
         point_front.point.z = 0
         pub_front.publish(point_front)
-        prev_front=front
+        prev_front = front
 
         ##publish another point in world coordinates
-        if (transform!=None):
+        if (transform != None):
             front_WC = tf2_geometry_msgs.do_transform_point(point_front, transform)
             front_WC.header.frame_id = "world"
             pub_front_WC.publish(front_WC)
@@ -58,14 +56,13 @@ def get_ranges(msg):
         point_back.point.y = 0
         point_back.point.z = 0
         pub_back.publish(point_back)
-        prev_back=back
+        prev_back = back
 
         ##publish another point in world coordinates
-        if (transform!=None):
+        if (transform != None):
             back_WC = tf2_geometry_msgs.do_transform_point(point_back, transform)
             back_WC.header.frame_id = "world"
             pub_back_WC.publish(back_WC)
-
 
     if (left != prev_left):
         point_left = PointStamped()
@@ -76,10 +73,10 @@ def get_ranges(msg):
         point_left.point.y = left
         point_left.point.z = 0
         pub_left.publish(point_left)
-        prev_left=left
+        prev_left = left
 
         ##publish another point in world coordinates
-        if (transform!=None):
+        if (transform != None):
             left_WC = tf2_geometry_msgs.do_transform_point(point_left, transform)
             left_WC.header.frame_id = "world"
             pub_left_WC.publish(left_WC)
@@ -94,10 +91,10 @@ def get_ranges(msg):
         point_right.point.y = right
         point_right.point.z = 0
         pub_right.publish(point_right)
-        prev_right=right
+        prev_right = right
 
         ##publish another point in world coordinates
-        if (transform!=None):
+        if (transform != None):
             right_WC = tf2_geometry_msgs.do_transform_point(point_right, transform)
             right_WC.header.frame_id = "world"
             pub_right_WC.publish(right_WC)
@@ -118,7 +115,7 @@ if __name__ == '__main__':
     pub_right_WC = rospy.Publisher('/cf1/points/right_WC', PointStamped, queue_size=1)
 
     rospy.Subscriber('/cf1/log_ranges', GenericLogData, get_ranges)
-    prev_front=prev_back=prev_left=prev_right = 0
+    prev_front = prev_back = prev_left = prev_right = 0
     seq = 0
 
     tfBuffer = tf2_ros.Buffer()

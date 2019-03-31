@@ -8,7 +8,7 @@ if __name__ == '__main__':
     p = rospy.Publisher('cmd_vel', Twist)
     twist = Twist()
     r = rospy.Rate(50)
-    #for i in range(0, 100):
+    # for i in range(0, 100):
     #    p.publish(twist)
     #    r.sleep()
 

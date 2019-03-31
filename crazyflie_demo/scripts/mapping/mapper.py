@@ -19,6 +19,7 @@ from sensor_msgs.msg import LaserScan
 
 import numpy as np
 
+
 class Map(object):
     """ 
     The Map class stores an occupancy grid as a two dimensional
@@ -38,7 +39,7 @@ class Map(object):
     with increasing row number. 
     """
 
-    def __init__(self, origin_x=-2.5, origin_y=-2.5, resolution=.1, 
+    def __init__(self, origin_x=-2.5, origin_y=-2.5, resolution=.1,
                  width=50, height=50):
         """ Construct an empty occupancy grid.
         
@@ -59,13 +60,13 @@ class Map(object):
         self.origin_x = origin_x
         self.origin_y = origin_y
         self.resolution = resolution
-        self.width = width 
-        self.height = height 
+        self.width = width
+        self.height = height
         self.grid = np.zeros((height, width))
 
     def to_message(self):
         """ Return a nav_msgs/OccupancyGrid representation of this map. """
-     
+
         grid_msg = OccupancyGrid()
 
         # Set up the header.
@@ -76,11 +77,11 @@ class Map(object):
         grid_msg.info.resolution = self.resolution
         grid_msg.info.width = self.width
         grid_msg.info.height = self.height
-        
+
         # Rotated maps are not supported... quaternion represents no
         # rotation. 
         grid_msg.info.origin = Pose(Point(self.origin_x, self.origin_y, 0),
-                               Quaternion(0, 0, 0, 1))
+                                    Quaternion(0, 0, 0, 1))
 
         # Flatten the numpy array into a list of integers from 0-100.
         # This assumes that the grid entries are probalities in the
@@ -104,11 +105,12 @@ class Map(object):
         """
         pass
 
+
 class Mapper(object):
     """ 
     The Mapper class creates a map from laser scan data.
     """
-    
+
     def __init__(self):
         """ Start the mapper. """
 
@@ -127,15 +129,14 @@ class Mapper(object):
         # Latched publishers are used for slow changing topics like
         # maps.  Data will sit on the topic until someone reads it. 
         self._map_pub = rospy.Publisher('map', OccupancyGrid, latch=True)
-        self._map_data_pub = rospy.Publisher('map_metadata', 
+        self._map_data_pub = rospy.Publisher('map_metadata',
                                              MapMetaData, latch=True)
-        
-        rospy.spin()
 
+        rospy.spin()
 
     def scan_callback(self, scan):
         """ Update the map on every scan callback. """
-        
+
         # Fill some cells in the map just so we can see that something is 
         # being published. 
         self._map.grid[0, 0] = 1.0
@@ -143,12 +144,10 @@ class Mapper(object):
         self._map.grid[0, 2] = .7
         self._map.grid[1, 0] = .5
         self._map.grid[2, 0] = .3
-        
 
         # Now that the map is updated, publish it!
         rospy.loginfo("Scan is processed, publishing updated map.")
         self.publish_map()
-
 
     def publish_map(self):
         """ Publish the map. """

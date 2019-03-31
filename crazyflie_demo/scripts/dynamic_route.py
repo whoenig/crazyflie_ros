@@ -178,7 +178,7 @@ if __name__ == '__main__':
     rospy.init_node('dynamic_route', anonymous=False)
 
     # Create loggers.
-    crazy_logger = logging.getLogger(rospy.get_param("~frame","cf1"))
+    crazy_logger = logging.getLogger(rospy.get_param("~frame", "cf1"))
     ch = logging.StreamHandler()
     # create formatter and add it to the handlers.
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -187,8 +187,8 @@ if __name__ == '__main__':
     crazy_logger.addHandler(ch)
 
     # Init an coordination object.
-    coordination_updater = Coordination(rospy.get_param("~name" ,"/cf1"), rospy.get_param("~frame", "cf1"),
-                                        rospy.get_param("~tf_prefix","cf1"), crazy_logger)
+    coordination_updater = Coordination(rospy.get_param("~name", "/cf1"), rospy.get_param("~frame", "cf1"),
+                                        rospy.get_param("~tf_prefix", "cf1"), crazy_logger)
 
     # Init listener
     listener = Listener(coordination_updater, crazy_logger)
@@ -197,7 +197,7 @@ if __name__ == '__main__':
 
     # Get initial route start_point. aka first goal point
     coordination_updater.worldframe = rospy.get_param("~worldFrame", "/world")
-    coordination_updater.r = rospy.get_param("~rate",5)
+    coordination_updater.r = rospy.get_param("~rate", 5)
     # coordination_updater.x = rospy.get_param("~x")
     # coordination_updater.y = rospy.get_param("~y")
     # coordination_updater.z = rospy.get_param("~z")

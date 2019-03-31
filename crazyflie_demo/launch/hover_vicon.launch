@@ -1,50 +1,55 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="uri" default="radio://0/90/2M" />
-  <arg name="frame" default="/vicon/crazyflie/crazyflie" />
-  <arg name="joy_dev" default="/dev/input/js0" />
-  <arg name="x" default="0" />
-  <arg name="y" default="0" />
-  <arg name="z" default="0.5" />
+    <arg name="uri" default="radio://0/90/2M"/>
+    <arg name="frame" default="/vicon/crazyflie/crazyflie"/>
+    <arg name="joy_dev" default="/dev/input/js0"/>
+    <arg name="x" default="0"/>
+    <arg name="y" default="0"/>
+    <arg name="z" default="0.5"/>
 
-  <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
-  </include>
-
-  <group ns="crazyflie">
-    <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
-      <arg name="uri" value="$(arg uri)" />
-      <arg name="tf_prefix" value="crazyflie" />
-      <arg name="enable_logging" value="False" />
+    <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
     </include>
 
-    <node name="joy" pkg="joy" type="joy_node" output="screen">
-      <param name="dev" value="$(arg joy_dev)" />
-    </node>
+    <group ns="crazyflie">
+        <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
+            <arg name="uri" value="$(arg uri)"/>
+            <arg name="tf_prefix" value="crazyflie"/>
+            <arg name="enable_logging" value="False"/>
+        </include>
 
-    <node name = "joystick_controller" pkg = "crazyflie_demo" type = "controller.py" output = "screen" >
-      < param name = "use_crazyflie_controller" value = "True" / >
-    </node>
+        <node name="joy" pkg="joy" type="joy_node" output="screen">
+            <param name="dev" value="$(arg joy_dev)"/>
+        </node>
 
-    < include file ="$(find crazyflie_controller)/launch/crazyflie2.launch">
-      <arg name="frame" value="$(arg frame)" />
-    </include>
+        <node name="joystick_controller" pkg="crazyflie_demo" type="controller.py" output="screen">
+            < param name="use_crazyflie_controller" value="True"
+            / >
+        </node>
 
-    < node name="pose" pkg="crazyflie_demo" type="publish_pose.py" output="screen">
-      < param name="name" value="goal" />
-      < param name="rate" value="30" />
-      < param name="x" value="$(arg x)" />
-      < param name="y" value="$(arg y)" />
-      < param name="z" value="$(arg z)" />
-    < /node>
+        < include file="$(find crazyflie_controller)/launch/crazyflie2.launch">
+            <arg name="frame" value="$(arg frame)"/>
+        </include>
 
-    <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster" args="0 0 0 0 0 0 1 $(arg frame) /crazyflie/base_link 100" />
-  </group>
+        < node name="pose" pkg="crazyflie_demo" type="publish_pose.py" output="screen">
+        < param name="name" value="goal"/>
+        < param name="rate" value="30"/>
+        < param name="x" value="$(arg x)"/>
+        < param name="y" value="$(arg y)"/>
+        < param name="z" value="$(arg z)"/>
+        <
+        /node>
 
-  <!-- run vicon bridge -->
-  <include file="$(find vicon_bridge)/launch/vicon.launch"/>
+        <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster"
+              args="0 0 0 0 0 0 1 $(arg frame) /crazyflie/base_link 100"/>
+    </group>
 
-  <!-- run rviz -->
-  <param name="robot_description" command="$(find xacro)/xacro.py $(find crazyflie_description)/urdf/crazyflie.urdf.xacro" />
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find crazyflie_demo)/launch/crazyflie_pos.rviz" required="true" />
+    <!-- run vicon bridge -->
+    <include file="$(find vicon_bridge)/launch/vicon.launch"/>
+
+    <!-- run rviz -->
+    <param name="robot_description"
+           command="$(find xacro)/xacro.py $(find crazyflie_description)/urdf/crazyflie.urdf.xacro"/>
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find crazyflie_demo)/launch/crazyflie_pos.rviz"
+          required="true"/>
 
 </launch>

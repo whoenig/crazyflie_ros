@@ -28,7 +28,7 @@ def get_route(file_name, cf_name, print_route=False):
     with open(file_name + '.csv') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
-            cf_route.append(row[3*cf_number-3:3*cf_number])
+            cf_route.append(row[3 * cf_number - 3:3 * cf_number])
     return cf_route
 
 

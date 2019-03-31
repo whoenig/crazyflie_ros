@@ -1,36 +1,35 @@
 <?xml version="1.0"?>
 
 <launch>
-  <arg name="uri1" default = "radio://0/120/2M/E7E7E7E703" />
+    <arg name="uri1" default="radio://0/120/2M/E7E7E7E703"/>
 
-<include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
-  </include>
+    <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
+    </include>
 
-  <group ns="cf1">
-    <!--<param name="crazyflie/pid_rate/yaw_kp" value="200"/>-->
-    <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
-      <param name="uri" value="$(arg uri1)" />
-      <param name="tf_prefix" value="cf1" />
-      <param name="enable_logging" value="True" />
-      <param name="enable_logging_temperature" value="False" />
-      <param name="enable_logging_magnetic_field" value="False" />
-      <param name="enable_logging_pressure" value="False" />
-      <param name="enable_logging_imu" value="True" />
-      <param name="enable_logging_battery" value="False" />
+    <group ns="cf1">
+        <!--<param name="crazyflie/pid_rate/yaw_kp" value="200"/>-->
+        <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
+            <param name="uri" value="$(arg uri1)"/>
+            <param name="tf_prefix" value="cf1"/>
+            <param name="enable_logging" value="True"/>
+            <param name="enable_logging_temperature" value="False"/>
+            <param name="enable_logging_magnetic_field" value="False"/>
+            <param name="enable_logging_pressure" value="False"/>
+            <param name="enable_logging_imu" value="True"/>
+            <param name="enable_logging_battery" value="False"/>
 
-       <rosparam>
-        genericLogTopics: ["log_pos" , "log_rpy" , "log_ranges"  ]
-        genericLogTopicFrequencies: [20 , 20 , 20 ]
-        genericLogTopic_log_pos_Variables: ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z"]
-        genericLogTopic_log_rpy_Variables: ["stabilizer.roll" , "stabilizer.pitch" , "stabilizer.yaw"]
-        genericLogTopic_log_ranges_Variables: ["range.front", "range.back", "range.up", "range.left", "range.right" , "range.zrange" ]
-      </rosparam> 
-    </node>
+            <rosparam>
+                genericLogTopics: ["log_pos" , "log_rpy" , "log_ranges" ]
+                genericLogTopicFrequencies: [20 , 20 , 20 ]
+                genericLogTopic_log_pos_Variables: ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z"]
+                genericLogTopic_log_rpy_Variables: ["stabilizer.roll" , "stabilizer.pitch" , "stabilizer.yaw"]
+                genericLogTopic_log_ranges_Variables: ["range.front", "range.back", "range.up", "range.left",
+                "range.right" , "range.zrange" ]
+            </rosparam>
+        </node>
 
 
-
-  </group>
-
+    </group>
 
 
     <node name="crazyflie_demo_hover" pkg="crazyflie_demo" type="hl_traj.py" output="screen">

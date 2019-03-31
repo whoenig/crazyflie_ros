@@ -8,11 +8,12 @@ import time
 from tf import TransformListener
 from geometry_msgs.msg import PoseStamped
 
+
 class Demo():
     def __init__(self, goals):
         rospy.init_node('demo', anonymous=True)
         self.worldFrame = rospy.get_param("~worldFrame", "world")
-        self.frame = "cf1" #rospy.get_param("~frame")
+        self.frame = "cf1"  # rospy.get_param("~frame")
         self.pubGoal = rospy.Publisher('/cf1/goal', PoseStamped, queue_size=1)
         self.listener = TransformListener()
         self.goals = goals
@@ -43,10 +44,10 @@ class Demo():
             if self.listener.canTransform(self.worldFrame, self.frame, t):
                 position, quaternion = self.listener.lookupTransform(self.worldFrame, self.frame, t)
                 rpy = tf.transformations.euler_from_quaternion(quaternion)
-                if     math.fabs(position[0] - self.goals[self.goalIndex][0]) < 0.3 \
-                   and math.fabs(position[1] - self.goals[self.goalIndex][1]) < 0.3 \
-                   and math.fabs(position[2] - self.goals[self.goalIndex][2]) < 0.3 \
-                   and math.fabs(rpy[2] - self.goals[self.goalIndex][3]) < math.radians(10) \
-                   and self.goalIndex < len(self.goals) - 1:
-                        rospy.sleep(self.goals[self.goalIndex][4])
-                        self.goalIndex += 1
+                if math.fabs(position[0] - self.goals[self.goalIndex][0]) < 0.3 \
+                        and math.fabs(position[1] - self.goals[self.goalIndex][1]) < 0.3 \
+                        and math.fabs(position[2] - self.goals[self.goalIndex][2]) < 0.3 \
+                        and math.fabs(rpy[2] - self.goals[self.goalIndex][3]) < math.radians(10) \
+                        and self.goalIndex < len(self.goals) - 1:
+                    rospy.sleep(self.goals[self.goalIndex][4])
+                    self.goalIndex += 1

@@ -17,6 +17,5 @@ class Stepper:
         self.current_point = current_point
         self.desired_point = target_point
 
-
 #   TODO: add private function for calculating and appending all steps into an array and than fly the Crazyflie from this array, while listening and comparing Crazyflie location with desired point
 #   TODO: add Stepper listener for calculating the distance between current step and next step.

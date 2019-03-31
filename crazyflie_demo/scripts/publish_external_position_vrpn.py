@@ -2,8 +2,9 @@
 
 import rospy
 import tf
-from geometry_msgs.msg import PointStamped, TransformStamped, PoseStamped #PoseStamped added to support vrpn_client
+from geometry_msgs.msg import PointStamped, TransformStamped, PoseStamped  # PoseStamped added to support vrpn_client
 from crazyflie_driver.srv import UpdateParams
+
 
 def onNewTransform(pose):
     global msg
@@ -18,10 +19,10 @@ def onNewTransform(pose):
 
         update_params(["kalman/initialX", "kalman/initialY", "kalman/initialZ"])
 
-        rospy.set_param("commander/enHighLevel", 1)# high level controller
+        rospy.set_param("commander/enHighLevel", 1)  # high level controller
         update_params(["commander/enHighLevel"])
 
-        rospy.set_param("stabilizer/estimator", 2)# 2=Use EKF
+        rospy.set_param("stabilizer/estimator", 2)  # 2=Use EKF
         update_params(["stabilizer/estimator"])
 
         rospy.set_param("kalman/resetEstimation", 1)
@@ -40,7 +41,7 @@ def onNewTransform(pose):
         msg.point.y = pose.pose.position.y
         msg.point.z = pose.pose.position.z
         pub.publish(msg)
-        #rospy.loginfo(msg)
+        # rospy.loginfo(msg)
 
 
 if __name__ == '__main__':

@@ -11,6 +11,7 @@ else:
     import _thread
 import time
 
+
 def getch():
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)

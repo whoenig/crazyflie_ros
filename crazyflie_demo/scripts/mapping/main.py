@@ -8,7 +8,7 @@ from std_msgs.msg import String
 from nav_msgs.msg import OccupancyGrid
 import tf
 import math
-from math import sin, cos, pi,tan, atan2
+from math import sin, cos, pi, tan, atan2
 import numpy as np
 from pylab import *
 from itertools import groupby
@@ -17,7 +17,9 @@ import matplotlib.pyplot as plt
 from scipy import interpolate
 
 from localmap import localmap
-pose=[0.0,0.0,0.0]
 
-#***********************************************************************
+pose = [0.0, 0.0, 0.0]
+
+
+# ***********************************************************************
 def handle_robot_pose(parent, child, pose ...

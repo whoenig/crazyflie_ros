@@ -1,18 +1,18 @@
 <?xml version="1.0"?>
 <package>
-  <name>crazyflie_description</name>
-  <version>0.0.1</version>
-  <description>URDF Model for the Crazyflie Nano Quadcopter from Bitcraze</description>
+    <name>crazyflie_description</name>
+    <version>0.0.1</version>
+    <description>URDF Model for the Crazyflie Nano Quadcopter from Bitcraze</description>
 
-  <maintainer email="whoenig@usc.edu">Wolfgang Hoenig</maintainer>
+    <maintainer email="whoenig@usc.edu">Wolfgang Hoenig</maintainer>
 
-  <license>MIT</license>
+    <license>MIT</license>
 
-  <url type="website">http://ros.org/wiki/crazyflie</url>
-  <url type="bugtracker">https://github.com/whoenig/crazyflie_ros/issues</url>
+    <url type="website">http://ros.org/wiki/crazyflie</url>
+    <url type="bugtracker">https://github.com/whoenig/crazyflie_ros/issues</url>
 
-  <author email="whoenig@usc.edu">Wolfgang Hoenig</author>
+    <author email="whoenig@usc.edu">Wolfgang Hoenig</author>
 
-  <buildtool_depend>catkin</buildtool_depend>
+    <buildtool_depend>catkin</buildtool_depend>
 
 </package>

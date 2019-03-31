@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 
 <launch>
-  <arg name="frame"/>
-  <arg name="worldFrame" default="world"/>
+    <arg name="frame"/>
+    <arg name="worldFrame" default="world"/>
 
-  <node name="controller" pkg="crazyflie_controller" type="crazyflie_controller" output="screen">
-    <param name="frame" value="$(arg frame)" />
-    <param name="worldFrame" value="$(arg worldFrame)" />
-    <rosparam command="load" file="$(find crazyflie_controller)/config/crazyflie2.yaml" />
-  </node>
+    <node name="controller" pkg="crazyflie_controller" type="crazyflie_controller" output="screen">
+        <param name="frame" value="$(arg frame)"/>
+        <param name="worldFrame" value="$(arg worldFrame)"/>
+        <rosparam command="load" file="$(find crazyflie_controller)/config/crazyflie2.yaml"/>
+    </node>
 </launch>

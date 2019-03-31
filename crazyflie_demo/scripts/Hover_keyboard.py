@@ -2,7 +2,6 @@
 
 from __future__ import absolute_import, division, unicode_literals, print_function
 
-
 import rospy
 import tf
 from crazyflie_driver.msg import Hover
@@ -10,19 +9,19 @@ from std_msgs.msg import Empty
 from crazyflie_driver.srv import UpdateParams
 from crazyflie_driver.msg import GenericLogData
 
-
 from threading import Thread
 
 import tty, termios
 import sys
 
-speed=0.25
-initialZ=0.3
+speed = 0.25
+initialZ = 0.3
 
-global front,back , up , left , right , zrange
-front=back=up=left=right=zrange= 0.0
+global front, back, up, left, right, zrange
+front = back = up = left = right = zrange = 0.0
 
 global key
+
 
 class Crazyflie:
     def __init__(self, prefix):
@@ -47,7 +46,6 @@ class Crazyflie:
         self.stop_pub = rospy.Publisher(prefix + "/cmd_stop", Empty, queue_size=1)
         self.stop_msg = Empty()
 
-
     def setParam(self, name, value):
         rospy.set_param(self.prefix + "/" + name, value)
         self.update_params([name])
@@ -57,12 +55,12 @@ class Crazyflie:
         if distance > 0:
             return speed
         elif distance < 0:
-            return -1*speed
+            return -1 * speed
         else:
             return 0
 
-    #command CF to go at
-    def goSpeed (self, vx, vy, zDistance, yaw):
+    # command CF to go at
+    def goSpeed(self, vx, vy, zDistance, yaw):
         self.msg.vx = vx
         self.msg.vy = vy
         self.msg.yawrate = yaw
@@ -76,27 +74,27 @@ class Crazyflie:
         # rospy.loginfo(self.msg.zDistance)
         self.pub.publish(self.msg)
 
-    def goTo (self, x, y, zDistance, yaw):
+    def goTo(self, x, y, zDistance, yaw):
         duration = 0
         duration_x = 0
         duration_y = 0
         duration_z = 0
         vx = 0
         vy = 0
-        z = self.msg.zDistance # the zDistance we have before
-        z_scale = self.getSpeed(z) # the z distance each time z has to increment, will be changed
+        z = self.msg.zDistance  # the zDistance we have before
+        z_scale = self.getSpeed(z)  # the z distance each time z has to increment, will be changed
 
         # for x, in secs
         if x != 0:
-            duration_x = abs(x/speed)
+            duration_x = abs(x / speed)
             vx = self.getSpeed(x)
 
         # for y, in secs
         if y != 0:
-            duration_y = abs(y/speed)
+            duration_y = abs(y / speed)
             vy = self.getSpeed(y)
 
-        duration_z = abs(z-zDistance)/speed  #speed
+        duration_z = abs(z - zDistance) / speed  # speed
         durations = [duration_x, duration_y, duration_z]
         duration = max(durations)
 
@@ -104,16 +102,16 @@ class Crazyflie:
             return
         elif duration == duration_x:
             # x is the longest path
-            vy *= abs(y/x)
-            z_scale *= abs((z-zDistance)/x)
+            vy *= abs(y / x)
+            z_scale *= abs((z - zDistance) / x)
         elif duration == duration_y:
             # y is the longest path
-            vx *= abs(x/y)
-            z_scale *= abs((z-zDistance)/y)
+            vx *= abs(x / y)
+            z_scale *= abs((z - zDistance) / y)
         elif duration == duration_z:
             # z is the longest path
-            vx *= abs(x/(z-zDistance))
-            vy *= abs(y/(z-zDistance))
+            vx *= abs(x / (z - zDistance))
+            vy *= abs(y / (z - zDistance))
 
         print(vx)
         print(vy)
@@ -145,10 +143,9 @@ class Crazyflie:
             self.pub.publish(self.msg)
             self.rate.sleep()
 
-
     # take off to z distance
     def takeOff(self, zDistance):
-        time_range = 1 + int(10*zDistance/0.4)
+        time_range = 1 + int(10 * zDistance / 0.4)
         while not rospy.is_shutdown():
             for y in range(time_range):
                 self.msg.vx = 0.0
@@ -171,7 +168,7 @@ class Crazyflie:
             break
 
     # land from last zDistance
-    def land (self):
+    def land(self):
         # get last height
         zDistance = self.msg.zDistance
 
@@ -189,6 +186,7 @@ class Crazyflie:
         self.stop_pub.publish(self.stop_msg)
         exit(0)
 
+
 def getch():
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
@@ -205,20 +203,18 @@ def keypress():
     key = getch()
 
 
-
 def handler(cf):
-
-    r=rospy.Rate(5)
+    r = rospy.Rate(5)
     cf.takeOff(initialZ)
 
     x, y, yaw = 0, 0, 0
-    z=initialZ
+    z = initialZ
 
     global key
     key = None
 
     global front, back, up, left, right, zrange
-    dist_threshold=0.2
+    dist_threshold = 0.2
 
     try:
         print("keyboard controller.")
@@ -233,13 +229,12 @@ def handler(cf):
         print("press 'k' for down.")
         print("press 'q' for yaw.")
 
-
         while not rospy.is_shutdown():
 
             if front < dist_threshold:
                 print("forward collision avoidance")
                 cf.goTo(-0.2, 0, z, 0)
-                x, y, yaw = 0, 0, 0 #stop movement due to keyboard
+                x, y, yaw = 0, 0, 0  # stop movement due to keyboard
 
             elif back < dist_threshold:
                 print("back collision avoidance")
@@ -295,7 +290,7 @@ def handler(cf):
                 t2 = Thread(target=keypress, )
                 t2.start()
 
-            #print(" gospeed x: {}, y: {}, z: {} , yaw: {} \n".format( x, y, z ,yaw))
+            # print(" gospeed x: {}, y: {}, z: {} , yaw: {} \n".format( x, y, z ,yaw))
             cf.goSpeed(x, y, z, yaw)
 
             r.sleep()
@@ -303,22 +298,23 @@ def handler(cf):
     except Exception as e:
         print(e)
 
-    #cf.land()
+    # cf.land()
+
 
 def get_ranges(msg):
     global front, back, up, left, right, zrange
 
-    front=msg.values[0]/1000
-    back = msg.values[1]/1000
-    up = msg.values[2]/1000
-    left = msg.values[3]/1000
-    right = msg.values[4]/1000
-    zrange = msg.values[5]/1000
+    front = msg.values[0] / 1000
+    back = msg.values[1] / 1000
+    up = msg.values[2] / 1000
+    left = msg.values[3] / 1000
+    right = msg.values[4] / 1000
+    zrange = msg.values[5] / 1000
 
 
 if __name__ == '__main__':
     rospy.init_node('hover', anonymous=True)
-    #settings = termios.tcgetattr(sys.stdin)
+    # settings = termios.tcgetattr(sys.stdin)
 
     rospy.Subscriber('/cf1/log_ranges', GenericLogData, get_ranges)
 
@@ -327,8 +323,3 @@ if __name__ == '__main__':
     t2 = Thread(target=keypress, )
     t1.start()
     t2.start()
-
-
-
-
-

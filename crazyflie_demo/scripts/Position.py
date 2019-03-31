@@ -10,7 +10,7 @@ if __name__ == '__main__':
     rospy.init_node('position', anonymous=True)
     worldFrame = rospy.get_param("~worldFrame", "/world")
 
-    rate = rospy.Rate(10) # 10 hz
+    rate = rospy.Rate(10)  # 10 hz
     name = "cmd_position"
 
     msg = Position()
@@ -44,7 +44,7 @@ if __name__ == '__main__':
             msg.x = 0.0
             msg.y = 0.0
             msg.yaw = 0.0
-            msg.z = y*100 / 25.0
+            msg.z = y * 100 / 25.0
             now = rospy.get_time()
             msg.header.seq += 1
             msg.header.stamp = rospy.Time.now()

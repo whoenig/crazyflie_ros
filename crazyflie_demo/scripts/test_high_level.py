@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # source - https://github.com/whoenig/crazyflie_ros/commit/b048c1f2fd3ee34f899fa0e2f6c58a4885a39405#diff-970be3522034ff436332d391db26982a
 
-#initializes drone initial position 0,0,0
+# initializes drone initial position 0,0,0
 # launch drone to fixed height initialZ [m]
 # collision avoidance #todo fix coordinate system currently works only without rotation
 # command drone using KB in WORLD coordinates
@@ -13,34 +13,34 @@ import rospy
 import crazyflie
 import time
 import tf
-#from crazyflie_driver.msg import Hover
+# from crazyflie_driver.msg import Hover
 from std_msgs.msg import Empty
 from crazyflie_driver.srv import UpdateParams
 from crazyflie_driver.msg import GenericLogData
-from geometry_msgs.msg import PointStamped, TransformStamped, PoseStamped #PoseStamped added to support vrpn_client
+from geometry_msgs.msg import PointStamped, TransformStamped, PoseStamped  # PoseStamped added to support vrpn_client
 
 from threading import Thread
 
 import tty, termios
 import sys
 
-speed=0.25
-initialZ=0.35
+speed = 0.25
+initialZ = 0.35
 
-global front,back , up , left , right , zrange
-front=back=up=left=right=zrange= 0.0
+global front, back, up, left, right, zrange
+front = back = up = left = right = zrange = 0.0
+
 
 def get_ranges(msg):
     global front, back, up, left, right, zrange
 
-    front=msg.values[0]/1000
-    back = msg.values[1]/1000
-    up = msg.values[2]/1000
-    left = msg.values[3]/1000
-    right = msg.values[4]/1000
-    zrange = msg.values[5]/1000
+    front = msg.values[0] / 1000
+    back = msg.values[1] / 1000
+    up = msg.values[2] / 1000
+    left = msg.values[3] / 1000
+    right = msg.values[4] / 1000
+    zrange = msg.values[5] / 1000
 
-    
 
 def getch():
     fd = sys.stdin.fileno()
@@ -57,21 +57,21 @@ def keypress():
     global key
     key = getch()
 
-def handler(cf):
 
-    r=rospy.Rate(5)
+def handler(cf):
+    r = rospy.Rate(5)
     time.sleep(1)
-    cf.takeoff(targetHeight = initialZ, duration = 5.0)
+    cf.takeoff(targetHeight=initialZ, duration=5.0)
     time.sleep(5.0)
 
     x, y, yaw = 0, 0, 0
-    z=initialZ
+    z = initialZ
 
     global key
     key = None
     global front, back, up, left, right, zrange
-    dist_threshold=0.1
-    def_duration=1.8
+    dist_threshold = 0.1
+    def_duration = 1.8
 
     try:
         rospy.loginfo("keyboard controller.")
@@ -85,9 +85,8 @@ def handler(cf):
         rospy.loginfo("press 'k' for down.")
         rospy.loginfo("press 'q','e' for yaw +-45 deg.")
 
-
         while not rospy.is_shutdown():
-            if front > 0 :
+            if front > 0:
                 if front < dist_threshold:
                     rospy.loginfo("forward collision avoidance")
                     cf.goTo(goal=[-0.1, 0.0, 0.0], yaw=0, duration=def_duration, relative=True)
@@ -122,9 +121,9 @@ def handler(cf):
 
                 if key == ' ':
                     # emergency land
-                    land_duration=z*3
+                    land_duration = z * 3
                     cf.land(targetHeight=0.0, duration=land_duration)
-                    time.sleep(land_duration-0.5)
+                    time.sleep(land_duration - 0.5)
                     cf.stop()
                     break
                 elif key == 'w':
@@ -147,25 +146,27 @@ def handler(cf):
                     cf.goTo(goal=[0.0, 0.0, -0.05], yaw=0, duration=def_duration, relative=True)
                 elif key == 'q':
                     # 45 degrees CW
-                    cf.goTo(goal=[0.0, 0.0, 0.0], yaw=1.5708, duration=def_duration+1.0, relative=True) #slow down yaw rotation
+                    cf.goTo(goal=[0.0, 0.0, 0.0], yaw=1.5708, duration=def_duration + 1.0,
+                            relative=True)  # slow down yaw rotation
                 elif key == 'e':
                     # 45 degrees CCW
-                    cf.goTo(goal=[0.0, 0.0, 0.0], yaw= -1.5708, duration=def_duration+1.0, relative=True) #slow down yaw rotation
-                #elif key == 's':
-                    # stop
+                    cf.goTo(goal=[0.0, 0.0, 0.0], yaw=-1.5708, duration=def_duration + 1.0,
+                            relative=True)  # slow down yaw rotation
+                # elif key == 's':
+                # stop
 
                 key = None
                 t2 = Thread(target=keypress, )
                 t2.start()
 
-            #print(" gospeed x: {}, y: {}, z: {} , yaw: {} \n".format( x, y, z ,yaw))
-            #cf.goSpeed(x, y, z, yaw)
+            # print(" gospeed x: {}, y: {}, z: {} , yaw: {} \n".format( x, y, z ,yaw))
+            # cf.goSpeed(x, y, z, yaw)
 
             r.sleep()
 
         rospy.loginfo('********EXITING*********')
         cf.stop()
-        #break
+        # break
 
     except Exception as e:
         cf.stop()
@@ -182,13 +183,12 @@ if __name__ == '__main__':
     rospy.loginfo("found update_params service")
 
     cf.setParam("commander/enHighLevel", 1)
-    cf.setParam("stabilizer/estimator", 2) # Use EKF
+    cf.setParam("stabilizer/estimator", 2)  # Use EKF
 
-    cf.setParam("ctrlMel/kp_z", 0.8) #reduce z wobble - default 1.25
-    #cf.setParam("ctrlMel/ki_z", 0.06) #reduce z wobble - default 0.05
-    #cf.setParam("ctrlMel/kd_z", 0.2) #reduce z wobble - default 0.4
-    #cf.setParam("ctrlMel/i_range_z", 0.2) #reduce z wobble
-
+    cf.setParam("ctrlMel/kp_z", 0.8)  # reduce z wobble - default 1.25
+    # cf.setParam("ctrlMel/ki_z", 0.06) #reduce z wobble - default 0.05
+    # cf.setParam("ctrlMel/kd_z", 0.2) #reduce z wobble - default 0.4
+    # cf.setParam("ctrlMel/i_range_z", 0.2) #reduce z wobble
 
     ## reset kalman
     cf.setParam("kalman/initialX", 0)
@@ -197,7 +197,7 @@ if __name__ == '__main__':
     cf.setParam("kalman/resetEstimation", 1)
     ########
 
-    cf.setParam("stabilizer/controller", 2) # 2=Use mellinger controller
+    cf.setParam("stabilizer/controller", 2)  # 2=Use mellinger controller
     time.sleep(1.0)
 
     rospy.loginfo("launching threads")
@@ -205,4 +205,3 @@ if __name__ == '__main__':
     t2 = Thread(target=keypress, )
     t1.start()
     t2.start()
-

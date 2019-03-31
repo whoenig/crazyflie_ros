@@ -34,7 +34,6 @@ ap.add_argument("-o", "--output", default="./",
                      "output csv files wil be asved within designated folder.")
 args = vars(ap.parse_args())
 
-
 # todo: read a bagfile, create a folder by its name and save all topics by their name's as a csv.
 
 # verify correct input arguments: 1 or 2
@@ -61,7 +60,8 @@ args = vars(ap.parse_args())
 #     print("bad argument(s): " + str(sys.argv))  # shouldnt really come up
 #     sys.exit(1)
 
-listOfBagFiles = [f for f in os.listdir(args["input"]) if f[-4:] == ".bag"]  # get list of only bag files in current dir.
+listOfBagFiles = [f for f in os.listdir(args["input"]) if
+                  f[-4:] == ".bag"]  # get list of only bag files in current dir.
 numberOfFiles = str(len(listOfBagFiles))
 print("reading all " + numberOfFiles + " bagfiles in current directory: \n")
 for f in listOfBagFiles:
@@ -82,7 +82,7 @@ for bagFile in listOfBagFiles:
     # create a new directory
     folder = bagName.rstrip(".bag")
     try:  # else already exists
-        os.makedirs("bag_record_"+folder)
+        os.makedirs("bag_record_" + folder)
     except:
         pass
     shutil.copyfile(bagName, folder + '/' + bagName)
