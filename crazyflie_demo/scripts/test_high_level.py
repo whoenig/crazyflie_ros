@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # source - https://github.com/whoenig/crazyflie_ros/commit/b048c1f2fd3ee34f899fa0e2f6c58a4885a39405#diff-970be3522034ff436332d391db26982a
 
+#initializes drone initial position 0,0,0
+# launch drone to fixed height initialZ [m]
+# collision avoidance #todo fix coordinate system currently works only without rotation
+# command drone using KB in WORLD coordinates
+
+
 from __future__ import absolute_import, division, unicode_literals, print_function
 
 import rospy

@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+#sucscribes to log_ranges and publishes PointStanmed message in LC
+# if transformation between 'drone' and 'world' exists, publishes PointStamped message in WC
+# publishes laserscan in 'drone' frame, and converts it to PointCloud2 too.
+
+
 import rospy
 import tf
 from geometry_msgs.msg import PointStamped
@@ -32,7 +37,7 @@ def get_ranges(msg):
 
     transform=None
     try:
-        transform = tfBuffer.lookup_transform('world', 'cf1', rospy.Time(0))
+        transform = tfBuffer.lookup_transform('world', 'cf1', rospy.Time(0)) #todo - change frame id from hardcoded
     except Exception as e:
         rospy.loginfo(e)
 
@@ -44,7 +49,7 @@ def get_ranges(msg):
         point_front = PointStamped()
         point_front.header.seq = seq
         point_front.header.stamp = rospy.Time.now()
-        point_front.header.frame_id = "cf1"
+        point_front.header.frame_id = "cf1" #todo - change frame id from hardcoded
         point_front.point.x = front
         point_front.point.y = 0
         point_front.point.z = 0

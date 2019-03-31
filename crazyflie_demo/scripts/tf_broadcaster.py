@@ -51,7 +51,7 @@ def handle_pose():
 
         t.header.stamp = rospy.Time.now()
         t.header.frame_id = "world"
-        t.child_frame_id = "cf1"
+        t.child_frame_id = "cf1" # todo  - DRONE FRAME ID IS HARDCODED, CHANGE TO PARAMETER ROSPARAM
         t.transform.translation.x = x
         t.transform.translation.y = y
         t.transform.translation.z = z
@@ -72,7 +72,7 @@ def handle_pose():
 
         odom = Odometry()
         odom.header.stamp = current_time
-        odom.header.frame_id = "odom"
+        odom.header.frame_id = "odom" # todo  - DRONE odom FRAME ID IS HARDCODED, CHANGE TO PARAMETER ROSPARAM
         # set the position
         odom.pose.pose = Pose(Point(x, y, 0.), Quaternion(*q))
 
