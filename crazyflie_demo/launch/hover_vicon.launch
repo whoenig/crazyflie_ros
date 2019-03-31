@@ -21,21 +21,21 @@
       <param name="dev" value="$(arg joy_dev)" />
     </node>
 
-    <node name="joystick_controller" pkg="crazyflie_demo" type="controller.py" output="screen">
-      <param name="use_crazyflie_controller" value="True" />
+    <node name = "joystick_controller" pkg = "crazyflie_demo" type = "controller.py" output = "screen" >
+      < param name = "use_crazyflie_controller" value = "True" / >
     </node>
 
-    <include file="$(find crazyflie_controller)/launch/crazyflie2.launch">
+    < include file ="$(find crazyflie_controller)/launch/crazyflie2.launch">
       <arg name="frame" value="$(arg frame)" />
     </include>
 
-    <node name="pose" pkg="crazyflie_demo" type="publish_pose.py" output="screen">
-      <param name="name" value="goal" />
-      <param name="rate" value="30" />
-      <param name="x" value="$(arg x)" />
-      <param name="y" value="$(arg y)" />
-      <param name="z" value="$(arg z)" />
-    </node>
+    < node name="pose" pkg="crazyflie_demo" type="publish_pose.py" output="screen">
+      < param name="name" value="goal" />
+      < param name="rate" value="30" />
+      < param name="x" value="$(arg x)" />
+      < param name="y" value="$(arg y)" />
+      < param name="z" value="$(arg z)" />
+    < /node>
 
     <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster" args="0 0 0 0 0 0 1 $(arg frame) /crazyflie/base_link 100" />
   </group>

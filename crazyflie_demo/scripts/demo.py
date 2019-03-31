@@ -11,15 +11,17 @@ from geometry_msgs.msg import PoseStamped
 class Demo():
     def __init__(self, goals):
         rospy.init_node('demo', anonymous=True)
-        self.worldFrame = rospy.get_param("~worldFrame", "/world")
-        self.frame = rospy.get_param("~frame")
-        self.pubGoal = rospy.Publisher('goal', PoseStamped, queue_size=1)
+        self.worldFrame = rospy.get_param("~worldFrame", "world")
+        self.frame = "cf1" #rospy.get_param("~frame")
+        self.pubGoal = rospy.Publisher('/cf1/goal', PoseStamped, queue_size=1)
         self.listener = TransformListener()
         self.goals = goals
         self.goalIndex = 0
 
     def run(self):
+        print("waiting for transform")
         self.listener.waitForTransform(self.worldFrame, self.frame, rospy.Time(), rospy.Duration(5.0))
+        print("starting")
         goal = PoseStamped()
         goal.header.seq = 0
         goal.header.frame_id = self.worldFrame

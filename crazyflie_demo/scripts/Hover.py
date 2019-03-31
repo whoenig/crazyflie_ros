@@ -18,7 +18,7 @@ class Crazyflie:
         rospy.loginfo("found update_params service")
         self.update_params = rospy.ServiceProxy(prefix + '/update_params', UpdateParams)
 
-        self.setParam("kalman/resetEstimation", 1)
+        #self.setParam("kalman/resetEstimation", 1)
 
         self.pub = rospy.Publisher(prefix + "/cmd_hover", Hover, queue_size=1)
         self.msg = Hover()
@@ -128,15 +128,7 @@ class Crazyflie:
                 self.msg.header.seq += 1
                 self.msg.header.stamp = rospy.Time.now()
                 self.pub.publish(self.msg)
-                self.rate.sleep()
-            for y in range(20):
-                self.msg.vx = 0.0
-                self.msg.vy = 0.0
-                self.msg.yawrate = 0.0
-                self.msg.zDistance = zDistance
-                self.msg.header.seq += 1
-                self.msg.header.stamp = rospy.Time.now()
-                self.pub.publish(self.msg)
+                rospy.loginfo(self.msg) ##log debug
                 self.rate.sleep()
             break
 
@@ -146,7 +138,7 @@ class Crazyflie:
         zDistance = self.msg.zDistance
 
         while not rospy.is_shutdown():
-            while zDistance > 0:
+            while zDistance > 0.1:
                 self.msg.vx = 0.0
                 self.msg.vy = 0.0
                 self.msg.yawrate = 0.0
@@ -155,24 +147,21 @@ class Crazyflie:
                 self.msg.header.stamp = rospy.Time.now()
                 self.pub.publish(self.msg)
                 self.rate.sleep()
-                zDistance -= 0.2
+                zDistance -= 0.1
         self.stop_pub.publish(self.stop_msg)
 
 def handler(cf):
     cf.takeOff(0.4)
-    cf.goTo(0.4, 0.1, 0.2, 0)
+    cf.goTo(0, 1, 0.4, 0)
     cf.land()
 
 if __name__ == '__main__':
     rospy.init_node('hover', anonymous=True)
 
-    cf1 = Crazyflie("cf1")
-    cf2 = Crazyflie("cf2")
+    cf1 = Crazyflie("/cf1")
+    # cf2 = Crazyflie("cf2")
 
     t1 = Thread(target=handler, args=(cf1,))
-    t2 = Thread(target=handler, args=(cf2,))
+    # t2 = Thread(target=handler, args=(cf2,))
     t1.start()
-    t2.start()
-
-
-
+    # t2.start()

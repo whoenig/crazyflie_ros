@@ -5,7 +5,7 @@ import tf
 from geometry_msgs.msg import PoseStamped
 
 if __name__ == '__main__':
-    rospy.init_node('publish_pose', anonymous=True)
+    rospy.init_node('publish_pose', anonymous=False)
     worldFrame = rospy.get_param("~worldFrame", "/world")
     name = rospy.get_param("~name")
     r = rospy.get_param("~rate")

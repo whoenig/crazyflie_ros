@@ -29,6 +29,7 @@ class Controller():
         else:
             self._land = None
             self._takeoff = None
+            #self._takeoff = rospy.ServiceProxy('takeoff', Empty) #ERAN
 
         # subscribe to the joystick at the end to make sure that all required
         # services were found
@@ -60,4 +61,5 @@ if __name__ == '__main__':
     use_controller = rospy.get_param("~use_crazyflie_controller", False)
     joy_topic = rospy.get_param("~joy_topic", "joy")
     controller = Controller(use_controller, joy_topic)
+    controller._takeoff()
     rospy.spin()

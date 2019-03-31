@@ -1,0 +1,223 @@
+<?xml version="1.0"?>
+
+<!--
+    Usage:
+        1. calibrate optitrack using motive.
+        2. int motive:
+            2.1 set "Multicast Interface" to this leptops IP.
+            2.2
+        2. set "server" param to "Local Interface" from MOTIVE streaming settings.
+        3. set "frame" to the same as desired rigid-body labeld in OPTITRACK.
+        4. set "port" to be same as, VRPN broadcast port from MOTIVE streaming setting.
+-->
+
+
+<launch>
+    <arg name="joy_dev" default="/dev/input/js0"/>
+    <arg name="server"
+         default="169.254.148.86"/>  <!-- Need to be the same as "Local Interface" in MOTIVE streaming settings. and "Multicast Interface" should be set to this leptop IP -->
+    <arg name="port" default="3883"/>
+
+    <!-- Load swarm plans -->
+    <!--<arg name="route" default="/home/user/catkin_ws/src/crazyflie_ros/crazyflie_demo/routes/swarm_route_test" />-->
+    <arg name="route" default="/home/user/catkin_ws/src/crazyflie_ros/crazyflie_demo/routes/demo1" />
+
+    <!-- for CF num 1  -->
+    <arg name="uri1" default="radio://0/80/1M/E7E7E7E7E9"/>
+    <arg name="frame1" default="Cf_1"/>
+    <!--<arg name="route1" default="/home/user/catkin_ws/src/crazyflie_ros/crazyflie_demo/routes/square_y_plane_5" />
+    <arg name="x1" default="1"/>
+    <arg name="y1" default="0"/>
+    <arg name="z1" default="1"/>
+    -->
+
+    <!-- for CF num 2  -->
+    <arg name="uri2" default="radio://0/80/1M/E7E7E7E7E8"/>
+    <arg name="frame2" default="Cf_2"/>
+    <!--<arg name="route2" default="/home/user/catkin_ws/src/crazyflie_ros/crazyflie_demo/routes/square_y_plane_2" />
+    <arg name="x2" default="-1"/>
+    <arg name="y2" default="0"/>
+    <arg name="z2" default="1"/>
+    -->
+
+    <!-- for CF num 3   -->
+    <arg name="uri3" default="radio://0/80/1M/E7E7E7E7EA"/>
+    <arg name="frame3" default="Cf_3"/>
+    <!--<arg name="route1" default="/home/user/catkin_ws/src/crazyflie_ros/crazyflie_demo/routes/square_y_plane_5" />-->
+    <!--
+    <arg name="x3" default="1"/>
+    <arg name="y3" default="0"/>
+    <arg name="z3" default="1"/>
+    -->
+
+    <!-- for CF num 1
+    <arg name="frame" default="Crazyflie_1" />
+    <arg name="uri" default="radio://0/80/250K" />
+    -->
+
+
+    <!-- for CF num 5
+    <arg name="frame" default="Crazyflie_5" />
+    <arg name="uri" default="radio://0/80/250K/E7E7E7E7E9" />
+    -->
+
+    <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
+    </include>
+
+    <group ns="$(arg frame1)">
+
+        <!-- Add a crazyflie -->
+        <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
+            <arg name="uri" value="$(arg uri1)"/>
+            <arg name="tf_prefix" value="$(arg frame1)"/>
+            <arg name="enable_logging" value="False"/>
+        </include>
+
+        <!--
+        <node name="joy" pkg="joy" type="joy_node" output="screen">
+          <param name="dev" value="$(arg joy_dev)" />
+        </node>
+
+
+
+        <node name="joystick_controller" pkg="crazyflie_demo" type="controller.py" output="screen">
+          <param name="use_crazyflie_controller" value="True" />
+        </node>
+         -->
+        <!-- Launch the Crazyflie controller, and load a crazyflie PID concfig -->
+        <include file="$(find crazyflie_controller)/launch/crazyflie2.launch">
+            <arg name="frame" value="$(arg frame1)"/>
+        </include>
+
+        <!-- launch pose_publisher with given parameter
+        <node name = "pose" pkg = "crazyflie_demo" type = "publish_pose.py" output = "screen" >
+          <param name = "name" value = "goal" />
+          <param name = "rate" value = "30" />
+          <param name = "x" value = "$(arg x)" />
+          <param name = "y" value = "$(arg y)" />
+          <param name = "z" value = "$(arg z)" />
+        </node>
+        -->
+
+        <!-- launch pose_publisher with given parameter -->
+        <node name="dynamic_route" pkg="crazyflie_demo" type="dynamic_route.py" output="screen">
+            <param name="tf_prefix" value="$(arg frame1)"/>
+            <param name="frame" value="$(arg frame1)"/>
+            <param name="name" value="goal"/>
+            <param name="route" value="$(arg route)"/>
+            <param name="rate" value="30"/>
+            <!--
+            <param name="x" value="$(arg x1)"/>
+            <param name="y" value="$(arg y1)"/>
+            <param name="z" value="$(arg z1)"/>
+            -->
+        </node>
+
+        <!--
+            <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster" args="0 0 0 0 0 0 1 $(arg frame) /crazyflie/base_link 100" />
+        -->
+
+
+        <!-- run vrpn client-->
+        <node pkg="vrpn_client_ros" name="vrpn" output="screen" type="vrpn_client_node" required="true">
+            <rosparam subst_value="true">
+                server: $(arg server)
+                port: $(arg port)
+                update_frequency: 100.0
+                frame_id: /world
+                child_frame_id: $(arg frame1)
+                use_server_time: true
+                broadcast_tf: true
+                refresh_tracker_frequency: 1.0
+            </rosparam>
+        </node>
+    </group>
+
+
+    <group ns="$(arg frame2)">
+        <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
+            <arg name="uri" value="$(arg uri2)"/>
+            <arg name="tf_prefix" value="$(arg frame2)"/>
+            <arg name="enable_logging" value="False"/>
+        </include>
+
+        <include file="$(find crazyflie_controller)/launch/crazyflie2.launch">
+            <arg name="frame" value="$(arg frame2)"/>
+        </include>
+
+        <node name="dynamic_route" pkg="crazyflie_demo" type="dynamic_route.py" output="screen">
+            <param name="tf_prefix" value="$(arg frame2)" />    <!-- Redundant -->
+            <param name="frame" value="$(arg frame2)"/>
+            <param name="name" value="goal"/>
+            <param name="route" value="$(arg route)"/>
+            <param name="rate" value="30"/>
+            <!--
+            <param name="x" value="$(arg x2)"/>
+            <param name="y" value="$(arg y2)"/>
+            <param name="z" value="$(arg z2)"/>
+            -->
+        </node>
+
+        <!--run vrpn client -->
+        <node pkg="vrpn_client_ros" name="vrpn" output="screen" type="vrpn_client_node" required="true">
+            <rosparam subst_value="true">
+                server: $(arg server)
+                port: $(arg port)
+                update_frequency: 100.0
+                frame_id: /world
+                child_frame_id: $(arg frame2)
+                use_server_time: true
+                broadcast_tf: true
+                refresh_tracker_frequency: 1.0
+            </rosparam>
+        </node>
+    </group>
+
+
+    <!--<group ns="$(arg frame3)">-->
+        <!--<include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">-->
+            <!--<arg name="uri" value="$(arg uri3)"/>-->
+            <!--<arg name="tf_prefix" value="$(arg frame3)"/>-->
+            <!--<arg name="enable_logging" value="False"/>-->
+        <!--</include>-->
+
+        <!--<include file="$(find crazyflie_controller)/launch/crazyflie2.launch">-->
+            <!--<arg name="frame" value="$(arg frame3)"/>-->
+        <!--</include>-->
+
+        <!--<node name="dynamic_route" pkg="crazyflie_demo" type="dynamic_route.py" output="screen">-->
+            <!--<param name="tf_prefix" value="$(arg frame3)" />    &lt;!&ndash; Redundant &ndash;&gt;-->
+            <!--<param name="frame" value="$(arg frame3)"/>-->
+            <!--<param name="name" value="goal"/>-->
+            <!--<param name="route" value="$(arg route)"/>-->
+            <!--<param name="rate" value="30"/>-->
+            <!--&lt;!&ndash;-->
+            <!--<param name="x" value="$(arg x2)"/>-->
+            <!--<param name="y" value="$(arg y2)"/>-->
+            <!--<param name="z" value="$(arg z2)"/>-->
+            <!--&ndash;&gt;-->
+        <!--</node>-->
+
+        <!--&lt;!&ndash;run vrpn client &ndash;&gt;-->
+        <!--<node pkg="vrpn_client_ros" name="vrpn" output="screen" type="vrpn_client_node" required="true">-->
+            <!--<rosparam subst_value="true">-->
+                <!--server: $(arg server)-->
+                <!--port: $(arg port)-->
+                <!--update_frequency: 100.0-->
+                <!--frame_id: /world-->
+                <!--child_frame_id: $(arg frame3)-->
+                <!--use_server_time: true-->
+                <!--broadcast_tf: true-->
+                <!--refresh_tracker_frequency: 1.0-->
+            <!--</rosparam>-->
+        <!--</node>-->
+    <!--</group>-->
+
+
+    <!-- run fixed_pose rviz -->
+    <param name="robot_description"
+           command="$(find xacro)/xacro.py $(find crazyflie_description)/urdf/crazyflie.urdf.xacro"/>
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find crazyflie_demo)/launch/crazyflie_fixed_pose.rviz"
+          required="true"/>
+
+</launch>

@@ -44,7 +44,7 @@ if __name__ == '__main__':
             msg.x = 0.0
             msg.y = 0.0
             msg.yaw = 0.0
-            msg.z = y / 25.0
+            msg.z = y*100 / 25.0
             now = rospy.get_time()
             msg.header.seq += 1
             msg.header.stamp = rospy.Time.now()
@@ -60,7 +60,7 @@ if __name__ == '__main__':
             msg.x = 0.0
             msg.y = 0.0
             msg.yaw = 0.0
-            msg.z = 0.4
+            msg.z = 100.4
             msg.header.seq += 1
             msg.header.stamp = rospy.Time.now()
             rospy.loginfo("sending...")

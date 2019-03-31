@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="joy_dev" default="/dev/input/js0" />
-  <arg name="ip" default="vicon" />
+
+  <arg name="ip" default="169.254.148.86" />
   <arg name="port" default="3883" />
 
-  <arg name="uri" default="radio://0/90/2M" />
-  <arg name="frame" default="crazyflie" />
+  <arg name="uri" default="radio://0/120/2M/E7E7E7E707" />
+  <arg name="frame" default="cf1" />
   <arg name="x" default="0" />
   <arg name="y" default="0" />
   <arg name="z" default="0.5" />
@@ -13,23 +13,15 @@
   <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
   </include>
 
-  <group ns="crazyflie">
+  <group ns="cf1">
     <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
       <arg name="uri" value="$(arg uri)" />
-      <arg name="tf_prefix" value="crazyflie" />
+      <arg name="tf_prefix" value="cf1" />
       <arg name="enable_logging" value="False" />
     </include>
 
-    <node name="joy" pkg="joy" type="joy_node" output="screen">
-      <param name="dev" value="$(arg joy_dev)" />
-    </node>
-
-    <node name="joystick_controller" pkg="crazyflie_demo" type="controller.py" output="screen">
-      <param name="use_crazyflie_controller" value="True" />
-    </node>
-
     <include file="$(find crazyflie_controller)/launch/crazyflie2.launch">
-      <arg name="frame" value="$(arg frame)" />
+    <arg name="frame" value="$(arg frame)"/>
     </include>
 
     <node name="pose" pkg="crazyflie_demo" type="publish_pose.py" output="screen">
@@ -42,15 +34,19 @@
 
     <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster" args="0 0 0 0 0 0 1 $(arg frame) /crazyflie/base_link 100" />
 
-    <!-- run vrpn client -->
-    <node pkg="ros_vrpn_client" name="vrpn" output="screen" type="ros_vrpn_client" required="true">
-      <param name="ip" value="$(arg ip)" />
-      <param name="port" value="$(arg port)" />
-      <param name="frame_id" value="/world" />
-      <param name="child_frame_id" value="$(arg frame)" />
+    <!-- run a single vrpn client -->
+    <node pkg="vrpn_client_ros" type="vrpn_client_node" name="vrpn_client_node" output="screen">
+      <rosparam subst_value="true">
+        server: $(arg ip)
+        port: $(arg port)
+        update_frequency: 100.0
+        frame_id: world
+        use_server_time: false
+        broadcast_tf: true
+        refresh_tracker_frequency: 1.0 <!-- VRPN will add all trackers found on connection -->
+      </rosparam>
     </node>
   </group>
-
 
   <!-- run rviz -->
   <param name="robot_description" command="$(find xacro)/xacro.py $(find crazyflie_description)/urdf/crazyflie.urdf.xacro" />

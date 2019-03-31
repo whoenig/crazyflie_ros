@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="uri1" default = "radio://0/80/250K/E7E7E7E7E9" />
+
+<include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
+  </include>
+
+  <group ns="cf1">
+    <!--<param name="crazyflie/pid_rate/yaw_kp" value="200"/>-->
+    <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
+      <param name="uri" value="$(arg uri1)" />
+      <param name="tf_prefix" value="cf1" />
+      <param name="enable_logging" value="True" />
+       <rosparam>
+        genericLogTopics: ["log1"]
+        genericLogTopicFrequencies: [10]
+        genericLogTopic_log1_Variables: ["ctrltarget.yaw", "stabilizer.yaw"]
+      </rosparam> 
+    </node>
+    <node pkg="rqt_plot" type="rqt_plot" name="rqt_plot_x" args="log1/values[0] log1/values[1]"/> 
+
+
+  </group>
+
+
+
+    <node name="crazyflie_demo_hover" pkg="crazyflie_demo" type="Hover_orig.py" output="screen">
+    </node>
+
+</launch>
