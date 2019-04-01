@@ -14,6 +14,9 @@ if __name__ == '__main__':
     cf.setParam("stabilizer/estimator", 2) # Use EKF
     cf.setParam("stabilizer/controller", 2) # Use mellinger controller
 
+    # reset kalman
+    cf.setParam("kalman/resetEstimation", 1)
+
     # cf.takeoff(targetHeight = 0.5, duration = 2.0)
     # time.sleep(3.0)
 
