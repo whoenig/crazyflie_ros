@@ -20,6 +20,7 @@ int main(int argc, char **argv)
   bool enable_logging_magnetic_field;
   bool enable_logging_pressure;
   bool enable_logging_battery;
+  bool enable_logging_pose;
   bool enable_logging_packets;
 
   n.getParam("uri", uri);
@@ -34,6 +35,7 @@ int main(int argc, char **argv)
   n.param("enable_logging_magnetic_field", enable_logging_magnetic_field, true);
   n.param("enable_logging_pressure", enable_logging_pressure, true);
   n.param("enable_logging_battery", enable_logging_battery, true);
+  n.param("enable_logging_pose", enable_logging_pose, false);
   n.param("enable_logging_packets", enable_logging_packets, true);
 
 
@@ -54,6 +56,7 @@ int main(int argc, char **argv)
   addCrazyflie.request.enable_logging_magnetic_field = enable_logging_magnetic_field;
   addCrazyflie.request.enable_logging_pressure = enable_logging_pressure;
   addCrazyflie.request.enable_logging_battery = enable_logging_battery;
+  addCrazyflie.request.enable_logging_pose = enable_logging_pose;
   addCrazyflie.request.enable_logging_packets = enable_logging_packets;
 
   std::vector<std::string> genericLogTopics;

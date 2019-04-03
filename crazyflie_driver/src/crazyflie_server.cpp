@@ -96,6 +96,7 @@ public:
     bool enable_logging_magnetic_field,
     bool enable_logging_pressure,
     bool enable_logging_battery,
+    bool enable_logging_pose,
     bool enable_logging_packets)
     : m_tf_prefix(tf_prefix)
     , m_cf(
@@ -114,6 +115,7 @@ public:
     , m_enable_logging_magnetic_field(enable_logging_magnetic_field)
     , m_enable_logging_pressure(enable_logging_pressure)
     , m_enable_logging_battery(enable_logging_battery)
+    , m_enable_logging_pose(enable_logging_pose)
     , m_enable_logging_packets(enable_logging_packets)
     , m_serviceEmergency()
     , m_serviceUpdateParams()
@@ -187,6 +189,13 @@ private:
     float baro_temp;
     float baro_pressure;
     float pm_vbat;
+  } __attribute__((packed));
+
+  struct logPose {
+    float x;
+    float y;
+    float z;
+    int32_t quatCompressed;
   } __attribute__((packed));
 
 private:
@@ -395,6 +404,9 @@ void cmdPositionSetpoint(
     if (m_enable_logging_battery) {
       m_pubBattery = n.advertise<std_msgs::Float32>(m_tf_prefix + "/battery", 10);
     }
+    if (m_enable_logging_pose) {
+      m_pubPose = n.advertise<geometry_msgs::PoseStamped>(m_tf_prefix + "/pose", 10);
+    }
     if (m_enable_logging_packets) {
       m_pubPackets = n.advertise<crazyflie_driver::crtpPacket>(m_tf_prefix + "/packets", 10);
       std::function<void(const ITransport::Ack&)> cb_genericPacket = std::bind(&CrazyflieROS::onGenericPacket, this, std::placeholders::_1);
@@ -454,6 +466,7 @@ void cmdPositionSetpoint(
 
     std::unique_ptr<LogBlock<logImu> > logBlockImu;
     std::unique_ptr<LogBlock<log2> > logBlock2;
+    std::unique_ptr<LogBlock<logPose> > logBlockPose;
     std::vector<std::unique_ptr<LogBlockGeneric> > logBlocksGeneric(m_logBlocks.size());
     if (m_enableLogging) {
 
@@ -495,6 +508,19 @@ void cmdPositionSetpoint(
             {"pm", "vbat"},
           }, cb2));
         logBlock2->start(10); // 100ms
+      }
+
+      if (m_enable_logging_pose) {
+        std::function<void(uint32_t, logPose*)> cb = std::bind(&CrazyflieROS::onPoseData, this, std::placeholders::_1, std::placeholders::_2);
+
+        logBlockPose.reset(new LogBlock<logPose>(
+          &m_cf,{
+            {"stateEstimate", "x"},
+            {"stateEstimate", "y"},
+            {"stateEstimate", "z"},
+            {"stateEstimateZ", "quat"}
+          }, cb));
+        logBlockPose->start(1); // 10ms
       }
 
       // custom log blocks
@@ -623,6 +649,31 @@ void cmdPositionSetpoint(
       // V
       msg.data = data->pm_vbat;
       m_pubBattery.publish(msg);
+    }
+  }
+
+  void onPoseData(uint32_t time_in_ms, logPose* data) {
+    if (m_enable_logging_pose) {
+      geometry_msgs::PoseStamped msg;
+      if (m_use_ros_time) {
+        msg.header.stamp = ros::Time::now();
+      } else {
+        msg.header.stamp = ros::Time(time_in_ms / 1000.0);
+      }
+      msg.header.frame_id = m_tf_prefix + "/base_link";
+
+      msg.pose.position.x = data->x;
+      msg.pose.position.y = data->y;
+      msg.pose.position.z = data->z;
+
+      float q[4];
+      quatdecompress(data->quatCompressed, q);
+      msg.pose.orientation.x = q[0];
+      msg.pose.orientation.y = q[1];
+      msg.pose.orientation.z = q[2];
+      msg.pose.orientation.w = q[3];
+
+      m_pubPose.publish(msg);
     }
   }
 
@@ -772,6 +823,7 @@ private:
   bool m_enable_logging_magnetic_field;
   bool m_enable_logging_pressure;
   bool m_enable_logging_battery;
+  bool m_enable_logging_pose;
   bool m_enable_logging_packets;
 
   ros::ServiceServer m_serviceEmergency;
@@ -799,6 +851,7 @@ private:
   ros::Publisher m_pubMag;
   ros::Publisher m_pubPressure;
   ros::Publisher m_pubBattery;
+  ros::Publisher m_pubPose;
   ros::Publisher m_pubPackets;
   ros::Publisher m_pubRssi;
   std::vector<ros::Publisher> m_pubLogDataGeneric;
@@ -875,6 +928,7 @@ private:
       req.enable_logging_magnetic_field,
       req.enable_logging_pressure,
       req.enable_logging_battery,
+      req.enable_logging_pose,
       req.enable_logging_packets);
 
     m_crazyflies[req.uri] = cf;
