@@ -23,12 +23,18 @@ A few notes:
     <arg name="uri1" default="radio://0/120/2M/E7E7E7E704"/>
     <arg name="frame1" default="cf4"/>
     <arg name="traj_list" default="[$(arg traj1),$(arg traj2)]"/>
+    <arg name="initX1" default="0"/>
+    <arg name="initY1" default="0"/>
+    <arg name="initZ1" default="0"/>
 
 
 <!-- for CF num 7   -->
     <arg name="uri2" default="radio://0/120/2M/E7E7E7E706"/>
     <arg name="frame2" default="cf6"/>
     <arg name="traj_list2" default="[$(arg traj1),$(arg traj2)]"/>
+    <arg name="initX2" default="0"/>
+    <arg name="initY2" default="0"/>
+    <arg name="initZ2" default="0"/>
 
 
 <!--    Activate the server.-->
@@ -70,6 +76,9 @@ A few notes:
 <!--        Tf_broadcast a specific drone with world-->
         <node name="tf_broadcast" pkg="crazyflie_demo" type="tf_broadcaster.py" output="screen">
             <param name="tf_prefix" value="$(arg frame1)"/>
+            <param name="initX" value="$(arg initX1)"/>
+            <param name="initY" value="$(arg initY1)"/>
+            <param name="initZ" value="$(arg initZ1)"/>
         </node>
 
          <node name="points_publisher" pkg="crazyflie_demo" type="publish_scan.py" output="screen">
@@ -78,6 +87,8 @@ A few notes:
 
     </group>
 
+
+<!--    *************************************************************************************************************-->
     <group ns="$(arg frame2)">
         <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
             <param name="uri" value="$(arg uri2)"/>
@@ -110,6 +121,9 @@ A few notes:
 <!--        Tf_broadcast a specific drone with world-->
         <node name="tf_broadcast" pkg="crazyflie_demo" type="tf_broadcaster.py" output="screen">
             <param name="tf_prefix" value="$(arg frame2)"/>
+            <param name="initX" value="$(arg initX2)"/>
+            <param name="initY" value="$(arg initY2)"/>
+            <param name="initZ" value="$(arg initZ2)"/>
         </node>
 
          <node name="points_publisher" pkg="crazyflie_demo" type="publish_scan.py" output="screen">

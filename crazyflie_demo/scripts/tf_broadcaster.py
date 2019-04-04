@@ -10,15 +10,13 @@ import tf2_ros
 from math import radians
 
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
+from geometry_msgs.msg import Point
+from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Vector3
 
 global x, y, z, roll, pitch, yaw
-x = 0
-y = 0
-z = 0
-roll = 0
-pitch = 0
-yaw = 0
 
 
 def get_pose(msg):
@@ -93,4 +91,15 @@ def handle_pose():
 
 
 if __name__ == '__main__':
+    rospy.init_node('tf_broadcaster')
+    global x, y, z, roll, pitch, yaw
+    # x = 0 + rospy.get_param("~initX")
+    # y = 0 + rospy.get_param("~initY")
+    # z = 0 + rospy.get_param("~initZ")
+    x = y = z = 0
+    rospy.loginfo("\n\nDEBUG  x={}; y={}, z={}".format(x, y, z))
+    roll = 0
+    pitch = 0
+    yaw = 0
+
     handle_pose()
