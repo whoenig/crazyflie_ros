@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<!--This is suppose to be a Well docomunted .launch file so we could take it as granted when working with other launch files.
+
+A few notes:
+    1. When working with traj path's, be sure to set the correct path.
+    2.-->
+
+<launch>
+    <!--If working with VRPN (e.g optitrack):
+        arg name="server" default="169.254.148.86"/>   Need to be the same as "Local Interface" in MOTIVE streaming settings. and "Multicast Interface" should be set to this leptop IP -
+        <arg name="port" default="3883"/>
+    -->
+
+<!--    Trajectory's-->
+    <arg name="traj1" default="/home/galbra/catkin_ws/src/crazyflie_ros/crazyflie_demo/scripts/takeoff.csv" />
+    <arg name="traj2" default="/home/galbra/catkin_ws/src/crazyflie_ros/crazyflie_demo/scripts/figure8.csv" />
+
+
+<!-- for CF num 4   -->
+    <arg name="uri1" default="radio://0/120/2M/E7E7E7E704"/>
+    <arg name="frame1" default="cf4"/>
+    <arg name="traj_list" default="[$(arg traj1),$(arg traj2)]"/>
+<!--    Temp arguments.-->
+    <arg name="x1" default="1"/>
+    <arg name="y1" default="0"/>
+    <arg name="z1" default="1"/>
+
+
+
+<!--    Activate the server.-->
+    <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
+    </include>
+
+
+<!--    Set the name space of the CF_x to be its name-->
+<!--    Future develop: instead of : each group is one CF, make each group flock.-->
+    <group ns="$(arg frame1)">
+        <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
+            <param name="uri" value="$(arg uri1)"/>
+            <param name="tf_prefix" value="$(arg frame1)"/>
+            <param name="traj_list" value="$(arg traj_list)"/>
+<!--            Logging params:-->
+            <param name="enable_logging" value="True"/>
+            <param name="enable_logging_temperature" value="False"/>
+            <param name="enable_logging_magnetic_field" value="False"/>
+            <param name="enable_logging_pressure" value="False"/>
+            <param name="enable_logging_imu" value="True"/>
+            <param name="enable_logging_battery" value="False"/>
+
+            <rosparam>
+                genericLogTopics: ["log_pos" , "log_rpy" , "log_ranges" ]
+                genericLogTopicFrequencies: [20 , 20 , 20 ]
+                genericLogTopic_log_pos_Variables: ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z"]
+                genericLogTopic_log_rpy_Variables: ["stabilizer.roll" , "stabilizer.pitch" , "stabilizer.yaw"]
+                genericLogTopic_log_ranges_Variables: ["range.front", "range.back", "range.up", "range.left",
+                "range.right" , "range.zrange" ]
+            </rosparam>
+        </node>
+<!--            The node for actually running desired python code -->
+        <node name="crazyflie_demo_hover" pkg="crazyflie_demo" type="hl_traj_arg.py" output="screen">
+            <param name="tf_prefix" value="$(arg frame1)"/>
+
+            <rosparam param="traj_list" subst_value="True">$(arg traj_list)</rosparam>
+        </node>
+    </group>
+
+
+
+
+
+     <!-- Run new_rvis rviz -->
+<!--    <param name="robot_description"-->
+<!--           command="$(find xacro)/xacro.py $(find crazyflie_description)/urdf/crazyflie.urdf.xacro"/>-->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find crazyflie_demo)/launch/new_rvis.rviz"
+          required="true"/>
+
+</launch>
