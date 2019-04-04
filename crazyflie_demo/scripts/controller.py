@@ -5,6 +5,7 @@ from sensor_msgs.msg import Joy
 from crazyflie_driver.srv import UpdateParams
 from std_srvs.srv import Empty
 
+
 class Controller():
     def __init__(self, use_controller, joy_topic):
         rospy.wait_for_service('update_params')
@@ -29,6 +30,7 @@ class Controller():
         else:
             self._land = None
             self._takeoff = None
+            # self._takeoff = rospy.ServiceProxy('takeoff', Empty) #ERAN
 
         # subscribe to the joystick at the end to make sure that all required
         # services were found
@@ -55,9 +57,11 @@ class Controller():
 
         self._buttons = data.buttons
 
+
 if __name__ == '__main__':
     rospy.init_node('crazyflie_demo_controller', anonymous=True)
     use_controller = rospy.get_param("~use_crazyflie_controller", False)
     joy_topic = rospy.get_param("~joy_topic", "joy")
     controller = Controller(use_controller, joy_topic)
+    controller._takeoff()
     rospy.spin()

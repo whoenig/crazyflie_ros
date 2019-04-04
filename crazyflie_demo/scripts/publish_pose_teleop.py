@@ -8,10 +8,12 @@ from math import fabs
 
 lastData = None
 
+
 def joyChanged(data):
     global lastData
     lastData = data
     # print(data)
+
 
 if __name__ == '__main__':
     rospy.init_node('publish_pose', anonymous=True)

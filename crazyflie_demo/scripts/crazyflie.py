@@ -5,8 +5,10 @@ import numpy as np
 from crazyflie_driver.srv import *
 from crazyflie_driver.msg import TrajectoryPolynomialPiece
 
+
 def arrayToGeometryPoint(a):
     return geometry_msgs.msg.Point(a[0], a[1], a[2])
+
 
 class Crazyflie:
     def __init__(self, prefix, tf):
@@ -33,16 +35,16 @@ class Crazyflie:
     def setGroupMask(self, groupMask):
         self.setGroupMaskService(groupMask)
 
-    def takeoff(self, targetHeight, duration, groupMask = 0):
+    def takeoff(self, targetHeight, duration, groupMask=0):
         self.takeoffService(groupMask, targetHeight, rospy.Duration.from_sec(duration))
 
-    def land(self, targetHeight, duration, groupMask = 0):
+    def land(self, targetHeight, duration, groupMask=0):
         self.landService(groupMask, targetHeight, rospy.Duration.from_sec(duration))
 
-    def stop(self, groupMask = 0):
+    def stop(self, groupMask=0):
         self.stopService(groupMask)
 
-    def goTo(self, goal, yaw, duration, relative = False, groupMask = 0):
+    def goTo(self, goal, yaw, duration, relative=False, groupMask=0):
         gp = arrayToGeometryPoint(goal)
         self.goToService(groupMask, relative, gp, yaw, rospy.Duration.from_sec(duration))
 
@@ -51,14 +53,14 @@ class Crazyflie:
         for poly in trajectory.polynomials:
             piece = TrajectoryPolynomialPiece()
             piece.duration = rospy.Duration.from_sec(poly.duration)
-            piece.poly_x   = poly.px.p
-            piece.poly_y   = poly.py.p
-            piece.poly_z   = poly.pz.p
+            piece.poly_x = poly.px.p
+            piece.poly_y = poly.py.p
+            piece.poly_z = poly.pz.p
             piece.poly_yaw = poly.pyaw.p
             pieces.append(piece)
         self.uploadTrajectoryService(trajectoryId, pieceOffset, pieces)
 
-    def startTrajectory(self, trajectoryId, timescale = 1.0, reverse = False, relative = True, groupMask = 0):
+    def startTrajectory(self, trajectoryId, timescale=1.0, reverse=False, relative=True, groupMask=0):
         self.startTrajectoryService(groupMask, trajectoryId, timescale, reverse, relative)
 
     def position(self):

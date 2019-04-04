@@ -7,7 +7,6 @@ from crazyflie_driver.msg import FullState
 import geometry_msgs
 import uav_trajectory
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("trajectory", type=str, help="CSV file containing trajectory")
@@ -39,19 +38,20 @@ if __name__ == '__main__':
 
         e = traj.eval(t)
 
-        msg.pose.position.x    = e.pos[0]
-        msg.pose.position.y    = e.pos[1]
-        msg.pose.position.z    = e.pos[2]
-        msg.twist.linear.x     = e.vel[0]
-        msg.twist.linear.y     = e.vel[1]
-        msg.twist.linear.z     = e.vel[2]
-        msg.acc.x              = e.acc[0]
-        msg.acc.y              = e.acc[1]
-        msg.acc.z              = e.acc[2]
-        msg.pose.orientation   = geometry_msgs.msg.Quaternion(*tf_conversions.transformations.quaternion_from_euler(0, 0, e.yaw))
-        msg.twist.angular.x    = e.omega[0]
-        msg.twist.angular.y    = e.omega[1]
-        msg.twist.angular.z    = e.omega[2]
+        msg.pose.position.x = e.pos[0]
+        msg.pose.position.y = e.pos[1]
+        msg.pose.position.z = e.pos[2]
+        msg.twist.linear.x = e.vel[0]
+        msg.twist.linear.y = e.vel[1]
+        msg.twist.linear.z = e.vel[2]
+        msg.acc.x = e.acc[0]
+        msg.acc.y = e.acc[1]
+        msg.acc.z = e.acc[2]
+        msg.pose.orientation = geometry_msgs.msg.Quaternion(
+            *tf_conversions.transformations.quaternion_from_euler(0, 0, e.yaw))
+        msg.twist.angular.x = e.omega[0]
+        msg.twist.angular.y = e.omega[1]
+        msg.twist.angular.z = e.omega[2]
 
         pub.publish(msg)
         rate.sleep()

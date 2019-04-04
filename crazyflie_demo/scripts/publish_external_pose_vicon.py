@@ -5,6 +5,7 @@ import tf
 from geometry_msgs.msg import PoseStamped, TransformStamped
 from crazyflie_driver.srv import UpdateParams, Takeoff, Land
 
+
 def onNewTransform(transform):
     global msg
     global pub
@@ -19,7 +20,7 @@ def onNewTransform(transform):
 
         rospy.set_param("kalman/resetEstimation", 1)
         # rospy.set_param("locSrv/extPosStdDev", 1e-4)
-        update_params(["kalman/resetEstimation"]) #, "locSrv/extPosStdDev"])
+        update_params(["kalman/resetEstimation"])  # , "locSrv/extPosStdDev"])
         firstTransform = False
     else:
         msg.header.frame_id = transform.header.frame_id
