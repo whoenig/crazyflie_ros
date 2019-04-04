@@ -103,14 +103,14 @@ Visualization Manager:
           Value: true
       Name: RobotModel
       Robot Description: robot_description
-      TF Prefix: crazyflie2
+      TF Prefix: cf4
       Update Interval: 0
       Value: true
       Visual Enabled: true
     - Alpha: 0.5
       Axes Length: 1
       Axes Radius: 0.1
-      Class: rviz/Pose
+      Class: rviz/Pointcloude2
       Color: 0; 0; 255
       Enabled: true
       Head Length: 0.1

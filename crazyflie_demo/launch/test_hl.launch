@@ -63,7 +63,7 @@ A few notes:
 <!--            The node for actually running desired python code -->
         <node name="crazyflie_demo_hover" pkg="crazyflie_demo" type="hl_traj_arg.py" output="screen">
             <param name="tf_prefix" value="$(arg frame1)"/>
-<!--            Pass a list as ros param-->
+<!--            Pass a 'list' as ros param-->
             <rosparam param="traj_list" subst_value="True">$(arg traj_list)</rosparam>
         </node>
 
@@ -117,13 +117,5 @@ A few notes:
         </node>
 
     </group>
-
-
-
-     <!-- Run new_rvis rviz -->
-<!--    <param name="robot_description"-->
-<!--           command="$(find xacro)/xacro.py $(find crazyflie_description)/urdf/crazyflie.urdf.xacro"/>-->
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find crazyflie_demo)/launch/new_rvis.rviz"
-          required="true"/>
 
 </launch>
