@@ -73,7 +73,7 @@ def handle_pose():
 
         odom = Odometry()
         odom.header.stamp = current_time
-        odom.header.frame_id = "odom"  # todo  - DRONE odom FRAME ID IS HARDCODED, CHANGE TO PARAMETER ROSPARAM
+        odom.header.frame_id = "odom"  # todo  - DRONE odom FRAME ID IS HARDCODED, CHANGE TO PARAMETER ROSPARAM - not clear if we want that per CF
         # set the position
         odom.pose.pose = Pose(Point(x, y, 0.), Quaternion(*q))
 

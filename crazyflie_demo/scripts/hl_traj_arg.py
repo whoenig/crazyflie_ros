@@ -53,7 +53,7 @@ def launcher(msg):
 
 if __name__ == '__main__':
     # Create a ros node
-    rospy.init_node('test_high_level')
+    rospy.init_node('test_high_level',anonymous=True)
 
     # prefix = sys.argv[1]
     # prefix = "/" + prefix
@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
         rospy.loginfo("\n\n******************* traj {} uploaded".format(i))
 
-    rospy.Subscriber("swarm_launch", Empty, launcher)
+    rospy.Subscriber("/swarm_launch", Empty, launcher)
 
     rospy.loginfo("******************* ready to fly  --- {0} ".format(prefix))
 
