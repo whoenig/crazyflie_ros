@@ -38,8 +38,8 @@ def get_rpy(msg):
 def handle_pose():
     global x, y, z, roll, pitch, yaw
     rospy.init_node('tf_broadcaster')
-    rospy.Subscriber('/cf1/log_pos', GenericLogData, get_pose)
-    rospy.Subscriber('/cf1/log_rpy', GenericLogData, get_rpy)
+    rospy.Subscriber('/' + rospy.get_param("~tf_prefix") + '/log_pos', GenericLogData, get_pose)
+    rospy.Subscriber('/' + rospy.get_param("~tf_prefix") + '/log_rpy', GenericLogData, get_rpy)
     odom_pub = rospy.Publisher("odom", Odometry, queue_size=10)
 
     r = rospy.Rate(40)
@@ -52,7 +52,7 @@ def handle_pose():
 
         t.header.stamp = rospy.Time.now()
         t.header.frame_id = "world"
-        t.child_frame_id = "cf1"  # todo  - DRONE FRAME ID IS HARDCODED, CHANGE TO PARAMETER ROSPARAM
+        t.child_frame_id = rospy.get_param("~tf_prefix")
         t.transform.translation.x = x
         t.transform.translation.y = y
         t.transform.translation.z = z

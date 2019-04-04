@@ -59,9 +59,11 @@ if __name__ == '__main__':
     # prefix = "/" + prefix
     prefix = "/" + rospy.get_param("~tf_prefix")
     cf = crazyflie.Crazyflie(prefix, "world")
-    rospy.loginfo("********* wait for update params -- {0} ".format(prefix))
+
+    rospy.loginfo("********* wait for update params -- {} ".format(prefix))
     rospy.wait_for_service(prefix + '/update_params')
-    rospy.loginfo("found update_params service for {0} ".format(prefix))
+
+    rospy.loginfo("found update_params service for {} ".format(prefix))
 
     cf.setParam("commander/enHighLevel", 1)  # enable use of high level commands
     cf.setParam("stabilizer/estimator", 2)  # 2=Use EKF

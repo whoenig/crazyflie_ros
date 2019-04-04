@@ -37,7 +37,7 @@ def get_ranges(msg):
 
     transform = None
     try:
-        transform = tfBuffer.lookup_transform('world', 'cf1', rospy.Time(0))  # todo - change frame id from hardcoded
+        transform = tfBuffer.lookup_transform('world', rospy.get_param("~tf_prefix"), rospy.Time(0))
     except Exception as e:
         rospy.loginfo(e)
 
@@ -49,7 +49,7 @@ def get_ranges(msg):
         point_front = PointStamped()
         point_front.header.seq = seq
         point_front.header.stamp = rospy.Time.now()
-        point_front.header.frame_id = "cf1"  # todo - change frame id from hardcoded
+        point_front.header.frame_id = rospy.get_param("~tf_prefix")
         point_front.point.x = front
         point_front.point.y = 0
         point_front.point.z = 0
@@ -69,7 +69,7 @@ def get_ranges(msg):
         point_back = PointStamped()
         point_back.header.seq = seq
         point_back.header.stamp = rospy.Time.now()
-        point_back.header.frame_id = "cf1"
+        point_back.header.frame_id = rospy.get_param("~tf_prefix")
         point_back.point.x = -1 * back
         point_back.point.y = 0
         point_back.point.z = 0
@@ -89,7 +89,7 @@ def get_ranges(msg):
         point_left = PointStamped()
         point_left.header.seq = seq
         point_left.header.stamp = rospy.Time.now()
-        point_left.header.frame_id = "cf1"
+        point_left.header.frame_id = rospy.get_param("~tf_prefix")
         point_left.point.x = 0
         point_left.point.y = left
         point_left.point.z = 0
@@ -109,7 +109,7 @@ def get_ranges(msg):
         point_right = PointStamped()
         point_right.header.seq = seq
         point_right.header.stamp = rospy.Time.now()
-        point_right.header.frame_id = "cf1"
+        point_right.header.frame_id = rospy.get_param("~tf_prefix")
         point_right.point.x = 0
         point_right.point.y = -1 * right
         point_right.point.z = 0
@@ -136,20 +136,23 @@ def get_ranges(msg):
 
 if __name__ == '__main__':
     rospy.init_node('publish_point', anonymous=False)
-    pub_front = rospy.Publisher('/cf1/points/front', PointStamped, queue_size=1)
-    pub_back = rospy.Publisher('/cf1/points/back', PointStamped, queue_size=1)
-    pub_left = rospy.Publisher('/cf1/points/left', PointStamped, queue_size=1)
-    pub_right = rospy.Publisher('/cf1/points/right', PointStamped, queue_size=1)
 
-    pub_front_WC = rospy.Publisher('/cf1/points/front_WC', PointStamped, queue_size=1)
-    pub_back_WC = rospy.Publisher('/cf1/points/back_WC', PointStamped, queue_size=1)
-    pub_left_WC = rospy.Publisher('/cf1/points/left_WC', PointStamped, queue_size=1)
-    pub_right_WC = rospy.Publisher('/cf1/points/right_WC', PointStamped, queue_size=1)
+    # Crazyflie coordinate
+    pub_front = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/points/front', PointStamped, queue_size=1)
+    pub_back = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/points/back', PointStamped, queue_size=1)
+    pub_left = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/points/left', PointStamped, queue_size=1)
+    pub_right = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/points/right', PointStamped, queue_size=1)
 
-    scan_pub = rospy.Publisher('scan', LaserScan, queue_size=2)
-    pc2_pub = rospy.Publisher("point_cloud", PointCloud2, queue_size=1)
+    # World coordinate
+    pub_front_WC = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/points/front_WC', PointStamped, queue_size=1)
+    pub_back_WC = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/points/back_WC', PointStamped, queue_size=1)
+    pub_left_WC = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/points/left_WC', PointStamped, queue_size=1)
+    pub_right_WC = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/points/right_WC', PointStamped, queue_size=1)
 
-    rospy.Subscriber('/cf1/log_ranges', GenericLogData, get_ranges)
+    scan_pub = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/laserScan', LaserScan, queue_size=2)
+    pc2_pub = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/point_cloud', PointCloud2, queue_size=1)
+
+    rospy.Subscriber('/'+rospy.get_param("~tf_prefix")+'/log_ranges', GenericLogData, get_ranges)
     prev_front = prev_back = prev_left = prev_right = 0
     seq = 0
 
@@ -161,7 +164,7 @@ if __name__ == '__main__':
     scan = LaserScan()
     num_readings = 4
     laser_frequency = 10
-    scan.header.frame_id = 'cf1'
+    scan.header.frame_id = rospy.get_param("~tf_prefix")
     scan.angle_min = -pi
     scan.angle_max = pi
     scan.angle_increment = 2 * pi / num_readings
