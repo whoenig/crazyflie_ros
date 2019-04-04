@@ -48,10 +48,10 @@ if __name__ == '__main__':
     # cf.takeoff(targetHeight = 0.4, duration = 3.0)
     # time.sleep(5.0)
     traj1 = uav_trajectory.Trajectory()
-    traj1.loadcsv("/home/user/catkin_ws/src/crazyflie_ros/crazyflie_demo/scripts/takeoff.csv")
+    traj1.loadcsv("/home/galbra/catkin_ws/src/crazyflie_ros/crazyflie_demo/scripts/takeoff.csv")
 
     traj2 = uav_trajectory.Trajectory()
-    traj2.loadcsv("/home/user/catkin_ws/src/crazyflie_ros/crazyflie_demo/scripts/sine.csv")
+    traj2.loadcsv("/home/galbra/catkin_ws/src/crazyflie_ros/crazyflie_demo/scripts/sine.csv")
 
     print('traj2 duration :', traj2.duration)
 

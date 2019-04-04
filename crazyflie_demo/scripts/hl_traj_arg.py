@@ -70,10 +70,10 @@ if __name__ == '__main__':
     rospy.loginfo("******************* uploading to {0}".format(prefix))
 
     traj1 = uav_trajectory.Trajectory()
-    traj1.loadcsv("/home/user/catkin_ws/src/crazyflie_ros/crazyflie_demo/scripts/takeoff.csv")
+    traj1.loadcsv("/src/crazyflie_ros/crazyflie_demo/scripts/takeoff.csv")  #
 
     traj2 = uav_trajectory.Trajectory()
-    traj2.loadcsv("/home/user/catkin_ws/src/crazyflie_ros/crazyflie_demo/scripts/figure8.csv")
+    traj2.loadcsv("/src/crazyflie_ros/crazyflie_demo/scripts/figure8.csv")
 
     cf.uploadTrajectory(0, 0, traj1)
     cf.uploadTrajectory(1, len(traj1.polynomials), traj2)
