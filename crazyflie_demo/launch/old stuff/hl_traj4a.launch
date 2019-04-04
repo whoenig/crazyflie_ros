@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+
+<launch>
+    <arg name="uri3" default="radio://0/100/2M/E7E7E7E705"/>
+    <arg name="uri4" default="radio://0/100/2M/E7E7E7E706"/>
+
+    <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
+    </include>
+
+    <include file="$(find crazyflie_demo)/launch/hl_traj2.launch">
+    </include>
+
+
+    <include file="$(find crazyflie_demo)/launch/hl_traj2a.launch">
+    </include>
+
+
+</launch>
