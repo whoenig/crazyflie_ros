@@ -138,21 +138,21 @@ if __name__ == '__main__':
     rospy.init_node('publish_point', anonymous=False)
 
     # Crazyflie coordinate
-    pub_front = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/points/front', PointStamped, queue_size=1)
-    pub_back = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/points/back', PointStamped, queue_size=1)
-    pub_left = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/points/left', PointStamped, queue_size=1)
-    pub_right = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/points/right', PointStamped, queue_size=1)
+    pub_front = rospy.Publisher('/' + rospy.get_param("~tf_prefix") + '/points/front', PointStamped, queue_size=1)
+    pub_back = rospy.Publisher('/' + rospy.get_param("~tf_prefix") + '/points/back', PointStamped, queue_size=1)
+    pub_left = rospy.Publisher('/' + rospy.get_param("~tf_prefix") + '/points/left', PointStamped, queue_size=1)
+    pub_right = rospy.Publisher('/' + rospy.get_param("~tf_prefix") + '/points/right', PointStamped, queue_size=1)
 
     # World coordinate
-    pub_front_WC = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/points/front_WC', PointStamped, queue_size=1)
-    pub_back_WC = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/points/back_WC', PointStamped, queue_size=1)
-    pub_left_WC = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/points/left_WC', PointStamped, queue_size=1)
-    pub_right_WC = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/points/right_WC', PointStamped, queue_size=1)
+    pub_front_WC = rospy.Publisher('/' + rospy.get_param("~tf_prefix") + '/points/front_WC', PointStamped, queue_size=1)
+    pub_back_WC = rospy.Publisher('/' + rospy.get_param("~tf_prefix") + '/points/back_WC', PointStamped, queue_size=1)
+    pub_left_WC = rospy.Publisher('/' + rospy.get_param("~tf_prefix") + '/points/left_WC', PointStamped, queue_size=1)
+    pub_right_WC = rospy.Publisher('/' + rospy.get_param("~tf_prefix") + '/points/right_WC', PointStamped, queue_size=1)
 
-    scan_pub = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/laserScan', LaserScan, queue_size=2)
-    pc2_pub = rospy.Publisher('/'+rospy.get_param("~tf_prefix")+'/point_cloud', PointCloud2, queue_size=1)
+    scan_pub = rospy.Publisher('/' + rospy.get_param("~tf_prefix") + '/laserScan', LaserScan, queue_size=2)
+    pc2_pub = rospy.Publisher('/' + rospy.get_param("~tf_prefix") + '/point_cloud', PointCloud2, queue_size=1)
 
-    rospy.Subscriber('/'+rospy.get_param("~tf_prefix")+'/log_ranges', GenericLogData, get_ranges)
+    rospy.Subscriber('/' + rospy.get_param("~tf_prefix") + '/log_ranges', GenericLogData, get_ranges)
     prev_front = prev_back = prev_left = prev_right = 0
     seq = 0
 
