@@ -48,7 +48,7 @@ A few notes:
         <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
             <param name="uri" value="$(arg uri1)"/>
             <param name="tf_prefix" value="$(arg frame1)"/>
-<!--            <param name="traj_list" value="$(arg traj_list)"/>-->
+
 <!--            Logging params:-->
             <param name="enable_logging" value="True"/>
             <param name="enable_logging_temperature" value="False"/>
@@ -93,7 +93,7 @@ A few notes:
         <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
             <param name="uri" value="$(arg uri2)"/>
             <param name="tf_prefix" value="$(arg frame2)"/>
-<!--            <param name="traj_list" value="$(arg traj_list2)"/>-->
+
 <!--            Logging params:-->
             <param name="enable_logging" value="True"/>
             <param name="enable_logging_temperature" value="False"/>
