@@ -31,7 +31,7 @@
 
     </group>
     <!--
-    <node name="array_broadcaster" pkg="crazyflie_demo" type="array_broadcaster.py" output="screen">
+    <node name="array_broadcaster" pkg="crazyflie_demo" type="logger_by_format.py" output="screen">
     </node>
     -->
 

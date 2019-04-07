@@ -1,9 +1,7 @@
 <?xml version="1.0"?>
 <!--This is suppose to be a Well docomunted .launch file so we could take it as granted when working with other launch files.
 
-A few notes:
-    1. When working with traj path's, be sure to set the correct path.
-    2.
+This is test for building the python CF data wrapper.
 
 
 -->

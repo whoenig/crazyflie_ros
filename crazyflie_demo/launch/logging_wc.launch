@@ -30,7 +30,7 @@
 
     </group>
 
-    <!-- <node name="array_logging" pkg="crazyflie_demo" type="array_broadcaster.py" output="screen">
+    <!-- <node name="array_logging" pkg="crazyflie_demo" type="logger_by_format.py" output="screen">
     </node>   -->
 
     <node name="tf_broadcast" pkg="crazyflie_demo" type="tf_broadcaster.py" output="screen">

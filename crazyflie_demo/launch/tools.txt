@@ -1,4 +1,0 @@
-rosrun crazyflie_tools reboot --uri radio://0/100/2M/E7E7E7E704 --mode sysoff
-rosrun crazyflie_tools reboot --uri radio://0/100/2M/E7E7E7E704
-rosrun crazyflie_tools battery --uri radio://0/100/2M/E7E7E7E704
-

@@ -65,16 +65,16 @@ def get_imu(msg):
     gyroZ = msg.angular_velocity.z
 
 
-def handle_pose():
+def logger_handler(tf_prefix):
     global x, y, z, roll, pitch, yaw
 
     rospy.init_node('tf_broadcaster')
     pub = rospy.Publisher('array_recording', crazyflie_sensors, queue_size=1)
-    rospy.Subscriber('/cf1/log_pos', GenericLogData, get_pose)
-    rospy.Subscriber('/cf1/log_rpy', GenericLogData, get_rpy)
-    rospy.Subscriber('/cf1/log_ranges', GenericLogData, get_ranges)
-    rospy.Subscriber('/cf1/log_sensors', GenericLogData, get_sensors)
-    rospy.Subscriber('/cf1/imu', Imu, get_imu)
+    rospy.Subscriber('/' + tf_prefix + '/log_pos', GenericLogData, get_pose)
+    rospy.Subscriber('/' + tf_prefix + '/log_rpy', GenericLogData, get_rpy)
+    rospy.Subscriber('/' + tf_prefix + '/log_ranges', GenericLogData, get_ranges)
+    rospy.Subscriber('/' + tf_prefix + '/log_sensors', GenericLogData, get_sensors)
+    rospy.Subscriber('/' + tf_prefix + '/imu', Imu, get_imu)
 
     tfBuffer = tf2_ros.Buffer()
     listener = tf2_ros.TransformListener(tfBuffer)
@@ -107,7 +107,7 @@ def handle_pose():
         t.gyroZ = gyroZ
 
         try:  # if optitrack message exists
-            trans = tfBuffer.lookup_transform('world', 'cf1', rospy.Time(0))
+            trans = tfBuffer.lookup_transform('world', tf_prefix, rospy.Time(0))
 
             q = (trans.transform.rotation.x,
                  trans.transform.rotation.y,
@@ -126,7 +126,7 @@ def handle_pose():
             t.ref_yaw = euler[1]
 
         except:
-            rospy.loginfo("tf lookup -- cf1 not found")
+            rospy.loginfo("tf lookup -- {} not found".format(tf_prefix))
 
         pub.publish(t)
 
@@ -135,4 +135,10 @@ def handle_pose():
 
 
 if __name__ == '__main__':
-    handle_pose()
+    rospy.init_node("logger")
+
+    # expecting a "bool"
+    # write_to_csv = rospy.get_param("~write_to_csv")
+    tf_prefix = rospy.get_param("~tf_prefix")
+
+    logger_handler(tf_prefix)
