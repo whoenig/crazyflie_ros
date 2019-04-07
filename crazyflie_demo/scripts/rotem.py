@@ -3,7 +3,6 @@
 
 import sensor_msgs.point_cloud2 as pc2
 import rospy
-import pcl
 from sensor_msgs.msg import PointCloud2
 from crazyflie_driver.msg import GenericLogData
 
@@ -82,7 +81,6 @@ class CrazyflieFlightData:
     def pos_parser(self, msg):
         self.pos = msg.header
         self.pos = msg.values
-        rospy.loginfo("\n\nlog_pos: {}".format(self.pos))
 
 
 if __name__ == '__main__':

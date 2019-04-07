@@ -67,9 +67,7 @@ def get_imu(msg):
 
 def logger_handler(tf_prefix):
     global x, y, z, roll, pitch, yaw
-
-    rospy.init_node('tf_broadcaster')
-    pub = rospy.Publisher('array_recording', crazyflie_sensors, queue_size=1)
+    pub = rospy.Publisher('/' + tf_prefix + '/debug_logger', crazyflie_sensors, queue_size=1)
     rospy.Subscriber('/' + tf_prefix + '/log_pos', GenericLogData, get_pose)
     rospy.Subscriber('/' + tf_prefix + '/log_rpy', GenericLogData, get_rpy)
     rospy.Subscriber('/' + tf_prefix + '/log_ranges', GenericLogData, get_ranges)
@@ -126,6 +124,12 @@ def logger_handler(tf_prefix):
             t.ref_yaw = euler[1]
 
         except:
+            t.ref_x = 0
+            t.ref_y = 0
+            t.ref_z = 0
+            t.ref_roll = 0
+            t.ref_pitch = 0
+            t.ref_yaw = 0
             rospy.loginfo("tf lookup -- {} not found".format(tf_prefix))
 
         pub.publish(t)
@@ -137,8 +141,6 @@ def logger_handler(tf_prefix):
 if __name__ == '__main__':
     rospy.init_node("logger")
 
-    # expecting a "bool"
-    # write_to_csv = rospy.get_param("~write_to_csv")
     tf_prefix = rospy.get_param("~tf_prefix")
 
     logger_handler(tf_prefix)

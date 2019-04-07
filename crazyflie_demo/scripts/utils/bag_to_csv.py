@@ -10,7 +10,9 @@ Supervised by Professor Inna Sharf, Professor Meyer Nahon
 
 '''
 
-import rosbag, sys, csv
+import rosbag
+import sysro
+import csv
 import time
 import string
 import os  # for file management make directory
@@ -52,7 +54,7 @@ for bagFile in listOfBagFiles:
     print
     "reading file " + str(count) + " of  " + numberOfFiles + ": " + bagFile
     # access bag
-    bag = rosbag.Bag(bagFile)
+    bag = pyrosbag.Bag(bagFile)
     bagContents = bag.read_messages()
     bagName = bag.filename
 

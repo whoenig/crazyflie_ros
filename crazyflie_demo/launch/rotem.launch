@@ -88,6 +88,10 @@ This is test for building the python CF data wrapper.
              <param name="tf_prefix" value="$(arg frame1)"/>
         </node>
 
+<!--        Logger - consetrate all cf's data under one topic, for debugging. -->
+        <node name="debug_logger" pkg="crazyflie_demo" type="logger_by_format.py" output="screen">
+             <param name="tf_prefix" value="$(arg frame1)"/>
+        </node>
     </group>
 
 
