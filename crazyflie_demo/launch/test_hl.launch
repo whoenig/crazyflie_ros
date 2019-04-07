@@ -19,7 +19,7 @@ A few notes:
     <arg name="traj2" default="/home/galbra/catkin_ws/src/crazyflie_ros/crazyflie_demo/scripts/figure8.csv" />
 
 
-<!-- for CF num 4   -->
+<!-- for CF num 4   THIS IS WORLD'S (0,0,0) AND ALL OTHER DRONES ARE RELATIVE TO THIS ONE-->
     <arg name="uri1" default="radio://0/120/2M/E7E7E7E704"/>
     <arg name="frame1" default="cf4"/>
     <arg name="traj_list" default="[$(arg traj1),$(arg traj2)]"/>
@@ -28,12 +28,12 @@ A few notes:
     <arg name="initZ1" default="0"/>
 
 
-<!-- for CF num 7   -->
+<!-- for CF num 6   -->
     <arg name="uri2" default="radio://0/120/2M/E7E7E7E706"/>
     <arg name="frame2" default="cf6"/>
     <arg name="traj_list2" default="[$(arg traj1),$(arg traj2)]"/>
     <arg name="initX2" default="0"/>
-    <arg name="initY2" default="0"/>
+    <arg name="initY2" default="1"/>
     <arg name="initZ2" default="0"/>
 
 
@@ -48,7 +48,7 @@ A few notes:
         <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
             <param name="uri" value="$(arg uri1)"/>
             <param name="tf_prefix" value="$(arg frame1)"/>
-            <param name="traj_list" value="$(arg traj_list)"/>
+<!--            <param name="traj_list" value="$(arg traj_list)"/>-->
 <!--            Logging params:-->
             <param name="enable_logging" value="True"/>
             <param name="enable_logging_temperature" value="False"/>
@@ -93,7 +93,7 @@ A few notes:
         <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
             <param name="uri" value="$(arg uri2)"/>
             <param name="tf_prefix" value="$(arg frame2)"/>
-            <param name="traj_list" value="$(arg traj_list2)"/>
+<!--            <param name="traj_list" value="$(arg traj_list2)"/>-->
 <!--            Logging params:-->
             <param name="enable_logging" value="True"/>
             <param name="enable_logging_temperature" value="False"/>

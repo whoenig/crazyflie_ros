@@ -16,7 +16,17 @@ from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import Vector3
 
-global x, y, z, roll, pitch, yaw
+global x, y, z, roll, pitch, yaw, relative_x, relative_y, relative_z
+x = 0
+y = 0
+z = 0
+# x = y = z = 0
+roll = 0
+pitch = 0
+yaw = 0
+relative_x = 0
+relative_y = 0
+relative_z = 0
 
 
 def get_pose(msg):
@@ -35,6 +45,7 @@ def get_rpy(msg):
 
 def handle_pose():
     global x, y, z, roll, pitch, yaw
+    global relative_x, relative_y, relative_z
     rospy.init_node('tf_broadcaster')
     rospy.Subscriber('/' + rospy.get_param("~tf_prefix") + '/log_pos', GenericLogData, get_pose)
     rospy.Subscriber('/' + rospy.get_param("~tf_prefix") + '/log_rpy', GenericLogData, get_rpy)
@@ -51,9 +62,9 @@ def handle_pose():
         t.header.stamp = rospy.Time.now()
         t.header.frame_id = "world"
         t.child_frame_id = rospy.get_param("~tf_prefix")
-        t.transform.translation.x = x
-        t.transform.translation.y = y
-        t.transform.translation.z = z
+        t.transform.translation.x = x + relative_x
+        t.transform.translation.y = y + relative_y
+        t.transform.translation.z = z + relative_z
         q = tf_conversions.transformations.quaternion_from_euler(radians(roll), radians(pitch), radians(yaw))
         t.transform.rotation.x = q[0]
         t.transform.rotation.y = q[1]
@@ -92,14 +103,8 @@ def handle_pose():
 
 if __name__ == '__main__':
     rospy.init_node('tf_broadcaster')
-    global x, y, z, roll, pitch, yaw
-    # x = 0 + rospy.get_param("~initX")
-    # y = 0 + rospy.get_param("~initY")
-    # z = 0 + rospy.get_param("~initZ")
-    x = y = z = 0
-    rospy.loginfo("\n\nDEBUG  x={}; y={}, z={}".format(x, y, z))
-    roll = 0
-    pitch = 0
-    yaw = 0
+    relative_x = rospy.get_param("~initX")
+    relative_y = rospy.get_param("~initY")
+    relative_z = rospy.get_param("~initZ")
 
     handle_pose()
