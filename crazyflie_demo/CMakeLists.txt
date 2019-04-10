@@ -48,6 +48,7 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    crazyflie_sensors.msg
    crazyflie_sensors_rotem.msg
+   goal.msg
  )
 ## Generate services in the 'srv' folder
 # add_service_files(

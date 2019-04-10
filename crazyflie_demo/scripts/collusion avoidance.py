@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# source - https://github.com/whoenig/crazyflie_ros/commit/b048c1f2fd3ee34f899fa0e2f6c58a4885a39405#diff-970be3522034ff436332d391db26982a
 
 # initializes drone initial position 0,0,0
 # launch drone to fixed height initialZ [m]
@@ -29,9 +28,6 @@ initialZ = 0.35
 
 global front, back, up, left, right, zrange
 front = back = up = left = right = zrange = 0.0
-
-
-class DronePosGoal:
 
 
 def get_ranges(msg):
@@ -178,13 +174,13 @@ def handler(cf_handler):
 
 
 if __name__ == '__main__':
-    rospy.init_node('test_high_level')
+    rospy.init_node('collusion avoidance')
 
+    # get cf name
     prefix = rospy.get_param("~tf_prefix")
-    rospy.Subscriber('/' + prefix + '/log_ranges', GenericLogData, get_ranges)
-    cf = crazyflie.Crazyflie("/" + prefix, "world")
-
-    rospy.wait_for_service("/" + prefix + '/update_params')
+    rospy.Subscriber('/'+prefix+'/log_ranges', GenericLogData, get_ranges)
+    cf = crazyflie.Crazyflie("/cf1", "world")
+    rospy.wait_for_service(prefix + '/update_params')
     rospy.loginfo("found update_params service")
 
     cf.setParam("commander/enHighLevel", 1)

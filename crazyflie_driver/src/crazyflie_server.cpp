@@ -389,6 +389,9 @@ void cmdPositionSetpoint(
     m_serviceUploadTrajectory = n.advertiseService(m_tf_prefix + "/upload_trajectory", &CrazyflieROS::uploadTrajectory, this);
     m_serviceStartTrajectory = n.advertiseService(m_tf_prefix + "/start_trajectory", &CrazyflieROS::startTrajectory, this);
 
+    // goal_publisher:
+    m_pubgoal = n.advertise<geometry_msgs::PoseStamped>(m_tf_prefix + "/goal_publisher", 100);
+
     if (m_enable_logging_imu) {
       m_pubImu = n.advertise<sensor_msgs::Imu>(m_tf_prefix + "/imu", 10);
     }
@@ -765,7 +768,33 @@ void cmdPositionSetpoint(
     crazyflie_driver::GoTo::Request& req,
     crazyflie_driver::GoTo::Response& res)
   {
+    ROS_INFO_NAMED(m_tf_prefix, "GoTo requested 888888888888888888888888888888888888888888888888888888888888888");
     ROS_INFO_NAMED(m_tf_prefix, "GoTo requested");
+
+    // Add publish goal
+    geometry_msgs::PoseStamped msg;
+      if (m_use_ros_time) {
+        msg.header.stamp = ros::Time::now();
+      }
+//       else {
+//        msg.header.stamp = ros::Time(time_in_ms / 1000.0);
+//      }
+      msg.header.frame_id = m_tf_prefix + "/goal_publisher";
+
+      msg.pose.position.x = req.goal.x;
+      msg.pose.position.y = req.goal.y;
+      msg.pose.position.z = req.goal.z;
+
+      float q[4];
+      quatdecompress(req.yaw, q);
+      msg.pose.orientation.x = q[0];
+      msg.pose.orientation.y = q[1];
+      msg.pose.orientation.z = q[2];
+      msg.pose.orientation.w = q[3];
+
+
+      m_pubgoal.publish(msg);
+
     m_cf.goTo(req.goal.x, req.goal.y, req.goal.z, req.yaw, req.duration.toSec(), req.relative, req.groupMask);
     return true;
   }
@@ -846,6 +875,10 @@ private:
   ros::Subscriber m_subscribeCmdPosition;
   ros::Subscriber m_subscribeExternalPosition;
   ros::Subscriber m_subscribeExternalPose;
+  // publisher for goal
+  ros::Publisher m_pubgoal;
+
+
   ros::Publisher m_pubImu;
   ros::Publisher m_pubTemp;
   ros::Publisher m_pubMag;

@@ -73,6 +73,11 @@ A few notes:
             <rosparam param="traj_list" subst_value="True">$(arg traj_list)</rosparam>
         </node>
 
+        <!--        Start keyboard controller. -->
+<!--        <node name="keyboard_controller" pkg="crazyflie_demo" type="test_high_level.py" output="screen">-->
+<!--            <param name="tf_prefix" value="$(arg frame1)"/>-->
+<!--        </node>-->
+
         <!--        Tf_broadcast a specific drone with world-->
         <node name="tf_broadcast" pkg="crazyflie_demo" type="tf_broadcaster.py" output="screen">
             <param name="tf_prefix" value="$(arg frame1)"/>
