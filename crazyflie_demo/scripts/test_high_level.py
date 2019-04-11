@@ -31,12 +31,8 @@ global front, back, up, left, right, zrange
 front = back = up = left = right = zrange = 0.0
 
 
-class DronePosGoal:
-
-
 def get_ranges(msg):
     global front, back, up, left, right, zrange
-
     front = msg.values[0] / 1000
     back = msg.values[1] / 1000
     up = msg.values[2] / 1000
@@ -178,7 +174,7 @@ def handler(cf_handler):
 
 
 if __name__ == '__main__':
-    rospy.init_node('test_high_level')
+    rospy.init_node('keyboard_controller')
 
     prefix = rospy.get_param("~tf_prefix")
     rospy.Subscriber('/' + prefix + '/log_ranges', GenericLogData, get_ranges)

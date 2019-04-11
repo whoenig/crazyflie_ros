@@ -53,7 +53,7 @@ def launcher(msg):
 
 if __name__ == '__main__':
     # Create a ros node
-    rospy.init_node('test_high_level',anonymous=True)
+    rospy.init_node('highlevel_trajectory_manager',anonymous=True)
 
     # prefix = sys.argv[1]
     # prefix = "/" + prefix
