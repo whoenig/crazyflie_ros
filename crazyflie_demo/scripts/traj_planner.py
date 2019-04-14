@@ -81,6 +81,11 @@ if __name__ == '__main__':
             # First traj, upload with 0 piecOffset, than update pieceoffset.
             cf.uploadTrajectory(i, 0, temp_traj)
             pieceOffset = pieceOffset + len(temp_traj.polynomials)
+
+            rospy.wait_for_service(prefix + "/upload_trajectory")
+            uploadTrajectoryService = rospy.ServiceProxy(prefix + "/upload_trajectory", UploadTrajectory)
+            uploadTrajectoryService(i, 0, temp_traj)
+
         else:
             cf.uploadTrajectory(i, pieceOffset, temp_traj)
             pieceOffset = pieceOffset + len(temp_traj.polynomials)

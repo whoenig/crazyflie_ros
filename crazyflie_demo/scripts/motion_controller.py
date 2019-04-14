@@ -147,6 +147,8 @@ def handler(cf_handler):
                     # 45 degrees CCW
                     cf_handler.goTo(goal=[0.0, 0.0, 0.0], yaw=-1.5708, duration=def_duration + 1.0,
                                     relative=True)  # slow down yaw rotation
+
+                # todo add number for trajectorys
                 # elif key == 's':
                 # stop
 
