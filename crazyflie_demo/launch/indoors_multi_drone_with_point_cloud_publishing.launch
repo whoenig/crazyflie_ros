@@ -9,10 +9,10 @@ A few notes:
 -->
 
 <launch>
-    <!--If working with VRPN (e.g optitrack):
-        arg name="server" default="169.254.148.86"/>   Need to be the same as "Local Interface" in MOTIVE streaming settings. and "Multicast Interface" should be set to this leptop IP -
+    <!--If working with VRPN (e.g optitrack): -->
+        <arg name="server" default="169.254.148.86"/>   Need to be the same as "Local Interface" in MOTIVE streaming settings. and "Multicast Interface" should be set to this leptop IP -
         <arg name="port" default="3883"/>
-    -->
+
 
     <!--    Trajectory's-->
     <arg name="traj1" default="/home/galbra/catkin_ws/src/crazyflie_ros/crazyflie_demo/scripts/takeoff.csv"/>
@@ -22,6 +22,7 @@ A few notes:
     <!-- for CF num 4   THIS IS WORLD'S (0,0,0) AND ALL OTHER DRONES ARE RELATIVE TO THIS ONE-->
     <arg name="uri1" default="radio://0/120/2M/E7E7E7E704"/>
     <arg name="frame1" default="cf4"/>
+    <arg name="frame_ref1" default="cf4_ref"/>
     <arg name="traj_list" default="[$(arg traj1),$(arg traj2)]"/>
     <arg name="initX1" default="0"/>
     <arg name="initY1" default="0"/>
@@ -31,10 +32,26 @@ A few notes:
     <!-- for CF num 6   -->
     <arg name="uri2" default="radio://0/120/2M/E7E7E7E706"/>
     <arg name="frame2" default="cf6"/>
+    <arg name="frame_ref2" default="cf6_ref"/>
     <arg name="traj_list2" default="[$(arg traj1),$(arg traj2)]"/>
     <arg name="initX2" default="0"/>
     <arg name="initY2" default="0"/>                    <!-- REMEMBER!!!!!!         -->
     <arg name="initZ2" default="0"/>
+
+    <!--run vrpn client -->
+    <node pkg="vrpn_client_ros" name="vrpn" output="screen" type="vrpn_client_node" required="true">
+        <rosparam subst_value="true">
+            server: $(arg server)
+            port: $(arg port)
+            update_frequency: 100.0
+            frame_id: /world
+<!--            child_frame_id: $(arg frame_ref1)-->
+            child_frame_id: $(arg frame_ref2)
+            use_server_time: true
+            broadcast_tf: true
+            refresh_tracker_frequency: 1.0
+        </rosparam>
+    </node>
 
 
     <!--    Activate the server.-->
@@ -74,7 +91,7 @@ A few notes:
 <!--        </node>-->
 
         <!--        Start keyboard controller. -->
-<!--        <node name="keyboard_controller" pkg="crazyflie_demo" type="test_high_level.py" output="screen">-->
+<!--        <node name="keyboard_controller" pkg="crazyflie_demo" type="motion_controller.py" output="screen">-->
 <!--            <param name="tf_prefix" value="$(arg frame1)"/>-->
 <!--        </node>-->
 
@@ -132,7 +149,7 @@ A few notes:
 <!--        </node>-->
 
                 <!--        Start keyboard controller. -->
-        <node name="keyboard_controller" pkg="crazyflie_demo" type="test_high_level.py" output="screen">
+        <node name="keyboard_controller" pkg="crazyflie_demo" type="motion_controller.py" output="screen">
             <param name="tf_prefix" value="$(arg frame2)"/>
         </node>
 

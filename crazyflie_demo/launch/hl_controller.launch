@@ -30,7 +30,7 @@
     </group>
 
 
-<!--    <node name="crazyflie_demo_hover" pkg="crazyflie_demo" type="test_high_level.py" output="screen">-->
+<!--    <node name="crazyflie_demo_hover" pkg="crazyflie_demo" type="motion_controller.py" output="screen">-->
 <!--    </node>-->
 
 </launch>

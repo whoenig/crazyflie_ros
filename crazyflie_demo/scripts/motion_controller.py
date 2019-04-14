@@ -6,22 +6,19 @@
 # collision avoidance #todo fix coordinate system currently works only without rotation
 # command drone using KB in WORLD coordinatesz
 
-from __future__ import absolute_import, division, unicode_literals, print_function
-
-import rospy
-import crazyflie
+import sys
+import termios
 import time
-import tf
-# from crazyflie_driver.msg import Hover
-from std_msgs.msg import Empty
-from crazyflie_driver.srv import UpdateParams
-from crazyflie_driver.msg import GenericLogData
-from geometry_msgs.msg import PointStamped, TransformStamped, PoseStamped  # PoseStamped added to support vrpn_client
-
+import tty
 from threading import Thread
 
-import tty, termios
-import sys
+import crazyflie
+import rospy
+# from crazyflie_driver.msg import Hover
+from crazyflie_driver.msg import GenericLogData
+
+# TODO: move all this shit into a class MotionController
+
 
 speed = 0.25
 initialZ = 0.35
