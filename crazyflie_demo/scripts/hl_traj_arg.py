@@ -3,22 +3,18 @@
 
 from __future__ import absolute_import, division, unicode_literals, print_function
 
-import rospy
-import crazyflie
-import uav_trajectory
 import time
-# import tf
 
-
+import crazyflie
+import rospy
+import uav_trajectory
 # from crazyflie_driver.msg import Hover
 from std_msgs.msg import Empty
-from crazyflie_driver.srv import UpdateParams
-from crazyflie_driver.msg import GenericLogData
+
+# import tf
 
 # from threading import Thread
 # import tty, termios
-
-import sys
 
 # Globals
 traj_container = []
@@ -27,20 +23,8 @@ traj_container = []
 def launcher(msg):
     rospy.loginfo("******************* launching  --- ".format(prefix))
 
-    # # takeoff
-    # cf.startTrajectory(0, timescale=1.0)
-    # time.sleep(traj1.duration * 1.6)
-    #
-    # # figure8
-    # cf.startTrajectory(1, timescale=1.3)
-    # time.sleep(traj2.duration * 1.7)
-    #
-    # # land
-    # cf.startTrajectory(0, timescale=0.7, reverse=True)
-    # time.sleep(1.1)
-    #
     # Loop on all trajectory's in traj_container:
-    for i,traj in enumerate(traj_container):
+    for i, traj in enumerate(traj_container):
         cf.startTrajectory(i, timescale=1.0)
         time.sleep(traj.duration * 1.6)
 
@@ -53,7 +37,7 @@ def launcher(msg):
 
 if __name__ == '__main__':
     # Create a ros node
-    rospy.init_node('highlevel_trajectory_manager',anonymous=True)
+    rospy.init_node('highlevel_trajectory_manager', anonymous=True)
 
     # prefix = sys.argv[1]
     # prefix = "/" + prefix

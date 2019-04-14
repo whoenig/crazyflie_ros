@@ -33,7 +33,7 @@ A few notes:
     <arg name="frame2" default="cf6"/>
     <arg name="traj_list2" default="[$(arg traj1),$(arg traj2)]"/>
     <arg name="initX2" default="0"/>
-    <arg name="initY2" default="1"/>
+    <arg name="initY2" default="0"/>                    <!-- REMEMBER!!!!!!         -->
     <arg name="initZ2" default="0"/>
 
 
@@ -125,10 +125,15 @@ A few notes:
             </rosparam>
         </node>
         <!--            The node for actually running desired python code -->
-        <node name="crazyflie_demo_hover" pkg="crazyflie_demo" type="hl_traj_arg.py" output="screen">
+<!--        <node name="crazyflie_demo_hover" pkg="crazyflie_demo" type="hl_traj_arg.py" output="screen">-->
+<!--            <param name="tf_prefix" value="$(arg frame2)"/>-->
+<!--            &lt;!&ndash;            Pass a list as ros param&ndash;&gt;-->
+<!--            <rosparam param="traj_list" subst_value="True">$(arg traj_list2)</rosparam>-->
+<!--        </node>-->
+
+                <!--        Start keyboard controller. -->
+        <node name="keyboard_controller" pkg="crazyflie_demo" type="test_high_level.py" output="screen">
             <param name="tf_prefix" value="$(arg frame2)"/>
-            <!--            Pass a list as ros param-->
-            <rosparam param="traj_list" subst_value="True">$(arg traj_list2)</rosparam>
         </node>
 
         <!--        Tf_broadcast a specific drone with world-->
@@ -144,7 +149,7 @@ A few notes:
         </node>
         <!--        Rotem.py capture all ros data of a certain CF and wrap it with python object.-->
         <node name="drone_data_parser" pkg="crazyflie_demo" type="rotem.py" output="screen">
-            <param name="tf_prefix" value="$(arg frame1)"/>
+            <param name="tf_prefix" value="$(arg frame2)"/>
         </node>
     </group>
 

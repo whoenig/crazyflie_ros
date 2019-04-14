@@ -4,8 +4,7 @@
 # initializes drone initial position 0,0,0
 # launch drone to fixed height initialZ [m]
 # collision avoidance #todo fix coordinate system currently works only without rotation
-# command drone using KB in WORLD coordinates
-
+# command drone using KB in WORLD coordinatesz
 
 from __future__ import absolute_import, division, unicode_literals, print_function
 
