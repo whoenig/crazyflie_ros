@@ -44,7 +44,7 @@ A few notes:
             server: $(arg server)
             port: $(arg port)
             update_frequency: 100.0
-            frame_id: /world
+            frame_id: world
 <!--            child_frame_id: $(arg frame_ref1)-->
             child_frame_id: $(arg frame_ref2)
             use_server_time: true

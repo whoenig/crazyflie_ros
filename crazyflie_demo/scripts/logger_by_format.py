@@ -106,32 +106,33 @@ def logger_handler(tf_prefix, tf_ref):
 
         """working, but Remember: there's a buf with tf_ref-wold coordinate's. """
         if tf_ref is not None:
-            trans = tfBuffer.lookup_transform('world', tf_ref, rospy.Time(0))
+            try:  # if optitrack message exists
+                trans = tfBuffer.lookup_transform('world', tf_ref, rospy.Time(0))
 
-            q = (trans.transform.rotation.x,
-                 trans.transform.rotation.y,
-                 trans.transform.rotation.z,
-                 trans.transform.rotation.w)
+                q = (trans.transform.rotation.x,
+                     trans.transform.rotation.y,
+                     trans.transform.rotation.z,
+                     trans.transform.rotation.w)
 
-            euler = euler_from_quaternion(q, axes='sxzy')
+                euler = euler_from_quaternion(q, axes='sxzy')
 
-            # translation : x, z, y
-            # rotation : x, -z , y
-            t.ref_x = -1 * trans.transform.translation.z
-            t.ref_y = trans.transform.translation.x
-            t.ref_z = trans.transform.translation.y
-            t.ref_roll = euler[0]
-            t.ref_pitch = -1 * euler[2]
-            t.ref_yaw = euler[1]
+                # translation : x, z, y
+                # rotation : x, -z , y
+                t.ref_x = -1 * trans.transform.translation.z
+                t.ref_y = trans.transform.translation.x
+                t.ref_z = trans.transform.translation.y
+                t.ref_roll = euler[0]
+                t.ref_pitch = -1 * euler[2]
+                t.ref_yaw = euler[1]
 
-        else:
-            t.ref_x = 0
-            t.ref_y = 0
-            t.ref_z = 0
-            t.ref_roll = 0
-            t.ref_pitch = 0
-            t.ref_yaw = 0
-            # rospy.loginfo("tf lookup -- {} not found".format(tf_prefix))
+            except:
+                t.ref_x = 0
+                t.ref_y = 0
+                t.ref_z = 0
+                t.ref_roll = 0
+                t.ref_pitch = 0
+                t.ref_yaw = 0
+                rospy.loginfo("tf lookup -- {} not found".format(tf_prefix))
 
         pub.publish(t)
 
