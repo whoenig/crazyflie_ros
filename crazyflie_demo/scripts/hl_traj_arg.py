@@ -11,6 +11,8 @@ import uav_trajectory
 from std_msgs.msg import Empty
 
 
+# Todo change to trajectory planner only without creating a CF object!!!!
+
 # Globals
 traj_container = []
 

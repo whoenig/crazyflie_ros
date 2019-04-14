@@ -141,12 +141,13 @@ A few notes:
                 "range.right" , "range.zrange" ]
             </rosparam>
         </node>
+
         <!--            The node for actually running desired python code -->
-<!--        <node name="crazyflie_demo_hover" pkg="crazyflie_demo" type="hl_traj_arg.py" output="screen">-->
-<!--            <param name="tf_prefix" value="$(arg frame2)"/>-->
-<!--            &lt;!&ndash;            Pass a list as ros param&ndash;&gt;-->
-<!--            <rosparam param="traj_list" subst_value="True">$(arg traj_list2)</rosparam>-->
-<!--        </node>-->
+        <node name="crazyflie_demo_hover" pkg="crazyflie_demo" type="hl_traj_arg.py" output="screen">
+            <param name="tf_prefix" value="$(arg frame2)"/>
+            <!--            Pass a list as ros param-->
+            <rosparam param="traj_list" subst_value="True">$(arg traj_list2)</rosparam>
+        </node>
 
                 <!--        Start keyboard controller. -->
         <node name="keyboard_controller" pkg="crazyflie_demo" type="motion_controller.py" output="screen">
@@ -169,7 +170,7 @@ A few notes:
             <param name="tf_prefix" value="$(arg frame2)"/>
         </node>
 
-        <!--        Rotem.py capture all ros data of a certain CF and wrap it with python object.-->
+        <!--        logger_by_format.py capture all topics relevant for looging into predesignd SCV.-->
         <node name="logger_by_format" pkg="crazyflie_demo" type="logger_by_format.py" output="screen">
             <param name="tf_prefix" value="$(arg frame2)"/>
             <param name="tf_ref" value="$(arg frame_ref2)"/>
