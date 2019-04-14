@@ -168,6 +168,11 @@ A few notes:
         <node name="drone_data_parser" pkg="crazyflie_demo" type="rotem.py" output="screen">
             <param name="tf_prefix" value="$(arg frame2)"/>
         </node>
+
+        <!--        Rotem.py capture all ros data of a certain CF and wrap it with python object.-->
+        <node name="logger_by_format" pkg="crazyflie_demo" type="logger_by_format.py" output="screen">
+            <param name="tf_prefix" value="$(arg frame2)"/>
+        </node>
     </group>
 
 </launch>
