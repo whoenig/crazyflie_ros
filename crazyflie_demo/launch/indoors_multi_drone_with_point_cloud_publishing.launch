@@ -172,6 +172,7 @@ A few notes:
         <!--        Rotem.py capture all ros data of a certain CF and wrap it with python object.-->
         <node name="logger_by_format" pkg="crazyflie_demo" type="logger_by_format.py" output="screen">
             <param name="tf_prefix" value="$(arg frame2)"/>
+            <param name="tf_ref" value="$(arg frame_ref2)"/>
         </node>
     </group>
 
