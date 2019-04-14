@@ -84,7 +84,7 @@ A few notes:
             </rosparam>
         </node>
         <!--            The node for actually running desired python code -->
-<!--        <node name="crazyflie_demo_hover" pkg="crazyflie_demo" type="hl_traj_arg.py" output="screen">-->
+<!--        <node name="crazyflie_demo_hover" pkg="crazyflie_demo" type="traj_planner.py" output="screen">-->
 <!--            <param name="tf_prefix" value="$(arg frame1)"/>-->
 <!--            &lt;!&ndash;            Pass a 'list' as ros param&ndash;&gt;-->
 <!--            <rosparam param="traj_list" subst_value="True">$(arg traj_list)</rosparam>-->
