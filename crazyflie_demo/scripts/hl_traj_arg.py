@@ -8,7 +8,6 @@ import time
 import crazyflie
 import rospy
 import uav_trajectory
-# from crazyflie_driver.msg import Hover
 from std_msgs.msg import Empty
 
 
