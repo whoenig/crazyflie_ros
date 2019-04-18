@@ -3,6 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/crazyflie_cpp" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/crazyflie_demo/scripts/utils/rosbag_to_csv" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/crazyflie_tools" vcs="Git" />
   </component>
 </project>
