@@ -205,6 +205,7 @@ private:
   {
     ROS_FATAL_NAMED(m_tf_prefix, "Emergency requested!");
     m_isEmergency = true;
+    m_cf.emergencyStop();
 
     return true;
   }
