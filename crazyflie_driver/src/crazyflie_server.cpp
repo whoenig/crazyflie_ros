@@ -4,6 +4,7 @@
 #include "crazyflie_driver/AddCrazyflie.h"
 #include "crazyflie_driver/GoTo.h"
 #include "crazyflie_driver/Land.h"
+#include "crazyflie_driver/NotifySetpointsStop.h"
 #include "crazyflie_driver/RemoveCrazyflie.h"
 #include "crazyflie_driver/SetGroupMask.h"
 #include "crazyflie_driver/StartTrajectory.h"
@@ -127,6 +128,7 @@ public:
     , m_serviceGoTo()
     , m_serviceUploadTrajectory()
     , m_serviceStartTrajectory()
+    , m_serviceNotifySetpointsStop()
     , m_subscribeCmdVel()
     , m_subscribeCmdFullState()
     , m_subscribeCmdVelocityWorld()
@@ -409,6 +411,7 @@ void cmdPositionSetpoint(
     m_serviceGoTo = n.advertiseService(m_tf_prefix + "/go_to", &CrazyflieROS::goTo, this);
     m_serviceUploadTrajectory = n.advertiseService(m_tf_prefix + "/upload_trajectory", &CrazyflieROS::uploadTrajectory, this);
     m_serviceStartTrajectory = n.advertiseService(m_tf_prefix + "/start_trajectory", &CrazyflieROS::startTrajectory, this);
+    m_serviceNotifySetpointsStop = n.advertiseService(m_tf_prefix + "/notify_setpoints_stop", &CrazyflieROS::notifySetpointsStop, this);
 
     if (m_enable_logging_imu) {
       m_pubImu = n.advertise<sensor_msgs::Imu>(m_tf_prefix + "/imu", 10);
@@ -829,6 +832,15 @@ void cmdPositionSetpoint(
     return true;
   }
 
+  bool notifySetpointsStop(
+    crazyflie_driver::NotifySetpointsStop::Request& req,
+    crazyflie_driver::NotifySetpointsStop::Response& res)
+  {
+    ROS_INFO_NAMED(m_tf_prefix, "NotifySetpointsStop requested");
+    m_cf.notifySetpointsStop(req.remainValidMillisecs);
+    return true;
+  }
+
 private:
   std::string m_tf_prefix;
   Crazyflie m_cf;
@@ -859,6 +871,7 @@ private:
   ros::ServiceServer m_serviceGoTo;
   ros::ServiceServer m_serviceUploadTrajectory;
   ros::ServiceServer m_serviceStartTrajectory;
+  ros::ServiceServer m_serviceNotifySetpointsStop;
 
   ros::Subscriber m_subscribeCmdVel;
   ros::Subscriber m_subscribeCmdFullState;
