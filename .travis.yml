@@ -50,9 +50,6 @@ matrix:
   - name: "Trusty indigo"
     dist: trusty
     env: ROS_DISTRO=indigo
-  # - name: "Trusty jade"
-  #   dist: trusty
-  #   env: ROS_DISTRO=jade
   - name: "Xenial kinetic"
     dist: xenial
     env: ROS_DISTRO=kinetic
@@ -61,7 +58,7 @@ matrix:
 # trigger a build matrix for different ROS distributions if desired.
 env:
   global:
-    - ROS_CI_DESKTOP="`lsb_release -cs`"  # e.g. [precise|trusty|...]
+    - ROS_CI_DESKTOP="`lsb_release -cs`"  # e.g. [trusty|xenial|...]
     - CI_SOURCE_PATH=$(pwd)
     - ROSINSTALL_FILE=$CI_SOURCE_PATH/dependencies.rosinstall
     - CATKIN_OPTIONS=$CI_SOURCE_PATH/catkin.options
@@ -75,14 +72,14 @@ env:
 # Install system dependencies, namely a very barebones ROS setup.
 before_install:
   - sudo sh -c "echo \"deb http://packages.ros.org/ros/ubuntu $ROS_CI_DESKTOP main\" > /etc/apt/sources.list.d/ros-latest.list"
-  - sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+  - sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
   - sudo apt-get update -qq
   - sudo apt-get install dpkg
   - sudo apt-get install -y python-catkin-pkg python-rosdep python-wstool ros-$ROS_DISTRO-ros-base
   - source /opt/ros/$ROS_DISTRO/setup.bash
   # Prepare rosdep to install dependencies.
   - sudo rosdep init
-  - rosdep update
+  - rosdep update --include-eol-distros  # Support EOL distros.
 
 # Create a catkin workspace with the package under integration.
 install:
