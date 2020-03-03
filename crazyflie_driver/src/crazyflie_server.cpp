@@ -215,7 +215,7 @@ private:
   }
 
   template<class T, class U>
-  void updateParam(uint8_t id, const std::string& ros_param) {
+  void updateParam(uint16_t id, const std::string& ros_param) {
       U value;
       ros::param::get(ros_param, value);
       m_cf.setParam<T>(id, (T)value);
