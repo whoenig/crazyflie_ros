@@ -18,6 +18,7 @@
   <build_depend>rosidl_default_generators</build_depend>
 
   <exec_depend>rosidl_default_runtime</exec_depend>
+  <exec_depend>launch_xml</exec_depend>
 
   <depend>rclcpp</depend>
   <depend>builtin_interfaces</depend>

@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="uri" default="radio://0/80/2M" />
+  <arg name="tf_prefix" default="" />
+  <arg name="roll_trim" default="0.0" />
+  <arg name="pitch_trim" default="0.0" />
+  <arg name="enable_logging" default="True" />
+  <arg name="use_ros_time" default="True" />
+  <arg name="enable_logging_imu" default="True" />
+  <arg name="enable_logging_temperature" default="True" />
+  <arg name="enable_logging_magnetic_field" default="True" />
+  <arg name="enable_logging_pressure" default="True" />
+  <arg name="enable_logging_battery" default="True" />
+  <arg name="enable_logging_pose" default="False" />
+  <arg name="enable_logging_packets" default="True" />
+
+  <node pkg="crazyflie_driver" exec="crazyflie_add" name="crazyflie_add" output="screen">
+    <param name="uri" value="$(var uri)" />
+    <param name="tf_prefix" value="$(var tf_prefix)" />
+    <param name="roll_trim" value="$(var roll_trim)" />
+    <param name="pitch_trim" value="$(var pitch_trim)" />
+    <param name="enable_logging" value="$(var enable_logging)" />
+    <param name="use_ros_time" value="$(var use_ros_time)" />
+    <param name="enable_logging_imu" value="$(var enable_logging_imu)" />
+    <param name="enable_logging_temperature" value="$(var enable_logging_temperature)" />
+    <param name="enable_logging_magnetic_field" value="$(var enable_logging_magnetic_field)" />
+    <param name="enable_logging_pressure" value="$(var enable_logging_pressure)" />
+    <param name="enable_logging_battery" value="$(var enable_logging_battery)" />
+    <param name="enable_logging_pose" value="$(var enable_logging_pose)" />
+    <param name="enable_logging_packets" value="$(var enable_logging_packets)"/>
+  </node>
+</launch>

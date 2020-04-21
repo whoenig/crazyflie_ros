@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="crazyflie_driver" exec="crazyflie_server" name="crazyflie_server" output="screen"/>
+</launch>
