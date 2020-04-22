@@ -597,7 +597,7 @@ void cmdPositionSetpoint(
         logBlocksGeneric[i].reset(new LogBlockGeneric(
           &m_cf,
           logBlock.variables,
-          (void*)&m_pubLogDataGeneric[i],
+          (void*)m_pubLogDataGeneric[i].get(),
           cb));
         logBlocksGeneric[i]->start(logBlock.frequency / 10);
         ++i;

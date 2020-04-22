@@ -9,6 +9,7 @@ int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
   rclcpp::NodeOptions options;
+  options.allow_undeclared_parameters(true);
   std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("crazyflie_add", options);
 
   // read paramaters
@@ -84,31 +85,34 @@ int main(int argc, char **argv)
   addCrazyflie->enable_logging_pose = enable_logging_pose;
   addCrazyflie->enable_logging_packets = enable_logging_packets;
 
-  // TODO -- specify log blocks as parameters
-  //node->declare_parameter("genericLogTopics", std::vector<std::string>());
-  //node->declare_parameter("genericLogTopicFrequencies", std::vector<int>());
-  //std::vector<std::string> genericLogTopics;
-  //node->get_parameter("genericLogTopics", genericLogTopics);
-  //std::vector<int> genericLogTopicFrequencies;
-  //node->get_parameter("genericLogTopicFrequencies", genericLogTopicFrequencies);
+  node->declare_parameter("genericLogTopics", std::vector<std::string>());
+  node->declare_parameter("genericLogTopicFrequencies", std::vector<std::int64_t>());
+  std::vector<std::string> genericLogTopics;
+  node->get_parameter("genericLogTopics", genericLogTopics);
+  std::vector<std::int64_t> genericLogTopicFrequencies;
+  node->get_parameter("genericLogTopicFrequencies", genericLogTopicFrequencies);
 
-  //if (genericLogTopics.size() == genericLogTopicFrequencies.size())
-  //{
-  //  size_t i = 0;
-  //  for (auto& topic : genericLogTopics)
-  //  {
-  //    crazyflie_driver::msg::LogBlock logBlock;
-  //    logBlock.topic_name = topic;
-  //    logBlock.frequency = genericLogTopicFrequencies[i];
-  //    node->get_parameter("genericLogTopic_" + topic + "_Variables", logBlock.variables);
-  //    addCrazyflie->log_blocks.push_back(logBlock);
-  //    ++i;
-  //  }
-  //}
-  //else
-  //{
-  //  RCLCPP_ERROR(node->get_logger(), "Cardinality of genericLogTopics and genericLogTopicFrequencies does not match!");
-  //}
+  if (genericLogTopics.size() == genericLogTopicFrequencies.size())
+  {
+    size_t i = 0;
+    for (auto& topic : genericLogTopics)
+    {
+      crazyflie_driver::msg::LogBlock logBlock;
+      logBlock.topic_name = topic;
+      logBlock.frequency = genericLogTopicFrequencies[i];
+      // TODO - in theory specifying "allow_undeclared_parameters" on the node
+      // options should make this declare_parameter call unnecessary, but it
+      // doesn't seem to work in practice.
+      node->declare_parameter("genericLogTopic_" + topic + "_Variables", std::vector<std::string>());
+      node->get_parameter("genericLogTopic_" + topic + "_Variables", logBlock.variables);
+      addCrazyflie->log_blocks.push_back(logBlock);
+      ++i;
+    }
+  }
+  else
+  {
+    RCLCPP_ERROR(node->get_logger(), "Cardinality of genericLogTopics and genericLogTopicFrequencies does not match!");
+  }
 
   auto result = addCrazyflieService->async_send_request(addCrazyflie);
   if (rclcpp::spin_until_future_complete(node, result) ==
