@@ -48,7 +48,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 add_executable(crazyflie_server
   src/crazyflie_server.cpp
 )
-
+target_link_libraries(crazyflie_server crazyflie_cpp::crazyflie_cpp)
 ament_target_dependencies(crazyflie_server
   rclcpp
   std_msgs
@@ -56,7 +56,6 @@ ament_target_dependencies(crazyflie_server
   builtin_interfaces
   geometry_msgs
   sensor_msgs
-  crazyflie_cpp
 )
 
 add_executable(crazyflie_add
