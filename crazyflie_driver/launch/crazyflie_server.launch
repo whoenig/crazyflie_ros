@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-
-<launch>
-  <node pkg="crazyflie_driver" type="crazyflie_server" name="crazyflie_server" output="screen">
-  </node>
-</launch>
