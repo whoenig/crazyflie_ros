@@ -1,9 +1,9 @@
-[![Build Status](https://travis-ci.org/whoenig/crazyflie_ros.svg?branch=master)](https://travis-ci.org/whoenig/crazyflie_ros)
+![Build (Ubuntu and ROS2)](https://github.com/whoenig/crazyflie_ros/workflows/Build%20(Ubuntu%20and%20ROS2)/badge.svg?branch=ros2)
 
 crazyflie_ros
 =============
 
-ROS stack for Bitcraze Crazyflie (http://www.bitcraze.se/), with the following features:
+ROS2 stack for Bitcraze Crazyflie (http://www.bitcraze.se/), with the following features:
 
 * Support for Crazyflie 1.0 and Crazyflie 2.0 (using stock firmware)
 * Publishes on-board sensors in ROS standard message formats
