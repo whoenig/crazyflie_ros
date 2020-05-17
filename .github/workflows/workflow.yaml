@@ -17,6 +17,11 @@ jobs:
         os: [ubuntu-18.04]
       fail-fast: false
     steps:
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libusb-1.0-0-dev
+
     - name: Setup ROS 2
       uses: ros-tooling/setup-ros@0.0.15
       with:
@@ -25,7 +30,7 @@ jobs:
     - name: Compile Package
       uses: ros-tooling/action-ros-ci@0.0.13
       with:
-        package-name: crazyflie
+        package-name: crazyflie_cpp crazyflie_driver
 
     - name: Upload Logs
       uses: actions/upload-artifact@v1
