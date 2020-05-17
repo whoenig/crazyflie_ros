@@ -39,6 +39,11 @@
 
 ################################################################################
 
+# blocklist ros2 branch for use with travis (ROS2 uses Github actions instead)
+branches:
+  except:
+    - ros2
+
 sudo: required
 cache:
   - apt
