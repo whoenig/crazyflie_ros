@@ -19,7 +19,7 @@ jobs:
     steps:
     - name: Setup ROS 2
       uses: ros-tooling/setup-ros@0.0.15
-    with:
+      with:
         required-ros-distributions: eloquent
 
     - name: Compile Package
