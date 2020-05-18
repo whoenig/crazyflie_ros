@@ -28,7 +28,7 @@ jobs:
         required-ros-distributions: eloquent
 
     - name: Compile Package
-      uses: ros-tooling/action-ros-ci@0.0.13
+      uses: ros-tooling/action-ros-ci@0.0.16
       with:
         package-name: crazyflie_cpp crazyflie_driver
 
