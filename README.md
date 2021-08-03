@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/whoenig/crazyflie_ros.svg?branch=master)](https://travis-ci.org/whoenig/crazyflie_ros)
 
+> **WARNING**: This repository is deprecated. Please use the [Crazyswarm](http://crazyswarm.readthedocs.io) instead, even when only operating a single Crazyflie. If you are missing features in the Crazyswarm, feel free to [open an open issue](https://github.com/USC-ACTLab/crazyswarm/issues).
+
 crazyflie_ros
 =============
 
@@ -13,8 +15,6 @@ ROS stack for Bitcraze Crazyflie (http://www.bitcraze.se/), with the following f
 * No dependency to the Bitcraze SDK (Driver and Controller written in C++)
 
 A tutorial (for a slightly older version) is available in W. Hönig and N. Ayanian. "Flying Multiple UAVs Using ROS", Chapter in Robot Operating System (ROS): The Complete Reference (Volume 2), Springer, 2017. (see http://act.usc.edu/publications.html for a free pre-print).
-
-If you want to control many Crazyflies or look for a good controller for a single Crazyflie, take a look at http://crazyswarm.readthedocs.io/en/latest/. We are currently in the process to unify the Crazyswarm and crazyflie_ros as well as contributing the Crazyswarm firmware changes back to the official firmware.
 
 ## Citing This Work
 
